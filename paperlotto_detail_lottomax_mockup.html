@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로또맥스 (Lotto Max) — PaperLotto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ca:#d8232a;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  word-break:keep-all; overflow-wrap:break-word;
+  background-image:linear-gradient(var(--board-line) 1px, transparent 1px), linear-gradient(90deg, var(--board-line) 1px, transparent 1px);
+  background-size:64px 64px; background-color:var(--board);
+}
+h1,h2,h3{ font-family:'Fraunces',serif; margin:0; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; border-radius:4px; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:20px 32px; border-bottom:1px solid var(--board-line);
+  background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:34px; height:34px; border-radius:7px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-size:17px; transform:rotate(-4deg); }
+.brand-name{ font-size:20px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+.brand-tag{ font-size:11px; color:var(--text-dim); margin-top:1px; letter-spacing:0.4px; }
+nav{ display:flex; align-items:center; gap:22px; font-size:14px; color:var(--text-mid); }
+nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 14px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:var(--ink); }
+
+.breadcrumb{ max-width:760px; margin:22px auto 0; padding:0 24px; font-size:13px; color:var(--text-dim); display:flex; align-items:center; gap:8px; }
+.breadcrumb a{ text-decoration:none; color:var(--text-mid); } .breadcrumb a:hover{ color:var(--gold-bright); }
+
+.game-hero{ max-width:760px; margin:20px auto 0; padding:0 24px; }
+.hero-ticket{ position:relative; background:var(--paper); color:var(--ink); border-radius:14px; padding:34px 34px 30px; box-shadow:0 20px 44px -20px rgba(0,0,0,0.6); overflow:hidden; }
+.hero-ticket::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:7px; background:var(--ca); }
+.hero-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.hero-country{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:1.4px; color:var(--ca); }
+.hero-title{ font-size:clamp(30px,4.4vw,42px); font-weight:600; margin-top:8px; line-height:1.1; }
+.hero-title-en{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-dim); margin-top:6px; }
+
+.hero-pips{ margin-top:26px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.pip{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; background:rgba(28,33,48,0.07); color:var(--ink-dim); }
+.pip.bonus{ background:var(--ca); color:var(--paper); }
+.pip-plus{ font-size:15px; color:var(--ink-dim); margin:0 3px; }
+.pip-caption{ font-size:11.5px; color:var(--ink-dim); margin-left:8px; }
+
+.hero-stats{ margin-top:28px; display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:16px; padding-top:22px; border-top:1px dashed rgba(28,33,48,0.18); }
+.stat-label{ font-size:11px; color:var(--ink-dim); letter-spacing:0.3px; margin-bottom:4px; }
+.stat-value{ font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:600; color:var(--ink); }
+
+.reg-cta-open{ display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--paper); font-weight:600; font-size:15px; padding:14px 30px; border-radius:9px; text-decoration:none; }
+.reg-cta-open:hover{ background:#2a3145; }
+.reg-cta-closed{
+  display:block; background:rgba(28,33,48,0.12); border:1.5px dashed rgba(28,33,48,0.3);
+  color:var(--ink); border-radius:10px; padding:16px 20px; font-size:13.5px; line-height:1.7; text-align:left;
+}
+.reg-cta-closed b{ display:block; font-size:14px; margin-bottom:4px; }
+
+.draw-gate{ margin-top:20px; padding-top:20px; border-top:1px dashed rgba(28,33,48,0.18); display:flex; flex-direction:column; gap:12px; }
+.gate-row{ display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:9px; background:rgba(28,33,48,0.04); }
+.gate-icon{ font-size:17px; flex-shrink:0; }
+.gate-text{ flex:1; min-width:0; }
+.gate-label{ font-size:11px; color:var(--ink-dim); letter-spacing:0.2px; margin-bottom:2px; }
+.gate-sublabel{ font-size:9.5px; color:var(--ink-dim); opacity:0.75; margin-bottom:4px; }
+.gate-countdown{ font-size:16px; font-weight:600; color:var(--ink); }
+.gate-abs{ font-size:11px; color:var(--ink-dim); text-align:right; flex-shrink:0; line-height:1.5; }
+.gate-row.closed{ background:rgba(198,90,46,0.1); }
+.gate-row.closed .gate-countdown{ color:#a13a1c; }
+.gate-row.urgent .gate-countdown{ color:#a13a1c; }
+
+main{ max-width:760px; margin:0 auto; padding:8px 24px 100px; }
+.sheet{ margin-top:34px; }
+.sheet-eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1.6px; color:var(--gold-bright); margin-bottom:10px; }
+.sheet h2{ font-size:24px; font-weight:600; color:var(--text-hi); margin-bottom:16px; }
+.sheet-body{ background:var(--paper); color:var(--ink); border-radius:12px; padding:28px 30px; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); line-height:1.75; font-size:15px; }
+.sheet-body p{ margin:0 0 14px; } .sheet-body p:last-child{ margin-bottom:0; }
+.sheet-body strong{ color:#8a5b1c; }
+
+table.prize-table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:4px; }
+table.prize-table th{ text-align:left; font-size:10.5px; letter-spacing:0.3px; color:var(--ink-dim); font-weight:600; padding:0 8px 9px 0; border-bottom:1px solid rgba(28,33,48,0.15); }
+table.prize-table td{ padding:9px 8px 9px 0; border-bottom:1px solid rgba(28,33,48,0.08); font-family:'IBM Plex Mono',monospace; }
+table.prize-table td:first-child{ font-family:'Inter',sans-serif; font-weight:600; }
+table.prize-table tr:last-child td{ border-bottom:none; }
+table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
+
+.callout{ margin-top:16px; padding:18px 20px; border-radius:10px; border-left:4px solid var(--gold); background:rgba(184,134,46,0.08); font-size:14px; line-height:1.7; }
+.callout b{ display:block; margin-bottom:6px; color:#8a5b1c; font-size:13px; letter-spacing:0.2px; }
+
+.feature-box{ margin-top:16px; padding:18px 20px; border-radius:10px; background:rgba(216,35,42,0.07); border:1px solid rgba(216,35,42,0.2); font-size:14px; line-height:1.7; }
+.feature-box b{ display:block; margin-bottom:6px; color:var(--ca); font-size:13px; }
+
+.foreign-note{ margin-top:18px; padding:18px 20px; border-radius:10px; background:rgba(216,35,42,0.06); border:1px solid rgba(216,35,42,0.16); font-size:14px; line-height:1.7; }
+.foreign-note b{ display:block; margin-bottom:6px; color:var(--ca); font-size:13px; }
+
+.strategy-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; }
+.strategy-list li{ display:flex; gap:12px; align-items:flex-start; font-size:14.5px; line-height:1.7; }
+.strategy-list .mark{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--gold); font-weight:700; margin-top:3px; flex-shrink:0; }
+.strategy-note{ font-size:12px; color:var(--ink-dim); margin-bottom:16px; font-style:italic; }
+
+.final-cta{ margin-top:44px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); border-radius:14px; padding:38px 34px; color:var(--ink); text-align:center; }
+.final-cta h3{ font-size:24px; font-weight:600; margin-bottom:10px; }
+.final-cta p{ font-size:14px; opacity:0.85; max-width:440px; margin:0 auto 22px; line-height:1.7; }
+.final-disclaimer{ margin-top:16px; font-size:11.5px; opacity:0.65; }
+
+footer{ border-top:1px solid var(--board-line); padding:36px 24px 44px; text-align:center; }
+footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560px; margin:0 auto; }
+footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--text-mid); margin-bottom:10px; }
+
+@media (max-width:640px){
+  header{ padding:16px 18px; } nav{ display:none; }
+  .hero-ticket{ padding:24px 20px; } .sheet-body{ padding:22px 20px; } main{ padding:0 18px 70px; }
+  table.prize-table{ font-size:11px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div><div class="brand-name">Paper<em>Lotto</em></div><div class="brand-tag">GLOBAL DRAW SIMULATOR</div></div>
+  </div>
+  <nav>
+    <a href="paperlotto_hub_mockup.html">전체 게임</a>
+    <a href="#">내 등록번호</a>
+    <a href="#">전략 가이드</a>
+    <div class="lang-toggle"><button class="active" type="button">KR</button><button type="button">EN</button></div>
+  </nav>
+</header>
+
+<div class="breadcrumb">
+  <a href="paperlotto_hub_mockup.html">← 전체 게임</a><span>/</span><span>캐나다</span><span>/</span><span style="color:var(--text-hi);">로또맥스</span>
+</div>
+
+<div class="game-hero">
+  <div class="hero-ticket">
+    <div class="hero-top">
+      <div>
+        <div class="hero-country">🇨🇦 CANADA · ILC / OLG · LOTO-QUÉBEC · BCLC</div>
+        <h1 class="hero-title">로또맥스</h1>
+        <div class="hero-title-en">Lotto Max</div>
+      </div>
+    </div>
+
+    <div class="hero-pips">
+      <span class="pip">1</span><span class="pip">2</span><span class="pip">3</span><span class="pip">4</span><span class="pip">5</span><span class="pip">6</span><span class="pip">7</span>
+      <span class="pip-plus">+</span><span class="pip bonus">B</span>
+      <span class="pip-caption">1~52 중 7개 + 보너스 1개, 같은 풀에서 추첨</span>
+    </div>
+
+    <div class="hero-stats">
+      <div><div class="stat-label">1게임 가격</div><div class="stat-value">$6</div></div>
+      <div><div class="stat-label">추첨일</div><div class="stat-value">화·금</div></div>
+      <div><div class="stat-label">1등 확률</div><div class="stat-value" style="font-size:13px;">1 / 33,446,140</div></div>
+      <div><div class="stat-label">잭팟 상한</div><div class="stat-value" style="font-size:13px;">$9,000만</div></div>
+    </div>
+
+    <div class="draw-gate">
+      <div class="gate-row">
+        <span class="gate-icon">🎯</span>
+        <div class="gate-text">
+          <div class="gate-label">다음 추첨까지</div>
+          <div class="gate-countdown mono" id="drawCountdown">계산 중…</div>
+        </div>
+        <div class="gate-abs mono" id="drawAbsolute"></div>
+      </div>
+      <div class="gate-row" id="regGateRow">
+        <span class="gate-icon">📝</span>
+        <div class="gate-text">
+          <div class="gate-label">내가 생각한 번호(전략번호) 등록 마감까지</div>
+          <div class="gate-sublabel">(실제 복권 판매 마감 시각 기준)</div>
+          <div class="gate-countdown mono" id="regCountdown">계산 중…</div>
+        </div>
+        <div class="gate-abs mono" id="regAbsolute"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">01 · PRIZE STRUCTURE</div>
+    <h2>등수별 당첨 조건 (1라인 기준)</h2>
+    <div class="sheet-body">
+      <table class="prize-table">
+        <thead><tr><th>등수</th><th>조건</th><th>당첨금</th><th>확률</th></tr></thead>
+        <tbody>
+          <tr><td>1등</td><td>7개 번호 일치</td><td>잭팟 (최소 $1,000만~최대 $9,000만)</td><td>1/33,446,140</td></tr>
+          <tr><td>2등</td><td>6개 + 보너스 일치</td><td>Pools Fund 18.5%</td><td>1/4,778,020</td></tr>
+          <tr><td>3등</td><td>6개 번호 일치</td><td>Pools Fund 18.85%</td><td>1/108,591</td></tr>
+          <tr><td>4등</td><td>5개 + 보너스 일치</td><td>Pools Fund 12.25%</td><td>1/36,197</td></tr>
+          <tr><td>5등</td><td>5개 번호 일치</td><td>Pools Fund 27.50%</td><td>1/1,684</td></tr>
+          <tr><td>6등</td><td>4개 + 보너스 일치</td><td>Pools Fund 22.90%</td><td>1/1,010</td></tr>
+          <tr><td>7등</td><td>4개 번호 일치</td><td>고정 $20</td><td>1/72.2</td></tr>
+          <tr><td>8등</td><td>3개 + 보너스 일치</td><td>고정 $20</td><td>1/72.2</td></tr>
+          <tr><td>9등</td><td>3개 번호 일치</td><td>무료 게임 1회권</td><td>1/7.0</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:18px;">전체 당첨확률은 약 <strong>5.8분의 1</strong>로 상당히 자주 걸리는 편이에요. 2026년 개편으로 <strong>$6에 4개 번호조합(라인)</strong>을 제공합니다.</p>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">02 · MAXMILLIONS</div>
+    <h2>1등이 여러 명 동시에 나오는 독특한 제도</h2>
+    <div class="sheet-body">
+      <div class="feature-box">
+        <b>✨ MAXMILLIONS</b>
+        메인 잭팟이 5,000만 달러를 넘으면, 별도로 각각 100만 달러씩 주는 "MAXMILLIONS" 추가 추첨이 발생합니다. 잭팟이 클수록 추가 당첨 기회도 늘어나요. 여기에 MAXPLUS(10만 달러 단위 보너스)까지 더해집니다.
+      </div>
+      <div class="callout">
+        <b>역대 최고 기록</b>
+        2021년 6월 22일, 메인 잭팟 7,000만 달러 + MAXMILLIONS 70구좌가 동시에 터지며 단일 회차 총 1억 4,000만 캐나다 달러라는 복권 역사상 최대 상금 풀을 기록했습니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">03 · TAX & TRANSPARENCY</div>
+    <h2>세금 0% — 그리고 익명은 불가능</h2>
+    <div class="sheet-body">
+      <p><strong>당첨금에 소득세가 전혀 붙지 않습니다.</strong> 캐나다는 복권 당첨금을 불로소득으로 분류해 세금을 면제해요.</p>
+      <p>⚠️ 다만 캐나다는 <strong>투명성을 위해 당첨자의 이름·거주 도시·얼굴 사진을 공개하는 것이 원칙</strong>입니다. 일본이나 미국 일부 주와 정반대로, 완전 익명 처리가 거의 불가능해요.</p>
+      <div class="foreign-note">
+        <b>🌏 외국인이라면?</b>
+        관광객·유학생도 캐나다 현지에서 합법 구매했다면 동일하게 세금 면제를 받습니다. 다만 한국으로 가져오면 국내 세법상 신고·과세 대상이 될 수 있어요.
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">04 · STRATEGY</div>
+    <h2>전략 코너</h2>
+    <div class="sheet-body">
+      <div class="strategy-note">※ 일반적인 확률·통계 전략 개념입니다. 실제 역대 번호 빈도 데이터는 DB 구축 완료 후 실데이터로 교체 예정입니다.</div>
+      <ul class="strategy-list">
+        <li><span class="mark">01</span>한 번에 4개 라인을 받는 구조라, 라인마다 다른 전략을 섞어서 비교해보는 실험이 가능해요.</li>
+        <li><span class="mark">02</span>9등(3개만 일치)의 확률이 1/7로 매우 높은 편이라, 적중 빈도 체감을 가장 빠르게 느껴볼 수 있어요.</li>
+        <li><span class="mark">03</span>MAXMILLIONS가 걸리는 회차(잭팟 5,000만 달러 이상)를 노려서 등록해보는 것도 캐나다 특유의 관전 포인트입니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="final-cta">
+    <h3>실제 돈 없이, 판단은 진짜로</h3>
+    <p>세금 없는 잭팟, 여러 명이 동시에 당첨될 수 있는 MAXMILLIONS 제도까지. PaperLotto에서 실제 돈 없이 경험해보세요.</p>
+    <div id="regCtaArea">
+      <a href="#" class="reg-cta-open">내 전략 번호 가상 등록하기 →</a>
+    </div>
+    <div class="final-disclaimer">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="foot-brand">PaperLotto</div>
+  <p>본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.</p>
+</footer>
+
+<script>
+function tzOffsetMinutes(date, timeZone){
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone, hourCycle:'h23', year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+  const p = dtf.formatToParts(date).reduce((a,x)=>{a[x.type]=x.value; return a;},{});
+  const asUTC = Date.UTC(p.year, p.month-1, p.day, p.hour===24?0:p.hour, p.minute, p.second);
+  return (asUTC - date.getTime()) / 60000;
+}
+function zonedToUtc(y, m, d, h, min, timeZone){
+  let guess = new Date(Date.UTC(y, m-1, d, h, min, 0));
+  for (let i=0; i<2; i++){
+    const off = tzOffsetMinutes(guess, timeZone);
+    guess = new Date(Date.UTC(y, m-1, d, h, min, 0) - off*60000);
+  }
+  return guess;
+}
+function zonedTodayParts(timeZone){
+  const dtf = new Intl.DateTimeFormat('en-US', { timeZone, year:'numeric', month:'2-digit', day:'2-digit' });
+  const p = dtf.formatToParts(new Date()).reduce((a,x)=>{a[x.type]=x.value; return a;},{});
+  return { y:+p.year, m:+p.month, d:+p.day };
+}
+function findOccurrences(drawDays, h, min, timeZone){
+  const today = zonedTodayParts(timeZone);
+  const base = new Date(Date.UTC(today.y, today.m-1, today.d));
+  const list = [];
+  for (let off=-8; off<=8; off++){
+    const cand = new Date(base.getTime() + off*86400000);
+    const wd = cand.getUTCDay();
+    if (drawDays.includes(wd)) {
+      const y = cand.getUTCFullYear(), m = cand.getUTCMonth()+1, d = cand.getUTCDate();
+      list.push(zonedToUtc(y, m, d, h, min, timeZone));
+    }
+  }
+  return list.sort((a,b)=>a-b);
+}
+function fmtCountdown(diffMs){
+  if (diffMs <= 0) return '0:00:00';
+  const d = Math.floor(diffMs/86400000), h = Math.floor((diffMs%86400000)/3600000);
+  const m = Math.floor((diffMs%3600000)/60000), s = Math.floor((diffMs%60000)/1000);
+  return d>0 ? `${d}일 ${h}시간 ${m}분` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function fmtAbsolute(dt, timeZone, tzLabel){
+  const dtf = new Intl.DateTimeFormat('ko-KR', { timeZone, month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+  return `${dtf.format(dt)} (${tzLabel})`;
+}
+
+const GAME = {
+  drawDays: [2,5],              // 화·금
+  drawTime: {h:22, min:30},     // 22:30 ET
+  cutoffTime: {h:22, min:30},   // 22:30 ET (판매 마감이 추첨과 동시로 알려져 있음)
+  timeZone: 'America/New_York',
+  tzLabel: 'ET·미국 동부시간'
+};
+
+function updateGate(){
+  const now = Date.now();
+  const draws = findOccurrences(GAME.drawDays, GAME.drawTime.h, GAME.drawTime.min, GAME.timeZone);
+  const cutoffs = findOccurrences(GAME.drawDays, GAME.cutoffTime.h, GAME.cutoffTime.min, GAME.timeZone);
+
+  let idx = draws.findIndex(t => t.getTime() > now);
+  if (idx === -1) idx = draws.length - 1;
+  const nextDraw = draws[idx];
+  const thisCutoff = cutoffs[idx];
+  const isClosed = now >= thisCutoff.getTime() && now < nextDraw.getTime();
+
+  document.getElementById('drawCountdown').textContent = fmtCountdown(nextDraw - now);
+  document.getElementById('drawAbsolute').textContent = fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel);
+
+  const regRow = document.getElementById('regGateRow');
+  const regCountdown = document.getElementById('regCountdown');
+  const regAbsolute = document.getElementById('regAbsolute');
+  const ctaArea = document.getElementById('regCtaArea');
+
+  if (isClosed) {
+    regRow.classList.add('closed'); regRow.classList.remove('urgent');
+    regCountdown.textContent = '마감됨';
+    regAbsolute.textContent = `재개: ${fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel)}`;
+    ctaArea.innerHTML = `<div class="reg-cta-closed"><b>⏰ 이번 회차 등록이 마감되었습니다</b>다음 회차 등록은 <strong>${fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel)}</strong>부터 재개됩니다.</div>`;
+  } else {
+    const diff = thisCutoff - now;
+    regRow.classList.remove('closed');
+    if (diff < 3*3600000) regRow.classList.add('urgent'); else regRow.classList.remove('urgent');
+    regCountdown.textContent = fmtCountdown(diff);
+    regAbsolute.textContent = fmtAbsolute(thisCutoff, GAME.timeZone, GAME.tzLabel);
+    ctaArea.innerHTML = `<a href="#" class="reg-cta-open">내 전략 번호 가상 등록하기 →</a>`;
+  }
+}
+
+updateGate();
+setInterval(updateGate, 1000);
+
+document.querySelectorAll('.lang-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
