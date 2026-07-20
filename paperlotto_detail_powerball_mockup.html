@@ -87,6 +87,7 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
 .gate-icon{ font-size:17px; flex-shrink:0; }
 .gate-text{ flex:1; min-width:0; }
 .gate-label{ font-size:11px; color:var(--ink-dim); letter-spacing:0.2px; margin-bottom:2px; }
+.gate-sublabel{ font-size:9.5px; color:var(--ink-dim); opacity:0.75; margin-bottom:4px; }
 .gate-countdown{ font-size:16px; font-weight:600; color:var(--ink); }
 .gate-abs{ font-size:11px; color:var(--ink-dim); text-align:right; flex-shrink:0; line-height:1.5; }
 .gate-row.closed{ background:rgba(198,90,46,0.1); }
@@ -222,7 +223,8 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <div class="gate-row" id="regGateRow">
         <span class="gate-icon">📝</span>
         <div class="gate-text">
-          <div class="gate-label">전략번호 등록 마감까지</div>
+          <div class="gate-label">내가 생각한 번호(전략번호) 등록 마감까지</div>
+          <div class="gate-sublabel">(실제 복권 판매 마감 시각 기준)</div>
           <div class="gate-countdown mono" id="regCountdown">계산 중…</div>
         </div>
         <div class="gate-abs mono" id="regAbsolute"></div>
