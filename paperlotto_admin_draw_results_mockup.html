@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>당첨결과 입력 (관리자) — PaperLotto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi); min-height:100vh;
+  font-family:'Inter',sans-serif; word-break:keep-all;
+  background-image:linear-gradient(var(--board-line) 1px, transparent 1px), linear-gradient(90deg, var(--board-line) 1px, transparent 1px);
+  background-size:64px 64px;
+}
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+
+header{ padding:20px 32px; border-bottom:1px solid var(--board-line); display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:30px; height:30px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:17px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+.admin-tag{ margin-left:auto; font-size:11px; padding:4px 10px; border-radius:12px; background:rgba(198,90,46,0.15); color:var(--err); font-weight:600; }
+
+main{ max-width:620px; margin:0 auto; padding:28px 24px 80px; }
+.panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:28px; margin-bottom:20px; }
+.panel h2{ font-size:17px; margin-bottom:6px; }
+.panel .desc{ font-size:12.5px; color:var(--ink-dim); margin-bottom:18px; line-height:1.6; }
+
+label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-dim); margin:14px 0 6px; }
+label:first-child{ margin-top:0; }
+select, input[type="text"], input[type="date"], input[type="number"], input[type="password"]{
+  width:100%; padding:11px 13px; border:1.5px solid rgba(28,33,48,0.15); border-radius:8px;
+  font-size:13.5px; font-family:'Inter',sans-serif; color:var(--ink); background:#fff;
+}
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+.numbers-input{ font-family:'IBM Plex Mono',monospace; }
+.hint{ font-size:11px; color:var(--ink-dim); margin-top:4px; }
+
+.tiers-box{ margin-top:8px; }
+.tier-row{ display:grid; grid-template-columns:70px 1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px; }
+.tier-row span{ font-size:12px; font-weight:600; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; }
+.tier-row input{ padding:8px 10px; font-size:12.5px; }
+.tier-del{ width:28px; height:28px; border-radius:50%; border:none; background:rgba(198,90,46,0.12); color:var(--err); cursor:pointer; font-size:13px; }
+.add-tier-btn{ font-size:12px; color:#8a5b1c; background:none; border:1px dashed rgba(138,91,28,0.4); border-radius:8px; padding:8px 14px; cursor:pointer; margin-top:4px; }
+
+.btn-primary{ width:100%; padding:13px; border:none; border-radius:9px; background:var(--ink); color:var(--paper); font-size:14px; font-weight:600; cursor:pointer; margin-top:20px; }
+.btn-primary:hover{ background:#2a3145; }
+.btn-primary:disabled{ opacity:0.4; cursor:not-allowed; }
+
+.status-msg{ margin-top:14px; padding:12px 16px; border-radius:8px; font-size:13px; display:none; }
+.status-msg.ok{ display:block; background:rgba(31,122,79,0.12); color:var(--ok); }
+.status-msg.err{ display:block; background:rgba(198,90,46,0.12); color:var(--err); }
+
+.config-note{ font-size:11.5px; color:var(--text-dim); text-align:center; margin-top:16px; line-height:1.7; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-mark">P</div>
+  <div class="brand-name">Paper<em>Lotto</em></div>
+  <div class="admin-tag">관리자 전용</div>
+</header>
+
+<main>
+
+  <div class="panel">
+    <h2>📋 당첨결과 수동 입력</h2>
+    <div class="desc">자동 수집이 아직 안 되는 게임의 결과를 여기서 직접 입력합니다. 입력한 내용은 Edge Function을 통해 draw_results 테이블에 저장됩니다.</div>
+
+    <label>관리자 키</label>
+    <input type="password" id="adminKey" placeholder="ADMIN_API_KEY">
+
+    <label>게임 선택</label>
+    <select id="gameSelect"></select>
+
+    <div class="row2">
+      <div><label>회차 번호</label><input type="number" id="roundNo" placeholder="예: 1235"></div>
+      <div><label>추첨일</label><input type="date" id="drawDate"></div>
+    </div>
+
+    <label>메인 번호 (쉼표로 구분)</label>
+    <input type="text" class="numbers-input" id="mainNumbers" placeholder="예: 3,7,15,22,29,41">
+    <div class="hint" id="mainHint"></div>
+
+    <label>보너스 번호 (쉼표로 구분, 없으면 비워두세요)</label>
+    <input type="text" class="numbers-input" id="bonusNumbers" placeholder="예: 26">
+
+    <label>출처 URL (선택)</label>
+    <input type="text" id="sourceUrl" placeholder="https://...">
+  </div>
+
+  <div class="panel">
+    <h2>🏆 등수별 당첨자수·당첨금 (선택)</h2>
+    <div class="desc">모르면 비워두고 등록해도 됩니다. 나중에 확인되면 다시 들어와서 수정하면 돼요.</div>
+    <div class="tiers-box" id="tiersBox"></div>
+    <button type="button" class="add-tier-btn" id="addTierBtn">+ 등수 추가</button>
+  </div>
+
+  <button class="btn-primary" id="submitBtn">결과 저장하기</button>
+  <div class="status-msg" id="statusMsg"></div>
+
+  <div class="config-note">
+    이 화면이 실제로 저장되려면, 아래 두 값을 이 파일 상단 스크립트에 채워 넣어야 합니다:<br>
+    <span class="mono">SUPABASE_FUNCTION_URL</span>, 그리고 배포된 <span class="mono">admin-save-draw-result</span> Edge Function 주소
+  </div>
+
+</main>
+
+<script>
+// ⚠ 실제 배포 시 이 값을 채워주세요 (Supabase 프로젝트 설정 → Edge Functions에서 확인)
+const SUPABASE_FUNCTION_URL = 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/admin-save-draw-result';
+
+const GAMES = [
+  { id:'kr_lotto645', name:'🇰🇷 로또 6/45', main:6 },
+  { id:'us_powerball', name:'🇺🇸 파워볼', main:5 },
+  { id:'us_megamillions', name:'🇺🇸 메가밀리언스', main:5 },
+  { id:'eu_euromillions', name:'🇪🇺 유로밀리언스', main:5 },
+  { id:'jp_miniloto', name:'🇯🇵 미니로또', main:5 },
+  { id:'jp_loto7', name:'🇯🇵 로또7', main:7 },
+  { id:'jp_loto6', name:'🇯🇵 로또6', main:6 },
+  { id:'ca_lottomax', name:'🇨🇦 로또맥스', main:7 },
+  { id:'ca_lotto649', name:'🇨🇦 로또 6/49', main:6 },
+  { id:'au_powerball', name:'🇦🇺 호주 파워볼', main:7 },
+  { id:'au_ozlotto', name:'🇦🇺 오즈로또', main:7 },
+  { id:'au_tattslotto', name:'🇦🇺 새터데이로또', main:6 },
+];
+
+const gameSelect = document.getElementById('gameSelect');
+gameSelect.innerHTML = GAMES.map(g => `<option value="${g.id}" data-main="${g.main}">${g.name}</option>`).join('');
+function updateMainHint(){
+  const g = GAMES.find(x => x.id === gameSelect.value);
+  document.getElementById('mainHint').textContent = `이 게임은 메인 번호 ${g.main}개가 필요합니다.`;
+}
+gameSelect.addEventListener('change', updateMainHint);
+updateMainHint();
+
+// ── 등수 입력 행 ──
+let tierCount = 0;
+const tiersBox = document.getElementById('tiersBox');
+function addTierRow(){
+  tierCount++;
+  const row = document.createElement('div');
+  row.className = 'tier-row';
+  row.innerHTML = `
+    <span>${tierCount}등</span>
+    <input type="number" placeholder="당첨자수" class="tier-winners">
+    <input type="number" placeholder="당첨금" class="tier-prize">
+    <button type="button" class="tier-del">✕</button>`;
+  row.querySelector('.tier-del').addEventListener('click', () => { row.remove(); });
+  tiersBox.appendChild(row);
+}
+document.getElementById('addTierBtn').addEventListener('click', addTierRow);
+addTierRow(); addTierRow(); // 기본 2줄 미리 제공
+
+// ── 저장 ──
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('statusMsg');
+  statusEl.className = 'status-msg';
+
+  const adminKey = document.getElementById('adminKey').value.trim();
+  const gameId = gameSelect.value;
+  const roundNo = +document.getElementById('roundNo').value;
+  const drawDate = document.getElementById('drawDate').value;
+  const mainRaw = document.getElementById('mainNumbers').value.trim();
+  const bonusRaw = document.getElementById('bonusNumbers').value.trim();
+  const sourceUrl = document.getElementById('sourceUrl').value.trim();
+
+  if (!adminKey || !roundNo || !drawDate || !mainRaw) {
+    statusEl.textContent = '관리자 키, 회차 번호, 추첨일, 메인 번호는 필수입니다.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+
+  const mainNumbers = mainRaw.split(',').map(s => +s.trim()).filter(n => !isNaN(n));
+  const bonusNumbers = bonusRaw ? bonusRaw.split(',').map(s => +s.trim()).filter(n => !isNaN(n)) : [];
+
+  const tiers = [];
+  document.querySelectorAll('.tier-row').forEach((row, i) => {
+    const w = row.querySelector('.tier-winners').value;
+    const p = row.querySelector('.tier-prize').value;
+    if (w || p) tiers.push({ tier: i+1, winners: w ? +w : null, prize: p ? +p : null });
+  });
+
+  const payload = {
+    game_id: gameId, round_no: roundNo, draw_date: drawDate,
+    main_numbers: mainNumbers, bonus_numbers: bonusNumbers, tiers,
+    source_url: sourceUrl || null, collection_type: 'manual',
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '저장 중…';
+
+  try {
+    const resp = await fetch(SUPABASE_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '저장 실패');
+
+    statusEl.textContent = `✅ ${gameId} ${roundNo}회차 결과가 저장되었습니다.`;
+    statusEl.className = 'status-msg ok';
+  } catch (e) {
+    statusEl.textContent = `저장 실패: ${e.message} (SUPABASE_FUNCTION_URL이 설정되어 있는지 확인해주세요)`;
+    statusEl.className = 'status-msg err';
+  } finally {
+    btn.disabled = false; btn.textContent = '결과 저장하기';
+  }
+});
+</script>
+
+</body>
+</html>
