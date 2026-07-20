@@ -292,7 +292,18 @@ const GAMES = [
   { id:'au_tattslotto', accent:'au', name:'새터데이로또', sub:'AU', main:6, range:45, bonus:2, days:[6] },
 ];
 
-const PRICE_PER_COMBO = 5;
+const PRICING_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/pricing';
+let PRICE_PER_COMBO = 5; // 기본값 — loadPricing()이 성공하면 실제 값으로 교체됨
+async function loadPricing(){
+  try {
+    const resp = await fetch(PRICING_FUNCTION_URL);
+    const data = await resp.json();
+    if (data.pricePerCombo != null) PRICE_PER_COMBO = data.pricePerCombo;
+  } catch (e) {
+    console.warn('[PaperLotto] 가격 조회 실패, 기본값(5P) 사용:', e);
+  }
+  updateAutoCost(); updateCheckout();
+}
 let balance = 340; // 데모용 — 실제로는 profiles.points_balance에서 fetch
 let selectedGame = GAMES[0];
 let mode = 'manual';
@@ -540,6 +551,7 @@ function renderAll(){
 }
 renderAll();
 renderPending();
+loadPricing();
 </script>
 
 </body>

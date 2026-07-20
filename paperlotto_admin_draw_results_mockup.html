@@ -75,6 +75,17 @@ select, input[type="text"], input[type="date"], input[type="number"], input[type
 <main>
 
   <div class="panel">
+    <h2>💰 조합당 가격 설정</h2>
+    <div class="desc">1개 조합 등록 시 차감되는 포인트입니다. 여기서 바꾸면 사이트 전체에 즉시 반영됩니다.</div>
+    <label>현재 가격</label>
+    <div id="currentPriceDisplay" style="font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:700; color:#8a5b1c; margin-bottom:14px;">불러오는 중…</div>
+    <label>새 가격 (포인트)</label>
+    <input type="number" id="newPrice" min="0" placeholder="예: 5">
+    <button type="button" class="btn-primary" id="savePriceBtn" style="margin-top:12px;">가격 저장</button>
+    <div class="status-msg" id="priceStatusMsg"></div>
+  </div>
+
+  <div class="panel">
     <h2>📋 당첨결과 수동 입력</h2>
     <div class="desc">자동 수집이 아직 안 되는 게임의 결과를 여기서 직접 입력합니다. 입력한 내용은 Edge Function을 통해 draw_results 테이블에 저장됩니다.</div>
 
@@ -120,6 +131,55 @@ select, input[type="text"], input[type="date"], input[type="number"], input[type
 <script>
 // ⚠ 실제 배포 시 이 값을 채워주세요 (Supabase 프로젝트 설정 → Edge Functions에서 확인)
 const SUPABASE_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/admin-save-draw-result';
+const PRICING_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/pricing';
+
+// ── 가격 설정 패널 ──
+async function loadPricing(){
+  try {
+    const resp = await fetch(PRICING_FUNCTION_URL);
+    const data = await resp.json();
+    document.getElementById('currentPriceDisplay').textContent = `${data.pricePerCombo}P / 조합`;
+    document.getElementById('newPrice').placeholder = `현재: ${data.pricePerCombo}`;
+  } catch (e) {
+    document.getElementById('currentPriceDisplay').textContent = '불러오기 실패 (PRICING_FUNCTION_URL 확인 필요)';
+  }
+}
+loadPricing();
+
+document.getElementById('savePriceBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('priceStatusMsg');
+  statusEl.className = 'status-msg';
+  const adminKey = document.getElementById('adminKey').value.trim();
+  const newPrice = document.getElementById('newPrice').value;
+
+  if (!adminKey) {
+    statusEl.textContent = '위쪽 "관리자 키"란에 먼저 키를 입력해주세요.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+  if (newPrice === '' || Number(newPrice) < 0) {
+    statusEl.textContent = '올바른 가격을 입력해주세요.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+
+  try {
+    const resp = await fetch(PRICING_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ pricePerCombo: Number(newPrice) }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '저장 실패');
+    statusEl.textContent = `✅ 가격이 ${newPrice}P로 변경되었습니다.`;
+    statusEl.className = 'status-msg ok';
+    loadPricing();
+    document.getElementById('newPrice').value = '';
+  } catch (e) {
+    statusEl.textContent = `저장 실패: ${e.message}`;
+    statusEl.className = 'status-msg err';
+  }
+});
 
 const GAMES = [
   { id:'kr_lotto645', name:'🇰🇷 로또 6/45', main:6 },
