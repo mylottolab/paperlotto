@@ -322,18 +322,18 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 <script>
 // ─── 12개 게임 데이터 (games 테이블 값 기준) ─────────────────────────────
 const GAMES = [
-  { id:'us_powerball', region:'us', accent:'us', nameKr:'파워볼', nameEn:'Powerball', main:5, mainRange:69, bonus:1, price:'$2', odds:'292,201,338', days:[1,3,6] },
-  { id:'us_megamillions', region:'us', accent:'us', nameKr:'메가밀리언스', nameEn:'Mega Millions', main:5, mainRange:70, bonus:1, price:'$5', odds:'290,472,336', days:[2,5] },
-  { id:'eu_euromillions', region:'eu', accent:'eu', nameKr:'유로밀리언스', nameEn:'EuroMillions', main:5, mainRange:50, bonus:2, price:'€2.50', odds:'139,838,160', days:[2,5] },
-  { id:'jp_miniloto', region:'jp', accent:'jp', nameKr:'미니로또', nameEn:'ミニロト · Mini Loto', main:5, mainRange:31, bonus:1, price:'¥200', odds:'169,911', days:[2] },
-  { id:'jp_loto7', region:'jp', accent:'jp', nameKr:'로또7', nameEn:'ロト7 · Loto 7', main:7, mainRange:37, bonus:2, price:'¥300', odds:'10,295,472', days:[5] },
-  { id:'jp_loto6', region:'jp', accent:'jp', nameKr:'로또6', nameEn:'ロト6 · Loto 6', main:6, mainRange:43, bonus:1, price:'¥200', odds:'6,096,454', days:[1,4] },
-  { id:'ca_lottomax', region:'ca', accent:'ca', nameKr:'로또맥스', nameEn:'Lotto Max', main:7, mainRange:52, bonus:1, price:'$6', odds:'33,446,140', days:[2,5] },
-  { id:'ca_lotto649', region:'ca', accent:'ca', nameKr:'로또 6/49', nameEn:'Lotto 6/49', main:6, mainRange:49, bonus:1, price:'$3', odds:'13,983,816', days:[3,6] },
-  { id:'au_powerball', region:'au', accent:'au', nameKr:'호주 파워볼', nameEn:'Australia Powerball', main:7, mainRange:35, bonus:1, price:'$1.80', odds:'134,490,400', days:[4] },
-  { id:'au_ozlotto', region:'au', accent:'au', nameKr:'오즈로또', nameEn:'Oz Lotto', main:7, mainRange:47, bonus:3, price:'$1.65', odds:'62,891,499', days:[2] },
-  { id:'au_tattslotto', region:'au', accent:'au', nameKr:'새터데이로또', nameEn:'Tatts Lotto', main:6, mainRange:45, bonus:2, price:'$1.20', odds:'8,145,060', days:[6] },
-  { id:'kr_lotto645', region:'kr', accent:'kr', nameKr:'로또 6/45', nameEn:'Lotto 6/45', main:6, mainRange:45, bonus:1, price:'₩1,000', odds:'8,145,060', days:[6] },
+  { id:'us_powerball', region:'us', accent:'us', nameKr:'파워볼', nameEn:'Powerball', main:5, mainRange:69, bonus:1, price:'$2', odds:'292,201,338', days:[1,3,6], detail:'paperlotto_detail_powerball_mockup.html' },
+  { id:'us_megamillions', region:'us', accent:'us', nameKr:'메가밀리언스', nameEn:'Mega Millions', main:5, mainRange:70, bonus:1, price:'$5', odds:'290,472,336', days:[2,5], detail:'paperlotto_detail_megamillions_mockup.html' },
+  { id:'eu_euromillions', region:'eu', accent:'eu', nameKr:'유로밀리언스', nameEn:'EuroMillions', main:5, mainRange:50, bonus:2, price:'€2.50', odds:'139,838,160', days:[2,5], detail:'paperlotto_detail_euromillions_mockup.html' },
+  { id:'jp_miniloto', region:'jp', accent:'jp', nameKr:'미니로또', nameEn:'ミニロト · Mini Loto', main:5, mainRange:31, bonus:1, price:'¥200', odds:'169,911', days:[2], detail:'paperlotto_detail_miniloto_mockup.html' },
+  { id:'jp_loto7', region:'jp', accent:'jp', nameKr:'로또7', nameEn:'ロト7 · Loto 7', main:7, mainRange:37, bonus:2, price:'¥300', odds:'10,295,472', days:[5], detail:'paperlotto_detail_loto7_mockup.html' },
+  { id:'jp_loto6', region:'jp', accent:'jp', nameKr:'로또6', nameEn:'ロト6 · Loto 6', main:6, mainRange:43, bonus:1, price:'¥200', odds:'6,096,454', days:[1,4], detail:'paperlotto_detail_loto6_mockup.html' },
+  { id:'ca_lottomax', region:'ca', accent:'ca', nameKr:'로또맥스', nameEn:'Lotto Max', main:7, mainRange:52, bonus:1, price:'$6', odds:'33,446,140', days:[2,5], detail:'paperlotto_detail_lottomax_mockup.html' },
+  { id:'ca_lotto649', region:'ca', accent:'ca', nameKr:'로또 6/49', nameEn:'Lotto 6/49', main:6, mainRange:49, bonus:1, price:'$3', odds:'13,983,816', days:[3,6], detail:'paperlotto_detail_lotto649_mockup.html' },
+  { id:'au_powerball', region:'au', accent:'au', nameKr:'호주 파워볼', nameEn:'Australia Powerball', main:7, mainRange:35, bonus:1, price:'$1.80', odds:'134,490,400', days:[4], detail:'paperlotto_detail_aupowerball_mockup.html' },
+  { id:'au_ozlotto', region:'au', accent:'au', nameKr:'오즈로또', nameEn:'Oz Lotto', main:7, mainRange:47, bonus:3, price:'$1.65', odds:'62,891,499', days:[2], detail:'paperlotto_detail_ozlotto_mockup.html' },
+  { id:'au_tattslotto', region:'au', accent:'au', nameKr:'새터데이로또', nameEn:'Tatts Lotto', main:6, mainRange:45, bonus:2, price:'$1.20', odds:'8,145,060', days:[6], detail:'paperlotto_detail_tattslotto_mockup.html' },
+  { id:'kr_lotto645', region:'kr', accent:'kr', nameKr:'로또 6/45', nameEn:'Lotto 6/45', main:6, mainRange:45, bonus:1, price:'₩1,000', odds:'8,145,060', days:[6], detail:'paperlotto_detail_korea_mockup.html' },
 ];
 
 // ─── 다음 추첨 시각 계산 (데모용: 방문자 로컬 시간 20:00 기준, 실제 서비스에서는 국가별 타임존 반영 필요) ───
@@ -371,7 +371,7 @@ function renderCards(){
         `<span class="num-pip">${i+1}</span>`).join('') +
         (g.bonus ? `<span class="ticket-plus">+</span>` + Array.from({length:g.bonus},() => `<span class="num-pip bonus">★</span>`).join('') : '');
       return `
-      <a class="ticket" style="--accent:var(--${g.accent})" href="#" data-id="${g.id}">
+      <a class="ticket" style="--accent:var(--${g.accent})" href="${g.detail}" data-id="${g.id}">
         <div class="ticket-top">
           <div class="ticket-country">${g.region.toUpperCase()} · ${g.mainRange}구 추첨</div>
           <div class="ticket-price">1게임<br><b>${g.price}</b></div>
