@@ -177,23 +177,27 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div><div class="brand-name">Paper<em>Lotto</em></div><div class="brand-tag">GLOBAL DRAW SIMULATOR</div></div>
   </div>
   <nav>
-    <a href="paperlotto_hub_mockup.html">전체 게임</a>
-    <a href="#">내 등록번호</a>
-    <a href="#">전략 가이드</a>
-    <div class="lang-toggle"><button class="active" type="button">KR</button><button type="button">EN</button></div>
+    <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
+    <a href="#" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="#" data-i18n="navGuide">전략 가이드</a>
+    <div class="lang-toggle">
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" class="active" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
   </nav>
 </header>
 
 <div class="breadcrumb">
-  <a href="paperlotto_hub_mockup.html">← 전체 게임</a><span>/</span><span>미국</span><span>/</span><span style="color:var(--text-hi);">파워볼</span>
+  <a href="paperlotto_hub_mockup.html" data-i18n="breadcrumbBack">← 전체 게임</a><span>/</span><span data-i18n="breadcrumbRegion">미국</span><span>/</span><span style="color:var(--text-hi);" data-i18n="breadcrumbGame">파워볼</span>
 </div>
 
 <div class="game-hero">
   <div class="hero-ticket">
     <div class="hero-top">
       <div>
-        <div class="hero-country">🇺🇸 UNITED STATES · MULTI-STATE LOTTERY</div>
-        <h1 class="hero-title">파워볼</h1>
+        <div class="hero-country" data-i18n="heroCountry">🇺🇸 UNITED STATES · MULTI-STATE LOTTERY</div>
+        <h1 class="hero-title" data-i18n="heroTitle">파워볼</h1>
         <div class="hero-title-en">Powerball</div>
       </div>
     </div>
@@ -201,21 +205,21 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="hero-pips">
       <span class="pip">1</span><span class="pip">2</span><span class="pip">3</span><span class="pip">4</span><span class="pip">5</span>
       <span class="pip-plus">+</span><span class="pip bonus">PB</span>
-      <span class="pip-caption">1~69 중 5개 + 파워볼(1~26) 1개, 별도 추첨</span>
+      <span class="pip-caption" data-i18n="heroPipCaption">1~69 중 5개 + 파워볼(1~26) 1개, 별도 추첨</span>
     </div>
 
     <div class="hero-stats">
-      <div><div class="stat-label">1게임 가격</div><div class="stat-value">$2</div></div>
-      <div><div class="stat-label">추첨일</div><div class="stat-value">월·수·토</div></div>
-      <div><div class="stat-label">1등 확률</div><div class="stat-value">1 / 292,201,338</div></div>
-      <div><div class="stat-label">운영기관</div><div class="stat-value" style="font-size:13px;">MUSL</div></div>
+      <div><div class="stat-label" data-i18n="statPrice">1게임 가격</div><div class="stat-value">$2</div></div>
+      <div><div class="stat-label" data-i18n="statDrawDay">추첨일</div><div class="stat-value" data-i18n="statDrawDayValue">월·수·토</div></div>
+      <div><div class="stat-label" data-i18n="statOdds">1등 확률</div><div class="stat-value">1 / 292,201,338</div></div>
+      <div><div class="stat-label" data-i18n="statOperator">운영기관</div><div class="stat-value" style="font-size:13px;">MUSL</div></div>
     </div>
 
     <div class="draw-gate">
       <div class="gate-row">
         <span class="gate-icon">🎯</span>
         <div class="gate-text">
-          <div class="gate-label">다음 추첨까지</div>
+          <div class="gate-label" data-i18n="gateNextDraw">다음 추첨까지</div>
           <div class="gate-countdown mono" id="drawCountdown">계산 중…</div>
         </div>
         <div class="gate-abs mono" id="drawAbsolute"></div>
@@ -223,8 +227,8 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <div class="gate-row" id="regGateRow">
         <span class="gate-icon">📝</span>
         <div class="gate-text">
-          <div class="gate-label">내가 생각한 번호(전략번호) 등록 마감까지</div>
-          <div class="gate-sublabel">(실제 복권 판매 마감 시각 기준)</div>
+          <div class="gate-label" data-i18n="gateRegDeadline">내가 생각한 번호(전략번호) 등록 마감까지</div>
+          <div class="gate-sublabel" data-i18n="gateRegSub">(실제 복권 판매 마감 시각 기준)</div>
           <div class="gate-countdown mono" id="regCountdown">계산 중…</div>
         </div>
         <div class="gate-abs mono" id="regAbsolute"></div>
@@ -237,9 +241,64 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 
   <div class="sheet">
     <div class="sheet-eyebrow">01 · PRIZE STRUCTURE</div>
-    <h2>등수별 당첨 조건</h2>
-    <div class="sheet-body">
-      <table class="prize-table">
+    <h2 data-i18n="s1h">등수별 당첨 조건</h2>
+    <div class="sheet-body" id="s1body"></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">02 · THE JACKPOT</div>
+    <h2 data-i18n="s2h">상한 없는 이월 — "파워볼 피버"</h2>
+    <div class="sheet-body" id="s2body"></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">03 · TAX & PAYOUT</div>
+    <h2 data-i18n="s3h">세금과 당첨금 수령</h2>
+    <div class="sheet-body" id="s3body"></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">04 · STRATEGY</div>
+    <h2 data-i18n="s4h">전략 코너</h2>
+    <div class="sheet-body" id="s4body"></div>
+  </div>
+
+  <div class="final-cta">
+    <h3 data-i18n="finalH">실제 돈 없이, 판단은 진짜로</h3>
+    <p data-i18n="finalP">2억 9천만분의 1이라는 확률을 PaperLotto에서 가상으로 직접 경험해보세요. 내 전략 번호를 등록하고 실제 추첨 결과와 비교합니다.</p>
+    <div id="regCtaArea">
+      <a href="#" class="reg-cta-open" data-i18n="ctaOpen">내 전략 번호 가상 등록하기 →</a>
+    </div>
+    <div class="final-disclaimer" data-i18n="finalDisclaimer">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="foot-brand">PaperLotto</div>
+  <p data-i18n="footerNote">본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.</p>
+</footer>
+
+<script>
+// =====================================================
+// 다국어(i18n)
+// =====================================================
+const i18n = {
+  ko: {
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드",
+    breadcrumbBack:"← 전체 게임", breadcrumbRegion:"미국", breadcrumbGame:"파워볼",
+    heroCountry:"🇺🇸 UNITED STATES · MULTI-STATE LOTTERY", heroTitle:"파워볼",
+    heroPipCaption:"1~69 중 5개 + 파워볼(1~26) 1개, 별도 추첨",
+    statPrice:"1게임 가격", statDrawDay:"추첨일", statDrawDayValue:"월·수·토",
+    statOdds:"1등 확률", statOperator:"운영기관",
+    gateNextDraw:"다음 추첨까지", gateRegDeadline:"내가 생각한 번호(전략번호) 등록 마감까지", gateRegSub:"(실제 복권 판매 마감 시각 기준)",
+    unitDay:"일", unitHour:"시간", unitMin:"분",
+    tzLabel:"ET·미국 동부시간", closedLabel:"마감됨", reopenLabel:"재개:",
+    closedTitle:"⏰ 이번 회차 등록이 마감되었습니다",
+    closedBody:(d)=>`다음 회차 등록은 <strong>${d}</strong>부터 재개됩니다.`,
+    ctaOpen:"내 전략 번호 가상 등록하기 →",
+    s1h:"등수별 당첨 조건",
+    s1body:`<table class="prize-table">
         <thead><tr><th>등수</th><th>조건</th><th>당첨금</th><th>확률</th></tr></thead>
         <tbody>
           <tr><td>1등</td><td>메인 5개 + 파워볼 일치</td><td>이월 누적 (상한 없음)</td><td>1/292,201,338</td></tr>
@@ -253,66 +312,169 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
           <tr><td>9등</td><td>파워볼만 일치</td><td>$4</td><td>1/38</td></tr>
         </tbody>
       </table>
-      <p style="margin-top:18px;">9개 등수가 있어서, 아무 등수나 하나 걸릴 확률은 약 <strong>24.9분의 1</strong>로 꽤 자주 발생해요. 다만 대부분 소액이라 큰돈보다는 "본전 회수"에 가까운 경우가 많습니다.</p>
-    </div>
-  </div>
-
-  <div class="sheet">
-    <div class="sheet-eyebrow">02 · THE JACKPOT</div>
-    <h2>상한 없는 이월 — "파워볼 피버"</h2>
-    <div class="sheet-body">
-      <p>파워볼 잭팟은 당첨자가 나올 때까지 상한선 없이 무한정 쌓입니다. 미국 전역 주유소·편의점 앞에 줄이 늘어서는 <strong>"파워볼 피버(Powerball Fever)"</strong> 현상이 바로 이 구조에서 나와요.</p>
+      <p style="margin-top:18px;">9개 등수가 있어서, 아무 등수나 하나 걸릴 확률은 약 <strong>24.9분의 1</strong>로 꽤 자주 발생해요. 다만 대부분 소액이라 큰돈보다는 "본전 회수"에 가까운 경우가 많습니다.</p>`,
+    s2h:'상한 없는 이월 — "파워볼 피버"',
+    s2body:`<p>파워볼 잭팟은 당첨자가 나올 때까지 상한선 없이 무한정 쌓입니다. 미국 전역 주유소·편의점 앞에 줄이 늘어서는 <strong>"파워볼 피버(Powerball Fever)"</strong> 현상이 바로 이 구조에서 나와요.</p>
       <div class="callout">
         <b>역대 최고 기록</b>
         2022년 11월 7일, 20억 4,000만 달러(약 2조 8,000억 원)를 캘리포니아의 단 한 명이 독식했습니다.
       </div>
-      <p style="margin-top:16px;">당첨금은 <strong>일시불(약 50~60% 수령)</strong> 또는 <strong>30년 연금형(매년 5%씩 증액)</strong> 중 선택할 수 있어요.</p>
-    </div>
-  </div>
-
-  <div class="sheet">
-    <div class="sheet-eyebrow">03 · TAX & PAYOUT</div>
-    <h2>세금과 당첨금 수령</h2>
-    <div class="sheet-body">
-      <p><strong>연방세</strong> 24% 기본 원천징수, 최종 최대 <strong>37%</strong>까지 부과될 수 있어요. <strong>주(State)세</strong>는 0%(캘리포니아·텍사스 등)부터 최고 10.9%(뉴욕)까지 천차만별입니다.</p>
+      <p style="margin-top:16px;">당첨금은 <strong>일시불(약 50~60% 수령)</strong> 또는 <strong>30년 연금형(매년 5%씩 증액)</strong> 중 선택할 수 있어요.</p>`,
+    s3h:"세금과 당첨금 수령",
+    s3body:`<p><strong>연방세</strong> 24% 기본 원천징수, 최종 최대 <strong>37%</strong>까지 부과될 수 있어요. <strong>주(State)세</strong>는 0%(캘리포니아·텍사스 등)부터 최고 10.9%(뉴욕)까지 천차만별입니다.</p>
       <p><strong>익명 유지</strong>는 주마다 달라요 — 델라웨어·오하이오·텍사스는 가능하지만, 캘리포니아·뉴욕 등 대다수 주는 신원 공개가 의무입니다.</p>
       <div class="foreign-note">
         <b>🌏 외국인이라면?</b>
         비거주 외국인에게는 연방세 30%가 기본 원천징수됩니다. 한미 조세조약에 따라 미국에서 낸 세금을 한국에서 공제받을 수 있지만, 차액이 있으면 추가 납부해야 할 수 있어요. 파워볼은 미국 현지에서 실물 티켓을 직접 구매해야만 유효합니다.
-      </div>
-    </div>
-  </div>
-
-  <div class="sheet">
-    <div class="sheet-eyebrow">04 · STRATEGY</div>
-    <h2>전략 코너</h2>
-    <div class="sheet-body">
-      <div class="strategy-note">※ 일반적인 확률·통계 전략 개념입니다. 실제 역대 번호 빈도 데이터는 DB 구축 완료 후 실데이터로 교체 예정입니다.</div>
+      </div>`,
+    s4h:"전략 코너",
+    s4body:`<div class="strategy-note">※ 일반적인 확률·통계 전략 개념입니다. 실제 역대 번호 빈도 데이터는 DB 구축 완료 후 실데이터로 교체 예정입니다.</div>
       <ul class="strategy-list">
         <li><span class="mark">01</span>메인 번호(69개)와 파워볼(26개)은 완전히 독립된 추첨이에요. 두 부분을 따로 접근하는 게 합리적입니다.</li>
         <li><span class="mark">02</span>9개 등수 중 4~9등은 상대적으로 자주 걸리는 구조라, "본전 회수 빈도"를 실험해보는 관전 포인트가 있어요.</li>
         <li><span class="mark">03</span>69개 범위를 여러 구간으로 나눠 고르게 분산시키는 접근이, 한쪽에 몰아 찍는 것보다 통계적으로 더 흔한 패턴입니다.</li>
-      </ul>
-    </div>
-  </div>
+      </ul>`,
+    finalH:"실제 돈 없이, 판단은 진짜로",
+    finalP:"2억 9천만분의 1이라는 확률을 PaperLotto에서 가상으로 직접 경험해보세요. 내 전략 번호를 등록하고 실제 추첨 결과와 비교합니다.",
+    finalDisclaimer:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
+    footerNote:'본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.',
+  },
+  en: {
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide",
+    breadcrumbBack:"← All Games", breadcrumbRegion:"United States", breadcrumbGame:"Powerball",
+    heroCountry:"🇺🇸 UNITED STATES · MULTI-STATE LOTTERY", heroTitle:"Powerball",
+    heroPipCaption:"5 of 1–69, plus 1 Powerball (1–26) drawn separately",
+    statPrice:"Price per game", statDrawDay:"Draw day", statDrawDayValue:"Mon, Wed & Sat",
+    statOdds:"Tier 1 odds", statOperator:"Operator",
+    gateNextDraw:"Until next draw", gateRegDeadline:"Until entry deadline for your strategy numbers", gateRegSub:"(based on the real ticket sales cutoff)",
+    unitDay:"d", unitHour:"h", unitMin:"m",
+    tzLabel:"ET · US Eastern Time", closedLabel:"Closed", reopenLabel:"Reopens:",
+    closedTitle:"⏰ Entries are closed for this round",
+    closedBody:(d)=>`Entries for the next round reopen on <strong>${d}</strong>.`,
+    ctaOpen:"Register my strategy numbers virtually →",
+    s1h:"Prize Tiers",
+    s1body:`<table class="prize-table">
+        <thead><tr><th>Tier</th><th>Match</th><th>Prize</th><th>Odds</th></tr></thead>
+        <tbody>
+          <tr><td>Tier 1</td><td>5 main + Powerball</td><td>Rolling jackpot (no cap)</td><td>1/292,201,338</td></tr>
+          <tr><td>Tier 2</td><td>5 main numbers</td><td>$1,000,000</td><td>1/11,688,054</td></tr>
+          <tr><td>Tier 3</td><td>4 main + Powerball</td><td>$50,000</td><td>1/913,129</td></tr>
+          <tr><td>Tier 4</td><td>4 main numbers</td><td>$100</td><td>1/36,525</td></tr>
+          <tr><td>Tier 5</td><td>3 main + Powerball</td><td>$100</td><td>1/14,494</td></tr>
+          <tr><td>Tier 6</td><td>3 main numbers</td><td>$7</td><td>1/580</td></tr>
+          <tr><td>Tier 7</td><td>2 main + Powerball</td><td>$7</td><td>1/701</td></tr>
+          <tr><td>Tier 8</td><td>1 main + Powerball</td><td>$4</td><td>1/92</td></tr>
+          <tr><td>Tier 9</td><td>Powerball only</td><td>$4</td><td>1/38</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:18px;">With 9 prize tiers, the odds of winning something are about <strong>1 in 24.9</strong> — fairly frequent. Most prizes are small, though, so it's often closer to "breaking even" than a life-changing win.</p>`,
+    s2h:'No Cap on Rollovers — "Powerball Fever"',
+    s2body:`<p>The Powerball jackpot rolls over with no cap until someone wins. That's exactly what fuels <strong>"Powerball Fever"</strong> — the long lines at gas stations and convenience stores across the US.</p>
+      <div class="callout">
+        <b>All-time record</b>
+        On November 7, 2022, a single winner in California took home $2.04 billion (roughly ₩2.8 trillion).
+      </div>
+      <p style="margin-top:16px;">Winners can choose between a <strong>lump sum (roughly 50–60% of the advertised amount)</strong> or a <strong>30-year annuity (payments increasing 5% each year)</strong>.</p>`,
+    s3h:"Taxes & Claiming Your Prize",
+    s3body:`<p><strong>Federal tax</strong> withholds 24% by default, and the final rate can reach up to <strong>37%</strong>. <strong>State tax</strong> varies widely, from 0% (California, Texas, etc.) up to 10.9% (New York).</p>
+      <p><strong>Staying anonymous</strong> depends on the state — Delaware, Ohio, and Texas allow it, but most states, including California and New York, require public disclosure of the winner's identity.</p>
+      <div class="foreign-note">
+        <b>🌏 If you're a foreign national?</b>
+        Non-resident foreign nationals have a default 30% federal withholding. Under the Korea-US tax treaty, taxes paid in the US can typically be credited in Korea, though you may owe the difference if Korean tax is higher. Powerball is only valid if you purchase a physical ticket in person within the US.
+      </div>`,
+    s4h:"Strategy Corner",
+    s4body:`<div class="strategy-note">※ These are general probability/statistics concepts. Once the historical draw database is complete, this section will be replaced with real frequency data.</div>
+      <ul class="strategy-list">
+        <li><span class="mark">01</span>The main numbers (69) and the Powerball (26) are drawn completely independently — it makes sense to approach them as two separate problems.</li>
+        <li><span class="mark">02</span>Of the 9 tiers, Tiers 4–9 hit relatively often, making "how frequently do I break even" an interesting thing to test.</li>
+        <li><span class="mark">03</span>Spreading picks evenly across several ranges within 1–69 tends to be statistically more common than clustering numbers in one area.</li>
+      </ul>`,
+    finalH:"No real money, real decisions",
+    finalP:"Experience 1-in-292-million odds virtually on PaperLotto. Register your strategy numbers and compare them against the real draw results.",
+    finalDisclaimer:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
+    footerNote:'This content is provided for informational and statistical simulation purposes only.<br>Always verify actual purchase and claim procedures through the official operator in your country.',
+  },
+  ja: {
+    navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド",
+    breadcrumbBack:"← すべてのゲーム", breadcrumbRegion:"アメリカ", breadcrumbGame:"パワーボール",
+    heroCountry:"🇺🇸 アメリカ · MULTI-STATE LOTTERY", heroTitle:"パワーボール",
+    heroPipCaption:"1〜69から5個 + パワーボール（1〜26）1個、別枠抽選",
+    statPrice:"1口の価格", statDrawDay:"抽選日", statDrawDayValue:"月・水・土",
+    statOdds:"1等確率", statOperator:"運営機関",
+    gateNextDraw:"次回抽選まで", gateRegDeadline:"戦略番号の登録締切まで", gateRegSub:"（実際の宝くじ販売締切時刻基準）",
+    unitDay:"日", unitHour:"時間", unitMin:"分",
+    tzLabel:"ET・米国東部時間", closedLabel:"締切済み", reopenLabel:"再開：",
+    closedTitle:"⏰ 今回の登録は締め切られました",
+    closedBody:(d)=>`次回の登録は<strong>${d}</strong>から再開されます。`,
+    ctaOpen:"戦略番号を仮想登録する →",
+    s1h:"等級別当選条件",
+    s1body:`<table class="prize-table">
+        <thead><tr><th>等級</th><th>条件</th><th>賞金</th><th>確率</th></tr></thead>
+        <tbody>
+          <tr><td>1等</td><td>メイン5個+パワーボール一致</td><td>繰越累積（上限なし）</td><td>1/292,201,338</td></tr>
+          <tr><td>2等</td><td>メイン5個一致</td><td>$1,000,000</td><td>1/11,688,054</td></tr>
+          <tr><td>3等</td><td>メイン4個+パワーボール一致</td><td>$50,000</td><td>1/913,129</td></tr>
+          <tr><td>4等</td><td>メイン4個一致</td><td>$100</td><td>1/36,525</td></tr>
+          <tr><td>5等</td><td>メイン3個+パワーボール一致</td><td>$100</td><td>1/14,494</td></tr>
+          <tr><td>6等</td><td>メイン3個一致</td><td>$7</td><td>1/580</td></tr>
+          <tr><td>7等</td><td>メイン2個+パワーボール一致</td><td>$7</td><td>1/701</td></tr>
+          <tr><td>8等</td><td>メイン1個+パワーボール一致</td><td>$4</td><td>1/92</td></tr>
+          <tr><td>9等</td><td>パワーボールのみ一致</td><td>$4</td><td>1/38</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:18px;">9つの等級があるため、いずれかの等級に当たる確率は約<strong>24.9分の1</strong>とかなり頻繁です。ただしほとんどが少額なので、大金というより「元本回収」に近いケースが多いです。</p>`,
+    s2h:'上限なしの繰越 — 「パワーボール・フィーバー」',
+    s2body:`<p>パワーボールのジャックポットは当選者が出るまで上限なく積み上がります。全米のガソリンスタンドやコンビニに行列ができる<strong>「パワーボール・フィーバー」</strong>現象はまさにこの仕組みから生まれます。</p>
+      <div class="callout">
+        <b>歴代最高記録</b>
+        2022年11月7日、20億4,000万ドル（約2兆8,000億ウォン）をカリフォルニアのたった1人が独占しました。
+      </div>
+      <p style="margin-top:16px;">賞金は<strong>一時金（約50〜60%を受給）</strong>または<strong>30年年金形式（毎年5%ずつ増額）</strong>から選択できます。</p>`,
+    s3h:"税金と当選金の受け取り",
+    s3body:`<p><strong>連邦税</strong>は基本24%源泉徴収、最終的に最大<strong>37%</strong>まで課される場合があります。<strong>州税</strong>は0%（カリフォルニア・テキサスなど）から最高10.9%（ニューヨーク）まで州によって様々です。</p>
+      <p><strong>匿名維持</strong>は州によって異なります — デラウェア・オハイオ・テキサスでは可能ですが、カリフォルニア・ニューヨークなど大多数の州では身元公開が義務付けられています。</p>
+      <div class="foreign-note">
+        <b>🌏 外国人の場合は？</b>
+        非居住外国人には連邦税30%が基本源泉徴収されます。日米租税条約により米国で納めた税金を自国で控除できる場合がありますが、差額があれば追加納付が必要になることがあります。パワーボールは米国現地で実物チケットを直接購入した場合のみ有効です。
+      </div>`,
+    s4h:"戦略コーナー",
+    s4body:`<div class="strategy-note">※一般的な確率・統計の戦略概念です。実際の過去番号頻度データはDB構築完了後、実データに差し替え予定です。</div>
+      <ul class="strategy-list">
+        <li><span class="mark">01</span>メイン番号（69個）とパワーボール（26個）は完全に独立した抽選です。両者を別々に考えるのが合理的です。</li>
+        <li><span class="mark">02</span>9等級のうち4〜9等は比較的よく当たる構造のため、「元本回収の頻度」を試してみる見どころがあります。</li>
+        <li><span class="mark">03</span>69の範囲を複数区間に分けて均等に分散させる方法が、一箇所に偏らせるより統計的によく見られるパターンです。</li>
+      </ul>`,
+    finalH:"実際のお金なしで、判断は本物",
+    finalP:"2億9千万分の1という確率をPaperLottoで仮想体験しましょう。戦略番号を登録して、実際の抽選結果と比較します。",
+    finalDisclaimer:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
+    footerNote:'本コンテンツは情報提供および統計的シミュレーションを目的として提供されています。<br>実際の購入・請求手続きは必ず各国の公式運営機関を通じてご確認ください。',
+  },
+};
 
-  <div class="final-cta">
-    <h3>실제 돈 없이, 판단은 진짜로</h3>
-    <p>2억 9천만분의 1이라는 확률을 PaperLotto에서 가상으로 직접 경험해보세요. 내 전략 번호를 등록하고 실제 추첨 결과와 비교합니다.</p>
-    <div id="regCtaArea">
-      <a href="#" class="reg-cta-open">내 전략 번호 가상 등록하기 →</a>
-    </div>
-    <div class="final-disclaimer">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
-  </div>
+let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
 
-</main>
+function applyLang(lang){
+  currentLang = i18n[lang] ? lang : 'en';
+  localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  const t = i18n[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (typeof t[key] === 'string') el.innerHTML = t[key];
+  });
+  document.getElementById('s1body').innerHTML = t.s1body;
+  document.getElementById('s2body').innerHTML = t.s2body;
+  document.getElementById('s3body').innerHTML = t.s3body;
+  document.getElementById('s4body').innerHTML = t.s4body;
+  document.querySelectorAll('.lang-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+  });
+  updateGate();
+}
+document.querySelectorAll('.lang-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+});
 
-<footer>
-  <div class="foot-brand">PaperLotto</div>
-  <p>본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.</p>
-</footer>
-
-<script>
 // =====================================================
 // 타임존 정확 계산 유틸 (Intl API만 사용, 외부 라이브러리 없이 DST까지 정확 처리)
 // =====================================================
@@ -356,13 +518,15 @@ function findOccurrences(drawDays, h, min, timeZone){
   return list.sort((a,b)=>a-b);
 }
 function fmtCountdown(diffMs){
+  const t = i18n[currentLang];
   if (diffMs <= 0) return '0:00:00';
   const d = Math.floor(diffMs/86400000), h = Math.floor((diffMs%86400000)/3600000);
   const m = Math.floor((diffMs%3600000)/60000), s = Math.floor((diffMs%60000)/1000);
-  return d>0 ? `${d}일 ${h}시간 ${m}분` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return d>0 ? `${d}${t.unitDay} ${h}${t.unitHour} ${m}${t.unitMin}` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 function fmtAbsolute(dt, timeZone, tzLabel){
-  const dtf = new Intl.DateTimeFormat('ko-KR', { timeZone, month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+  const locale = currentLang === 'ko' ? 'ko-KR' : currentLang === 'ja' ? 'ja-JP' : 'en-US';
+  const dtf = new Intl.DateTimeFormat(locale, { timeZone, month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
   return `${dtf.format(dt)} (${tzLabel})`;
 }
 
@@ -373,10 +537,10 @@ const GAME = {
   drawTime: {h:22, min:59},    // 22:59 ET
   cutoffTime: {h:22, min:0},   // 22:00 ET (판매처별 상이할 수 있음)
   timeZone: 'America/New_York',
-  tzLabel: 'ET·미국 동부시간'
 };
 
 function updateGate(){
+  const t = i18n[currentLang];
   const now = Date.now();
   const draws = findOccurrences(GAME.drawDays, GAME.drawTime.h, GAME.drawTime.min, GAME.timeZone);
   const cutoffs = findOccurrences(GAME.drawDays, GAME.cutoffTime.h, GAME.cutoffTime.min, GAME.timeZone);
@@ -390,7 +554,7 @@ function updateGate(){
 
   // 추첨 카운트다운 (항상 표시)
   document.getElementById('drawCountdown').textContent = fmtCountdown(nextDraw - now);
-  document.getElementById('drawAbsolute').textContent = fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel);
+  document.getElementById('drawAbsolute').textContent = fmtAbsolute(nextDraw, GAME.timeZone, t.tzLabel);
 
   const regRow = document.getElementById('regGateRow');
   const regCountdown = document.getElementById('regCountdown');
@@ -399,28 +563,21 @@ function updateGate(){
 
   if (isClosed) {
     regRow.classList.add('closed'); regRow.classList.remove('urgent');
-    regCountdown.textContent = '마감됨';
-    regAbsolute.textContent = `재개: ${fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel)}`;
-    ctaArea.innerHTML = `<div class="reg-cta-closed"><b>⏰ 이번 회차 등록이 마감되었습니다</b>다음 회차 등록은 <strong>${fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel)}</strong>부터 재개됩니다.</div>`;
+    regCountdown.textContent = t.closedLabel;
+    regAbsolute.textContent = `${t.reopenLabel} ${fmtAbsolute(nextDraw, GAME.timeZone, t.tzLabel)}`;
+    ctaArea.innerHTML = `<div class="reg-cta-closed"><b>${t.closedTitle}</b>${t.closedBody(fmtAbsolute(nextDraw, GAME.timeZone, t.tzLabel))}</div>`;
   } else {
     const diff = thisCutoff - now;
     regRow.classList.remove('closed');
     if (diff < 3*3600000) regRow.classList.add('urgent'); else regRow.classList.remove('urgent');
     regCountdown.textContent = fmtCountdown(diff);
-    regAbsolute.textContent = fmtAbsolute(thisCutoff, GAME.timeZone, GAME.tzLabel);
-    ctaArea.innerHTML = `<a href="#" class="reg-cta-open">내 전략 번호 가상 등록하기 →</a>`;
+    regAbsolute.textContent = fmtAbsolute(thisCutoff, GAME.timeZone, t.tzLabel);
+    ctaArea.innerHTML = `<a href="#" class="reg-cta-open">${t.ctaOpen}</a>`;
   }
 }
 
-updateGate();
+applyLang(currentLang);
 setInterval(updateGate, 1000);
-
-document.querySelectorAll('.lang-toggle button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
 </script>
 
 </body>

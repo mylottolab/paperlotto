@@ -252,62 +252,63 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     </div>
   </div>
   <nav>
-    <a href="#board">전체 게임</a>
-    <a href="#">내 등록번호</a>
-    <a href="#">전략 가이드</a>
+    <a href="#board" data-i18n="navGames">전체 게임</a>
+    <a href="#" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="#" data-i18n="navGuide">전략 가이드</a>
     <div class="lang-toggle">
-      <button class="active" type="button">KR</button>
-      <button type="button">EN</button>
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" class="active" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
     </div>
   </nav>
 </header>
 
 <!-- 신호 티커: 12개 게임 다음 추첨까지 남은 시간이 실시간으로 흐름 -->
 <div class="ticker-wrap">
-  <div class="ticker-label"><span class="dot"></span><span>LIVE BOARD</span></div>
+  <div class="ticker-label"><span class="dot"></span><span data-i18n="liveBoard">LIVE BOARD</span></div>
   <div class="ticker-track" id="tickerTrack"></div>
 </div>
 
 <section class="hero">
   <div class="hero-eyebrow">NO PURCHASE · NO PRIZE · PURE SIMULATION</div>
-  <h1>세계 12개 복권을,<br><span class="accent">실제 돈 없이</span> 종이 위에서 실험하세요</h1>
-  <p>한국·미국·일본·캐나다·호주·유럽 — 당신의 전략 번호를 가상으로 등록하고, 실제 추첨 결과와 비교하며 데이터로 검증합니다.</p>
+  <h1 data-i18n="heroTitle">세계 12개 복권을,<br><span class="accent">실제 돈 없이</span> 종이 위에서 실험하세요</h1>
+  <p data-i18n="heroSub">한국·미국·일본·캐나다·호주·유럽 — 당신의 전략 번호를 가상으로 등록하고, 실제 추첨 결과와 비교하며 데이터로 검증합니다.</p>
   <div class="hero-actions">
-    <a href="#board" class="btn btn-primary">게임 보드 보기 ↓</a>
-    <a href="#" class="btn btn-ghost">전략 가이드 읽기</a>
+    <a href="#board" class="btn btn-primary" data-i18n="heroBtnBoard">게임 보드 보기 ↓</a>
+    <a href="#" class="btn btn-ghost" data-i18n="heroBtnGuide">전략 가이드 읽기</a>
   </div>
-  <div class="hero-note">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
+  <div class="hero-note" data-i18n="heroNote">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
 </section>
 
 <main id="board">
 
   <div class="region" data-region="us">
-    <div class="region-head"><h2>🇺🇸 미국</h2><span class="region-en mono">UNITED STATES</span><span class="region-count mono">2 GAMES</span></div>
+    <div class="region-head"><h2>🇺🇸 <span data-i18n="regionUS">미국</span></h2><span class="region-en mono">UNITED STATES</span><span class="region-count mono">2 GAMES</span></div>
     <div class="card-grid"></div>
   </div>
 
   <div class="region" data-region="eu">
-    <div class="region-head"><h2>🇪🇺 유로밀리언스</h2><span class="region-en mono">EUROPE · 9-NATION</span><span class="region-count mono">1 GAME</span></div>
+    <div class="region-head"><h2>🇪🇺 <span data-i18n="regionEU">유로밀리언스</span></h2><span class="region-en mono">EUROPE · 9-NATION</span><span class="region-count mono">1 GAME</span></div>
     <div class="card-grid"></div>
   </div>
 
   <div class="region" data-region="jp">
-    <div class="region-head"><h2>🇯🇵 일본</h2><span class="region-en mono">JAPAN</span><span class="region-count mono">3 GAMES</span></div>
+    <div class="region-head"><h2>🇯🇵 <span data-i18n="regionJP">일본</span></h2><span class="region-en mono">JAPAN</span><span class="region-count mono">3 GAMES</span></div>
     <div class="card-grid"></div>
   </div>
 
   <div class="region" data-region="ca">
-    <div class="region-head"><h2>🇨🇦 캐나다</h2><span class="region-en mono">CANADA</span><span class="region-count mono">2 GAMES</span></div>
+    <div class="region-head"><h2>🇨🇦 <span data-i18n="regionCA">캐나다</span></h2><span class="region-en mono">CANADA</span><span class="region-count mono">2 GAMES</span></div>
     <div class="card-grid"></div>
   </div>
 
   <div class="region" data-region="au">
-    <div class="region-head"><h2>🇦🇺 호주</h2><span class="region-en mono">AUSTRALIA</span><span class="region-count mono">3 GAMES</span></div>
+    <div class="region-head"><h2>🇦🇺 <span data-i18n="regionAU">호주</span></h2><span class="region-en mono">AUSTRALIA</span><span class="region-count mono">3 GAMES</span></div>
     <div class="card-grid"></div>
   </div>
 
   <div class="region" data-region="kr">
-    <div class="region-head"><h2>🇰🇷 대한민국</h2><span class="region-en mono">KOREA</span><span class="region-count mono">1 GAME</span></div>
+    <div class="region-head"><h2>🇰🇷 <span data-i18n="regionKR">대한민국</span></h2><span class="region-en mono">KOREA</span><span class="region-count mono">1 GAME</span></div>
     <div class="card-grid"></div>
   </div>
 
@@ -315,26 +316,96 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 
 <footer>
   <div class="foot-brand">PaperLotto</div>
-  <p>본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>
+  <p data-i18n="footerNote">본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>
   복권을 판매하거나 구매를 대행하지 않으며, 상금을 지급하지 않습니다.</p>
 </footer>
 
 <script>
 // ─── 12개 게임 데이터 (games 테이블 값 기준) ─────────────────────────────
 const GAMES = [
-  { id:'us_powerball', region:'us', accent:'us', nameKr:'파워볼', nameEn:'Powerball', main:5, mainRange:69, bonus:1, price:'$2', odds:'292,201,338', days:[1,3,6], detail:'paperlotto_detail_powerball_mockup.html' },
-  { id:'us_megamillions', region:'us', accent:'us', nameKr:'메가밀리언스', nameEn:'Mega Millions', main:5, mainRange:70, bonus:1, price:'$5', odds:'290,472,336', days:[2,5], detail:'paperlotto_detail_megamillions_mockup.html' },
-  { id:'eu_euromillions', region:'eu', accent:'eu', nameKr:'유로밀리언스', nameEn:'EuroMillions', main:5, mainRange:50, bonus:2, price:'€2.50', odds:'139,838,160', days:[2,5], detail:'paperlotto_detail_euromillions_mockup.html' },
-  { id:'jp_miniloto', region:'jp', accent:'jp', nameKr:'미니로또', nameEn:'ミニロト · Mini Loto', main:5, mainRange:31, bonus:1, price:'¥200', odds:'169,911', days:[2], detail:'paperlotto_detail_miniloto_mockup.html' },
-  { id:'jp_loto7', region:'jp', accent:'jp', nameKr:'로또7', nameEn:'ロト7 · Loto 7', main:7, mainRange:37, bonus:2, price:'¥300', odds:'10,295,472', days:[5], detail:'paperlotto_detail_loto7_mockup.html' },
-  { id:'jp_loto6', region:'jp', accent:'jp', nameKr:'로또6', nameEn:'ロト6 · Loto 6', main:6, mainRange:43, bonus:1, price:'¥200', odds:'6,096,454', days:[1,4], detail:'paperlotto_detail_loto6_mockup.html' },
-  { id:'ca_lottomax', region:'ca', accent:'ca', nameKr:'로또맥스', nameEn:'Lotto Max', main:7, mainRange:52, bonus:1, price:'$6', odds:'33,446,140', days:[2,5], detail:'paperlotto_detail_lottomax_mockup.html' },
-  { id:'ca_lotto649', region:'ca', accent:'ca', nameKr:'로또 6/49', nameEn:'Lotto 6/49', main:6, mainRange:49, bonus:1, price:'$3', odds:'13,983,816', days:[3,6], detail:'paperlotto_detail_lotto649_mockup.html' },
-  { id:'au_powerball', region:'au', accent:'au', nameKr:'호주 파워볼', nameEn:'Australia Powerball', main:7, mainRange:35, bonus:1, price:'$1.80', odds:'134,490,400', days:[4], detail:'paperlotto_detail_aupowerball_mockup.html' },
-  { id:'au_ozlotto', region:'au', accent:'au', nameKr:'오즈로또', nameEn:'Oz Lotto', main:7, mainRange:47, bonus:3, price:'$1.65', odds:'62,891,499', days:[2], detail:'paperlotto_detail_ozlotto_mockup.html' },
-  { id:'au_tattslotto', region:'au', accent:'au', nameKr:'새터데이로또', nameEn:'Tatts Lotto', main:6, mainRange:45, bonus:2, price:'$1.20', odds:'8,145,060', days:[6], detail:'paperlotto_detail_tattslotto_mockup.html' },
-  { id:'kr_lotto645', region:'kr', accent:'kr', nameKr:'로또 6/45', nameEn:'Lotto 6/45', main:6, mainRange:45, bonus:1, price:'₩1,000', odds:'8,145,060', days:[6], detail:'paperlotto_detail_korea_mockup.html' },
+  { id:'us_powerball', region:'us', accent:'us', nameKr:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', main:5, mainRange:69, bonus:1, price:'$2', odds:'292,201,338', days:[1,3,6], detail:'paperlotto_detail_powerball_mockup.html' },
+  { id:'us_megamillions', region:'us', accent:'us', nameKr:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', main:5, mainRange:70, bonus:1, price:'$5', odds:'290,472,336', days:[2,5], detail:'paperlotto_detail_megamillions_mockup.html' },
+  { id:'eu_euromillions', region:'eu', accent:'eu', nameKr:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', main:5, mainRange:50, bonus:2, price:'€2.50', odds:'139,838,160', days:[2,5], detail:'paperlotto_detail_euromillions_mockup.html' },
+  { id:'jp_miniloto', region:'jp', accent:'jp', nameKr:'미니로또', nameEn:'ミニロト · Mini Loto', nameJa:'ミニロト', main:5, mainRange:31, bonus:1, price:'¥200', odds:'169,911', days:[2], detail:'paperlotto_detail_miniloto_mockup.html' },
+  { id:'jp_loto7', region:'jp', accent:'jp', nameKr:'로또7', nameEn:'ロト7 · Loto 7', nameJa:'ロト7', main:7, mainRange:37, bonus:2, price:'¥300', odds:'10,295,472', days:[5], detail:'paperlotto_detail_loto7_mockup.html' },
+  { id:'jp_loto6', region:'jp', accent:'jp', nameKr:'로또6', nameEn:'ロト6 · Loto 6', nameJa:'ロト6', main:6, mainRange:43, bonus:1, price:'¥200', odds:'6,096,454', days:[1,4], detail:'paperlotto_detail_loto6_mockup.html' },
+  { id:'ca_lottomax', region:'ca', accent:'ca', nameKr:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', main:7, mainRange:52, bonus:1, price:'$6', odds:'33,446,140', days:[2,5], detail:'paperlotto_detail_lottomax_mockup.html' },
+  { id:'ca_lotto649', region:'ca', accent:'ca', nameKr:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', main:6, mainRange:49, bonus:1, price:'$3', odds:'13,983,816', days:[3,6], detail:'paperlotto_detail_lotto649_mockup.html' },
+  { id:'au_powerball', region:'au', accent:'au', nameKr:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', main:7, mainRange:35, bonus:1, price:'$1.80', odds:'134,490,400', days:[4], detail:'paperlotto_detail_aupowerball_mockup.html' },
+  { id:'au_ozlotto', region:'au', accent:'au', nameKr:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', main:7, mainRange:47, bonus:3, price:'$1.65', odds:'62,891,499', days:[2], detail:'paperlotto_detail_ozlotto_mockup.html' },
+  { id:'au_tattslotto', region:'au', accent:'au', nameKr:'새터데이로또', nameEn:'Tatts Lotto', nameJa:'タッツロト', main:6, mainRange:45, bonus:2, price:'$1.20', odds:'8,145,060', days:[6], detail:'paperlotto_detail_tattslotto_mockup.html' },
+  { id:'kr_lotto645', region:'kr', accent:'kr', nameKr:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', main:6, mainRange:45, bonus:1, price:'₩1,000', odds:'8,145,060', days:[6], detail:'paperlotto_detail_korea_mockup.html' },
 ];
+
+// =====================================================
+// 다국어(i18n)
+// =====================================================
+const i18n = {
+  ko: {
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드",
+    liveBoard:"LIVE BOARD",
+    heroTitle:'세계 12개 복권을,<br><span class="accent">실제 돈 없이</span> 종이 위에서 실험하세요',
+    heroSub:"한국·미국·일본·캐나다·호주·유럽 — 당신의 전략 번호를 가상으로 등록하고, 실제 추첨 결과와 비교하며 데이터로 검증합니다.",
+    heroBtnBoard:"게임 보드 보기 ↓", heroBtnGuide:"전략 가이드 읽기",
+    heroNote:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
+    regionUS:"미국", regionEU:"유로밀리언스", regionJP:"일본", regionCA:"캐나다", regionAU:"호주", regionKR:"대한민국",
+    footerNote:'본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>복권을 판매하거나 구매를 대행하지 않으며, 상금을 지급하지 않습니다.',
+    ballDraw:"구 추첨", perGame:"1게임", tier1Odds:"1등 확률", untilNext:"다음 추첨까지", registerCta:"가상 번호 등록하기",
+    day:"일", hour:"시간",
+    gameCount1:"GAME", gameCountN:"GAMES",
+    nameKey:"nameKr",
+  },
+  en: {
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide",
+    liveBoard:"LIVE BOARD",
+    heroTitle:'Try 12 lotteries from around the world<br><span class="accent">with no real money</span>, on paper',
+    heroSub:"Korea · US · Japan · Canada · Australia · Europe — register your strategic numbers virtually and validate them against real draw results with data.",
+    heroBtnBoard:"View Game Board ↓", heroBtnGuide:"Read Strategy Guide",
+    heroNote:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
+    regionUS:"United States", regionEU:"EuroMillions", regionJP:"Japan", regionCA:"Canada", regionAU:"Australia", regionKR:"Korea",
+    footerNote:'This site stores and manages numbers chosen by users, and compares them against real draw results as a simulation service.<br>It does not sell tickets, act as a purchase agent, or pay out prizes.',
+    ballDraw:"-ball draw", perGame:"1 line", tier1Odds:"Tier 1 odds", untilNext:"Until next draw", registerCta:"Register virtual numbers",
+    day:"d", hour:"h",
+    gameCount1:"GAME", gameCountN:"GAMES",
+    nameKey:"nameEn",
+  },
+  ja: {
+    navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド",
+    liveBoard:"LIVE BOARD",
+    heroTitle:'世界12の宝くじを、<br><span class="accent">実際のお金を使わず</span>紙の上で体験',
+    heroSub:"韓国・アメリカ・日本・カナダ・オーストラリア・ヨーロッパ — 戦略番号を仮想登録し、実際の抽選結果と比較してデータで検証します。",
+    heroBtnBoard:"ゲームボードを見る ↓", heroBtnGuide:"攻略ガイドを読む",
+    heroNote:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
+    regionUS:"アメリカ", regionEU:"ユーロミリオンズ", regionJP:"日本", regionCA:"カナダ", regionAU:"オーストラリア", regionKR:"韓国",
+    footerNote:'当サイトはユーザーが選んだ番号を保存・管理し、実際の抽選結果と比較するシミュレーションサービスです。<br>宝くじの販売や購入代行は行わず、賞金の支払いもありません。',
+    ballDraw:"球抽選", perGame:"1口", tier1Odds:"1等確率", untilNext:"次回抽選まで", registerCta:"仮想番号を登録する",
+    day:"日", hour:"時間",
+    gameCount1:"GAME", gameCountN:"GAMES",
+    nameKey:"nameJa",
+  },
+};
+
+let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
+
+function applyLang(lang){
+  currentLang = i18n[lang] ? lang : 'en';
+  localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const t = i18n[currentLang][key];
+    if (t !== undefined) el.innerHTML = t;
+  });
+  document.querySelectorAll('.lang-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+  });
+  renderCards();
+  renderTicker();
+}
+
+document.querySelectorAll('.lang-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+});
 
 // ─── 다음 추첨 시각 계산 (데모용: 방문자 로컬 시간 20:00 기준, 실제 서비스에서는 국가별 타임존 반영 필요) ───
 function nextDrawDate(days){
@@ -351,18 +422,20 @@ function nextDrawDate(days){
   return best;
 }
 function fmtCountdown(target){
+  const t = i18n[currentLang];
   const diff = Math.max(0, target - new Date());
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
   const s = Math.floor((diff % 60000) / 1000);
-  return d > 0 ? `${d}일 ${h}시간` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return d > 0 ? `${d}${t.day} ${h}${t.hour}` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
 // ─── 카드 렌더 ─────────────────────────────────────────────────────────
 GAMES.forEach(g => { g.next = nextDrawDate(g.days); });
 
 function renderCards(){
+  const t = i18n[currentLang];
   document.querySelectorAll('.region').forEach(regionEl => {
     const region = regionEl.dataset.region;
     const grid = regionEl.querySelector('.card-grid');
@@ -370,25 +443,25 @@ function renderCards(){
       const pips = Array.from({length: g.main}, (_,i) =>
         `<span class="num-pip">${i+1}</span>`).join('') +
         (g.bonus ? `<span class="ticket-plus">+</span>` + Array.from({length:g.bonus},() => `<span class="num-pip bonus">★</span>`).join('') : '');
+      const displayName = g[t.nameKey] || g.nameEn;
       return `
       <a class="ticket" style="--accent:var(--${g.accent})" href="${g.detail}" data-id="${g.id}">
         <div class="ticket-top">
-          <div class="ticket-country">${g.region.toUpperCase()} · ${g.mainRange}구 추첨</div>
-          <div class="ticket-price">1게임<br><b>${g.price}</b></div>
+          <div class="ticket-country">${g.region.toUpperCase()} · ${g.mainRange}${t.ballDraw}</div>
+          <div class="ticket-price">${t.perGame}<br><b>${g.price}</b></div>
         </div>
-        <div class="ticket-name">${g.nameKr}</div>
+        <div class="ticket-name">${displayName}</div>
         <div class="ticket-name-en">${g.nameEn}</div>
         <div class="ticket-numbers">${pips}</div>
         <div class="ticket-meta">
-          <div><span class="meta-label">1등 확률</span><span class="meta-value">1 / ${g.odds}</span></div>
-          <div><span class="meta-label">다음 추첨까지</span><span class="meta-value countdown" data-cd="${g.id}">${fmtCountdown(g.next)}</span></div>
+          <div><span class="meta-label">${t.tier1Odds}</span><span class="meta-value">1 / ${g.odds}</span></div>
+          <div><span class="meta-label">${t.untilNext}</span><span class="meta-value countdown" data-cd="${g.id}">${fmtCountdown(g.next)}</span></div>
         </div>
-        <div class="ticket-cta">가상 번호 등록하기 <span class="arrow">→</span></div>
+        <div class="ticket-cta">${t.registerCta} <span class="arrow">→</span></div>
       </a>`;
     }).join('');
   });
 }
-renderCards();
 setInterval(() => {
   document.querySelectorAll('[data-cd]').forEach(el => {
     const g = GAMES.find(x => x.id === el.dataset.cd);
@@ -398,16 +471,16 @@ setInterval(() => {
 
 // ─── 상단 라이브 티커 (카드와 동일 데이터, 두 벌 이어붙여 무한 스크롤) ───
 function renderTicker(){
+  const t = i18n[currentLang];
   const items = GAMES.map(g => `
     <div class="ticker-item">
       <span class="flag" style="background:var(--${g.accent})"></span>
-      <span class="name">${g.nameKr}</span>
+      <span class="name">${g[t.nameKey] || g.nameEn}</span>
       <span class="odds mono">1/${g.odds}</span>
       <span class="cd mono" data-tcd="${g.id}">${fmtCountdown(g.next)}</span>
     </div>`).join('');
   document.getElementById('tickerTrack').innerHTML = items + items;
 }
-renderTicker();
 setInterval(() => {
   document.querySelectorAll('[data-tcd]').forEach(el => {
     const g = GAMES.find(x => x.id === el.dataset.tcd);
@@ -415,13 +488,7 @@ setInterval(() => {
   });
 }, 1000);
 
-// 언어 토글 (데모: 시각적 상태만 전환)
-document.querySelectorAll('.lang-toggle button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
+applyLang(currentLang);
 </script>
 
 </body>

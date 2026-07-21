@@ -142,23 +142,27 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div><div class="brand-name">Paper<em>Lotto</em></div><div class="brand-tag">GLOBAL DRAW SIMULATOR</div></div>
   </div>
   <nav>
-    <a href="paperlotto_hub_mockup.html">전체 게임</a>
-    <a href="#">내 등록번호</a>
-    <a href="#">전략 가이드</a>
-    <div class="lang-toggle"><button class="active" type="button">KR</button><button type="button">EN</button></div>
+    <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
+    <a href="#" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="#" data-i18n="navGuide">전략 가이드</a>
+    <div class="lang-toggle">
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" class="active" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
   </nav>
 </header>
 
 <div class="breadcrumb">
-  <a href="paperlotto_hub_mockup.html">← 전체 게임</a><span>/</span><span>유럽 9개국</span><span>/</span><span style="color:var(--text-hi);">유로밀리언스</span>
+  <a href="paperlotto_hub_mockup.html" data-i18n="breadcrumbBack">← 전체 게임</a><span>/</span><span data-i18n="breadcrumbRegion">유럽 9개국</span><span>/</span><span style="color:var(--text-hi);" data-i18n="breadcrumbGame">유로밀리언스</span>
 </div>
 
 <div class="game-hero">
   <div class="hero-ticket">
     <div class="hero-top">
       <div>
-        <div class="hero-country">🇪🇺 EUROPE · 9-NATION CONSORTIUM</div>
-        <h1 class="hero-title">유로밀리언스</h1>
+        <div class="hero-country" data-i18n="heroCountry">🇪🇺 EUROPE · 9-NATION CONSORTIUM</div>
+        <h1 class="hero-title" data-i18n="heroTitle">유로밀리언스</h1>
         <div class="hero-title-en">EuroMillions</div>
       </div>
     </div>
@@ -166,21 +170,21 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="hero-pips">
       <span class="pip">1</span><span class="pip">2</span><span class="pip">3</span><span class="pip">4</span><span class="pip">5</span>
       <span class="pip-plus">+</span><span class="pip bonus">★</span><span class="pip bonus">★</span>
-      <span class="pip-caption">1~50 중 5개 + 럭키스타(1~12) 2개, 별도 추첨</span>
+      <span class="pip-caption" data-i18n="heroPipCaption">1~50 중 5개 + 럭키스타(1~12) 2개, 별도 추첨</span>
     </div>
 
     <div class="hero-stats">
-      <div><div class="stat-label">1게임 가격</div><div class="stat-value">€2.50</div></div>
-      <div><div class="stat-label">추첨일</div><div class="stat-value">화·금</div></div>
-      <div><div class="stat-label">1등 확률</div><div class="stat-value" style="font-size:14px;">1 / 139,838,160</div></div>
-      <div><div class="stat-label">운영기관</div><div class="stat-value" style="font-size:13px;">SLE (9개국 연합)</div></div>
+      <div><div class="stat-label" data-i18n="statPrice">1게임 가격</div><div class="stat-value">€2.50</div></div>
+      <div><div class="stat-label" data-i18n="statDrawDay">추첨일</div><div class="stat-value" data-i18n="statDrawDayValue">화·금</div></div>
+      <div><div class="stat-label" data-i18n="statOdds">1등 확률</div><div class="stat-value" style="font-size:14px;">1 / 139,838,160</div></div>
+      <div><div class="stat-label" data-i18n="statOperator">운영기관</div><div class="stat-value" style="font-size:13px;" data-i18n="statOperatorValue">SLE (9개국 연합)</div></div>
     </div>
 
     <div class="draw-gate">
       <div class="gate-row">
         <span class="gate-icon">🎯</span>
         <div class="gate-text">
-          <div class="gate-label">다음 추첨까지</div>
+          <div class="gate-label" data-i18n="gateNextDraw">다음 추첨까지</div>
           <div class="gate-countdown mono" id="drawCountdown">계산 중…</div>
         </div>
         <div class="gate-abs mono" id="drawAbsolute"></div>
@@ -188,8 +192,8 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <div class="gate-row" id="regGateRow">
         <span class="gate-icon">📝</span>
         <div class="gate-text">
-          <div class="gate-label">내가 생각한 번호(전략번호) 등록 마감까지</div>
-          <div class="gate-sublabel">(실제 복권 판매 마감 시각 기준)</div>
+          <div class="gate-label" data-i18n="gateRegDeadline">내가 생각한 번호(전략번호) 등록 마감까지</div>
+          <div class="gate-sublabel" data-i18n="gateRegSub">(실제 복권 판매 마감 시각 기준)</div>
           <div class="gate-countdown mono" id="regCountdown">계산 중…</div>
         </div>
         <div class="gate-abs mono" id="regAbsolute"></div>
@@ -202,9 +206,59 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 
   <div class="sheet">
     <div class="sheet-eyebrow">01 · PRIZE STRUCTURE</div>
-    <h2>등수별 당첨 조건 (총 13개 등수)</h2>
-    <div class="sheet-body">
-      <table class="prize-table">
+    <h2 data-i18n="s1h">등수별 당첨 조건 (총 13개 등수)</h2>
+    <div class="sheet-body" id="s1body"></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">02 · JACKPOT CAP</div>
+    <h2 data-i18n="s2h">잭팟에 상한선이 있는, 보기 드문 구조</h2>
+    <div class="sheet-body" id="s2body"></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">03 · TAX BY COUNTRY</div>
+    <h2 data-i18n="s3h">세금 — 어느 나라에서 샀느냐가 좌우합니다</h2>
+    <div class="sheet-body" id="s3body"></div>
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-eyebrow">04 · STRATEGY</div>
+    <h2 data-i18n="s4h">전략 코너</h2>
+    <div class="sheet-body" id="s4body"></div>
+  </div>
+
+  <div class="final-cta">
+    <h3 data-i18n="finalH">실제 돈 없이, 판단은 진짜로</h3>
+    <p data-i18n="finalP">9개국이 함께 만들어가는 유럽 최대 복권을, PaperLotto에서 가상으로 직접 경험해보세요.</p>
+    <div id="regCtaArea"><a href="#" class="reg-cta-open" data-i18n="ctaOpen">내 전략 번호 가상 등록하기 →</a></div>
+    <div class="final-disclaimer" data-i18n="finalDisclaimer">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="foot-brand">PaperLotto</div>
+  <p data-i18n="footerNote">본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.</p>
+</footer>
+
+<script>
+const i18n = {
+  ko: {
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드",
+    breadcrumbBack:"← 전체 게임", breadcrumbRegion:"유럽 9개국", breadcrumbGame:"유로밀리언스",
+    heroCountry:"🇪🇺 EUROPE · 9-NATION CONSORTIUM", heroTitle:"유로밀리언스",
+    heroPipCaption:"1~50 중 5개 + 럭키스타(1~12) 2개, 별도 추첨",
+    statPrice:"1게임 가격", statDrawDay:"추첨일", statDrawDayValue:"화·금",
+    statOdds:"1등 확률", statOperator:"운영기관", statOperatorValue:"SLE (9개국 연합)",
+    gateNextDraw:"다음 추첨까지", gateRegDeadline:"내가 생각한 번호(전략번호) 등록 마감까지", gateRegSub:"(실제 복권 판매 마감 시각 기준)",
+    unitDay:"일", unitHour:"시간", unitMin:"분",
+    tzLabel:"CET·프랑스 파리시간", closedLabel:"마감됨", reopenLabel:"재개:",
+    closedTitle:"⏰ 이번 회차 등록이 마감되었습니다",
+    closedBody:(d)=>`다음 회차 등록은 <strong>${d}</strong>부터 재개됩니다.`,
+    ctaOpen:"내 전략 번호 가상 등록하기 →",
+    s1h:"등수별 당첨 조건 (총 13개 등수)",
+    s1body:`<table class="prize-table">
         <thead><tr><th>등수</th><th>조건</th><th>확률</th></tr></thead>
         <tbody>
           <tr><td>1등</td><td>메인 5개 + 럭키스타 2개</td><td>1/139,838,160</td></tr>
@@ -222,27 +276,15 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
           <tr><td>13등</td><td>메인 2개</td><td>1/22</td></tr>
         </tbody>
       </table>
-      <p style="margin-top:18px;">한국(5등급)·미국(9등급)보다도 훨씬 세분화된 <strong>13개 등수</strong>. 아무 등수나 걸릴 확률은 약 <strong>13분의 1</strong>로 꽤 높은 편이에요. 당첨금은 등수별 상금 풀을 당첨자 수로 나누는 파리뮤추얼 방식입니다.</p>
-    </div>
-  </div>
-
-  <div class="sheet">
-    <div class="sheet-eyebrow">02 · JACKPOT CAP</div>
-    <h2>잭팟에 상한선이 있는, 보기 드문 구조</h2>
-    <div class="sheet-body">
-      <p>파워볼·메가밀리언스와 가장 다른 점: 유로밀리언스는 <strong>잭팟 상한선이 2억 5,000만 유로</strong>로 정해져 있어요. 상한 도달 후에도 당첨자가 없으면 최대 5회까지 유지되다가, 이후 하위 등수로 분배됩니다.</p>
+      <p style="margin-top:18px;">한국(5등급)·미국(9등급)보다도 훨씬 세분화된 <strong>13개 등수</strong>. 아무 등수나 걸릴 확률은 약 <strong>13분의 1</strong>로 꽤 높은 편이에요. 당첨금은 등수별 상금 풀을 당첨자 수로 나누는 파리뮤추얼 방식입니다.</p>`,
+    s2h:"잭팟에 상한선이 있는, 보기 드문 구조",
+    s2body:`<p>파워볼·메가밀리언스와 가장 다른 점: 유로밀리언스는 <strong>잭팟 상한선이 2억 5,000만 유로</strong>로 정해져 있어요. 상한 도달 후에도 당첨자가 없으면 최대 5회까지 유지되다가, 이후 하위 등수로 분배됩니다.</p>
       <div class="callout">
         <b>슈퍼드로우(Superdraw)</b>
         이월 여부와 상관없이, 특정 회차의 잭팟을 최소 1억 3,000만 유로(약 1,800억 원)로 강제로 열어버리는 특별 추첨을 연간 여러 차례 진행합니다. 이때마다 유럽 전역이 구매 열풍에 휩싸여요.
-      </div>
-    </div>
-  </div>
-
-  <div class="sheet">
-    <div class="sheet-eyebrow">03 · TAX BY COUNTRY</div>
-    <h2>세금 — 어느 나라에서 샀느냐가 좌우합니다</h2>
-    <div class="sheet-body">
-      <p>같은 유로밀리언스인데도, <strong>구매한 나라에 따라 세금이 완전히 다릅니다.</strong></p>
+      </div>`,
+    s3h:"세금 — 어느 나라에서 샀느냐가 좌우합니다",
+    s3body:`<p>같은 유로밀리언스인데도, <strong>구매한 나라에 따라 세금이 완전히 다릅니다.</strong></p>
       <table class="tax-table">
         <thead><tr><th>국가</th><th>세금</th></tr></thead>
         <tbody>
@@ -255,38 +297,177 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <div class="foreign-note">
         <b>🌏 외국인이라면?</b>
         현지에서 합법 구매했다면 외국인도 당첨금을 받을 수 있어요. 다만 <strong>구매한 나라의 세법을 그대로</strong> 적용받습니다. 청구 기한도 나라마다 달라서, 영국은 180일, 프랑스·스페인은 90일로 짧은 편이에요.
-      </div>
-    </div>
-  </div>
-
-  <div class="sheet">
-    <div class="sheet-eyebrow">04 · STRATEGY</div>
-    <h2>전략 코너</h2>
-    <div class="sheet-body">
-      <div class="strategy-note">※ 일반적인 확률·통계 전략 개념입니다. 실제 역대 번호 빈도 데이터는 DB 구축 완료 후 실데이터로 교체 예정입니다.</div>
+      </div>`,
+    s4h:"전략 코너",
+    s4body:`<div class="strategy-note">※ 일반적인 확률·통계 전략 개념입니다. 실제 역대 번호 빈도 데이터는 DB 구축 완료 후 실데이터로 교체 예정입니다.</div>
       <ul class="strategy-list">
         <li><span class="mark">01</span>메인 번호(50개)와 럭키스타(12개)가 완전히 독립된 추첨이라, 두 부분을 따로 접근하는 게 합리적입니다.</li>
         <li><span class="mark">02</span>13개 등수 활용 — 1등보다 하위 등수를 자주 맞히는 접근도 실험해볼 만해요.</li>
         <li><span class="mark">03</span>잭팟 상한선을 고려해, "이번엔 슈퍼드로우인가?"를 확인하고 접근하는 것도 유로밀리언스만의 관전 포인트입니다.</li>
-      </ul>
-    </div>
-  </div>
+      </ul>`,
+    finalH:"실제 돈 없이, 판단은 진짜로",
+    finalP:"9개국이 함께 만들어가는 유럽 최대 복권을, PaperLotto에서 가상으로 직접 경험해보세요.",
+    finalDisclaimer:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
+    footerNote:'본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.',
+  },
+  en: {
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide",
+    breadcrumbBack:"← All Games", breadcrumbRegion:"Europe (9 nations)", breadcrumbGame:"EuroMillions",
+    heroCountry:"🇪🇺 EUROPE · 9-NATION CONSORTIUM", heroTitle:"EuroMillions",
+    heroPipCaption:"5 of 1–50, plus 2 Lucky Stars (1–12) drawn separately",
+    statPrice:"Price per game", statDrawDay:"Draw day", statDrawDayValue:"Tue & Fri",
+    statOdds:"Tier 1 odds", statOperator:"Operator", statOperatorValue:"SLE (9-nation consortium)",
+    gateNextDraw:"Until next draw", gateRegDeadline:"Until entry deadline for your strategy numbers", gateRegSub:"(based on the real ticket sales cutoff)",
+    unitDay:"d", unitHour:"h", unitMin:"m",
+    tzLabel:"CET · Paris, France time", closedLabel:"Closed", reopenLabel:"Reopens:",
+    closedTitle:"⏰ Entries are closed for this round",
+    closedBody:(d)=>`Entries for the next round reopen on <strong>${d}</strong>.`,
+    ctaOpen:"Register my strategy numbers virtually →",
+    s1h:"Prize Tiers (13 tiers total)",
+    s1body:`<table class="prize-table">
+        <thead><tr><th>Tier</th><th>Match</th><th>Odds</th></tr></thead>
+        <tbody>
+          <tr><td>Tier 1</td><td>5 main + 2 Lucky Stars</td><td>1/139,838,160</td></tr>
+          <tr><td>Tier 2</td><td>5 main + 1 Lucky Star</td><td>1/6,991,908</td></tr>
+          <tr><td>Tier 3</td><td>5 main</td><td>1/3,107,515</td></tr>
+          <tr><td>Tier 4</td><td>4 main + 2 Lucky Stars</td><td>1/621,503</td></tr>
+          <tr><td>Tier 5</td><td>4 main + 1 Lucky Star</td><td>1/31,075</td></tr>
+          <tr><td>Tier 6</td><td>3 main + 2 Lucky Stars</td><td>1/14,126</td></tr>
+          <tr><td>Tier 7</td><td>4 main</td><td>1/13,811</td></tr>
+          <tr><td>Tier 8</td><td>2 main + 2 Lucky Stars</td><td>1/985</td></tr>
+          <tr><td>Tier 9</td><td>3 main + 1 Lucky Star</td><td>1/706</td></tr>
+          <tr><td>Tier 10</td><td>3 main</td><td>1/314</td></tr>
+          <tr><td>Tier 11</td><td>1 main + 2 Lucky Stars</td><td>1/188</td></tr>
+          <tr><td>Tier 12</td><td>2 main + 1 Lucky Star</td><td>1/49</td></tr>
+          <tr><td>Tier 13</td><td>2 main</td><td>1/22</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:18px;">With <strong>13 prize tiers</strong>, this is far more granular than Korea's (5 tiers) or the US's (9 tiers). The odds of winning something are about <strong>1 in 13</strong> — fairly high. Prizes use a pari-mutuel system, splitting each tier's prize pool among that tier's winners.</p>`,
+    s2h:"A Rare Structure: A Capped Jackpot",
+    s2body:`<p>The biggest difference from Powerball or Mega Millions: EuroMillions has a <strong>jackpot cap of €250 million</strong>. Even after the cap is reached, if there's still no winner, it stays capped for up to 5 draws before rolling down to lower tiers.</p>
+      <div class="callout">
+        <b>Superdraw</b>
+        Several times a year, regardless of rollover status, a special draw force-opens the jackpot to at least €130 million (roughly ₩180 billion). Each one sends buying frenzy across all of Europe.
+      </div>`,
+    s3h:"Taxes — It Depends on Which Country You Bought In",
+    s3body:`<p>Even though it's the same EuroMillions game, <strong>taxes differ completely depending on which country you purchased in.</strong></p>
+      <table class="tax-table">
+        <thead><tr><th>Country</th><th>Tax</th></tr></thead>
+        <tbody>
+          <tr><td>UK, France, Ireland, Austria, Belgium, Luxembourg</td><td><span class="tag-free">Tax-free 0%</span></td></tr>
+          <tr><td>Spain</td><td><span class="tag-tax">20% on amount over €40,000</span></td></tr>
+          <tr><td>Portugal</td><td><span class="tag-tax">20% on amount over €5,000</span></td></tr>
+          <tr><td>Switzerland</td><td><span class="tag-tax">~35% on amount over CHF 1,000</span></td></tr>
+        </tbody>
+      </table>
+      <div class="foreign-note">
+        <b>🌏 If you're a foreign national?</b>
+        Foreign nationals can claim winnings too, as long as the ticket was purchased legally in that country. However, you're subject to <strong>whatever tax law applies in the country of purchase</strong>. Claim deadlines also vary — the UK gives 180 days, while France and Spain give a shorter 90 days.
+      </div>`,
+    s4h:"Strategy Corner",
+    s4body:`<div class="strategy-note">※ These are general probability/statistics concepts. Once the historical draw database is complete, this section will be replaced with real frequency data.</div>
+      <ul class="strategy-list">
+        <li><span class="mark">01</span>The main numbers (50) and Lucky Stars (12) are drawn completely independently — it makes sense to approach the two separately.</li>
+        <li><span class="mark">02</span>With 13 tiers to work with, it's worth experimenting with strategies focused on hitting lower tiers more often rather than chasing Tier 1.</li>
+        <li><span class="mark">03</span>Given the jackpot cap, checking "is this a Superdraw?" before you play is a distinctly EuroMillions point of interest.</li>
+      </ul>`,
+    finalH:"No real money, real decisions",
+    finalP:"Try Europe's biggest lottery, run jointly by 9 countries, virtually on PaperLotto.",
+    finalDisclaimer:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
+    footerNote:'This content is provided for informational and statistical simulation purposes only.<br>Always verify actual purchase and claim procedures through the official operator in your country.',
+  },
+  ja: {
+    navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド",
+    breadcrumbBack:"← すべてのゲーム", breadcrumbRegion:"ヨーロッパ9カ国", breadcrumbGame:"ユーロミリオンズ",
+    heroCountry:"🇪🇺 ヨーロッパ · 9カ国コンソーシアム", heroTitle:"ユーロミリオンズ",
+    heroPipCaption:"1〜50から5個 + ラッキースター（1〜12）2個、別枠抽選",
+    statPrice:"1口の価格", statDrawDay:"抽選日", statDrawDayValue:"火・金",
+    statOdds:"1等確率", statOperator:"運営機関", statOperatorValue:"SLE（9カ国連合）",
+    gateNextDraw:"次回抽選まで", gateRegDeadline:"戦略番号の登録締切まで", gateRegSub:"（実際の宝くじ販売締切時刻基準）",
+    unitDay:"日", unitHour:"時間", unitMin:"分",
+    tzLabel:"CET・フランス パリ時間", closedLabel:"締切済み", reopenLabel:"再開：",
+    closedTitle:"⏰ 今回の登録は締め切られました",
+    closedBody:(d)=>`次回の登録は<strong>${d}</strong>から再開されます。`,
+    ctaOpen:"戦略番号を仮想登録する →",
+    s1h:"等級別当選条件（全13等級）",
+    s1body:`<table class="prize-table">
+        <thead><tr><th>等級</th><th>条件</th><th>確率</th></tr></thead>
+        <tbody>
+          <tr><td>1等</td><td>メイン5個+ラッキースター2個</td><td>1/139,838,160</td></tr>
+          <tr><td>2等</td><td>メイン5個+ラッキースター1個</td><td>1/6,991,908</td></tr>
+          <tr><td>3等</td><td>メイン5個</td><td>1/3,107,515</td></tr>
+          <tr><td>4等</td><td>メイン4個+ラッキースター2個</td><td>1/621,503</td></tr>
+          <tr><td>5等</td><td>メイン4個+ラッキースター1個</td><td>1/31,075</td></tr>
+          <tr><td>6等</td><td>メイン3個+ラッキースター2個</td><td>1/14,126</td></tr>
+          <tr><td>7等</td><td>メイン4個</td><td>1/13,811</td></tr>
+          <tr><td>8等</td><td>メイン2個+ラッキースター2個</td><td>1/985</td></tr>
+          <tr><td>9等</td><td>メイン3個+ラッキースター1個</td><td>1/706</td></tr>
+          <tr><td>10等</td><td>メイン3個</td><td>1/314</td></tr>
+          <tr><td>11等</td><td>メイン1個+ラッキースター2個</td><td>1/188</td></tr>
+          <tr><td>12等</td><td>メイン2個+ラッキースター1個</td><td>1/49</td></tr>
+          <tr><td>13等</td><td>メイン2個</td><td>1/22</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:18px;">韓国（5等級）・米国（9等級）よりもさらに細分化された<strong>13等級</strong>。いずれかの等級に当たる確率は約<strong>13分の1</strong>とかなり高めです。賞金は各等級の賞金プールを当選者数で割るパリミュチュエル方式です。</p>`,
+    s2h:"ジャックポットに上限がある珍しい仕組み",
+    s2body:`<p>パワーボール・メガミリオンズとの最大の違い：ユーロミリオンズは<strong>ジャックポット上限が2億5,000万ユーロ</strong>に定められています。上限到達後も当選者がいなければ最大5回まで維持され、その後下位等級に分配されます。</p>
+      <div class="callout">
+        <b>スーパードロー（Superdraw）</b>
+        繰越の有無にかかわらず、特定回のジャックポットを最低1億3,000万ユーロ（約1,800億ウォン）に強制的に引き上げる特別抽選を年に数回実施します。この時期はヨーロッパ全土が購入熱に包まれます。
+      </div>`,
+    s3h:"税金 — どの国で購入したかがすべてを決めます",
+    s3body:`<p>同じユーロミリオンズでも、<strong>購入した国によって税金がまったく異なります。</strong></p>
+      <table class="tax-table">
+        <thead><tr><th>国</th><th>税金</th></tr></thead>
+        <tbody>
+          <tr><td>英国・フランス・アイルランド・オーストリア・ベルギー・ルクセンブルク</td><td><span class="tag-free">非課税0%</span></td></tr>
+          <tr><td>スペイン</td><td><span class="tag-tax">4万€超過分20%</span></td></tr>
+          <tr><td>ポルトガル</td><td><span class="tag-tax">5千€超過分20%</span></td></tr>
+          <tr><td>スイス</td><td><span class="tag-tax">1千CHF超過分約35%</span></td></tr>
+        </tbody>
+      </table>
+      <div class="foreign-note">
+        <b>🌏 外国人の場合は？</b>
+        現地で合法的に購入していれば、外国人も当選金を受け取れます。ただし<strong>購入した国の税法がそのまま</strong>適用されます。請求期限も国によって異なり、英国は180日、フランス・スペインは90日と短めです。
+      </div>`,
+    s4h:"戦略コーナー",
+    s4body:`<div class="strategy-note">※一般的な確率・統計の戦略概念です。実際の過去番号頻度データはDB構築完了後、実データに差し替え予定です。</div>
+      <ul class="strategy-list">
+        <li><span class="mark">01</span>メイン番号（50個）とラッキースター（12個）は完全に独立した抽選のため、両者を別々に考えるのが合理的です。</li>
+        <li><span class="mark">02</span>13等級を活用 — 1等より下位等級を頻繁に当てるアプローチも試す価値があります。</li>
+        <li><span class="mark">03</span>ジャックポット上限を考慮し、「今回はスーパードローか？」を確認してから参加するのもユーロミリオンズならではの見どころです。</li>
+      </ul>`,
+    finalH:"実際のお金なしで、判断は本物",
+    finalP:"9カ国が共同で作り上げるヨーロッパ最大の宝くじを、PaperLottoで仮想体験しましょう。",
+    finalDisclaimer:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
+    footerNote:'本コンテンツは情報提供および統計的シミュレーションを目的として提供されています。<br>実際の購入・請求手続きは必ず各国の公式運営機関を通じてご確認ください。',
+  },
+};
 
-  <div class="final-cta">
-    <h3>실제 돈 없이, 판단은 진짜로</h3>
-    <p>9개국이 함께 만들어가는 유럽 최대 복권을, PaperLotto에서 가상으로 직접 경험해보세요.</p>
-    <div id="regCtaArea"><a href="#" class="reg-cta-open">내 전략 번호 가상 등록하기 →</a></div>
-    <div class="final-disclaimer">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
-  </div>
+let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
 
-</main>
+function applyLang(lang){
+  currentLang = i18n[lang] ? lang : 'en';
+  localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  const t = i18n[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (typeof t[key] === 'string') el.innerHTML = t[key];
+  });
+  document.getElementById('s1body').innerHTML = t.s1body;
+  document.getElementById('s2body').innerHTML = t.s2body;
+  document.getElementById('s3body').innerHTML = t.s3body;
+  document.getElementById('s4body').innerHTML = t.s4body;
+  document.querySelectorAll('.lang-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+  });
+  updateGate();
+}
+document.querySelectorAll('.lang-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+});
 
-<footer>
-  <div class="foot-brand">PaperLotto</div>
-  <p>본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.</p>
-</footer>
-
-<script>
 function tzOffsetMinutes(date, timeZone){
   const dtf = new Intl.DateTimeFormat('en-US', { timeZone, hourCycle:'h23', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
   const p = dtf.formatToParts(date).reduce((a,x)=>{a[x.type]=x.value; return a;},{});
@@ -321,13 +502,15 @@ function findOccurrences(drawDays, h, min, timeZone){
   return list.sort((a,b)=>a-b);
 }
 function fmtCountdown(diffMs){
+  const t = i18n[currentLang];
   if (diffMs <= 0) return '0:00:00';
   const d = Math.floor(diffMs/86400000), h = Math.floor((diffMs%86400000)/3600000);
   const m = Math.floor((diffMs%3600000)/60000), s = Math.floor((diffMs%60000)/1000);
-  return d>0 ? `${d}일 ${h}시간 ${m}분` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return d>0 ? `${d}${t.unitDay} ${h}${t.unitHour} ${m}${t.unitMin}` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 function fmtAbsolute(dt, timeZone, tzLabel){
-  const dtf = new Intl.DateTimeFormat('ko-KR', { timeZone, month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+  const locale = currentLang === 'ko' ? 'ko-KR' : currentLang === 'ja' ? 'ja-JP' : 'en-US';
+  const dtf = new Intl.DateTimeFormat(locale, { timeZone, month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
   return `${dtf.format(dt)} (${tzLabel})`;
 }
 
@@ -336,10 +519,10 @@ const GAME = {
   drawTime: {h:21, min:0},     // 21:00 파리시간
   cutoffTime: {h:19, min:30},  // 19:30 파리시간 (PaperLotto 확정치 — 공식 마감시각 미확보로 잠정 적용)
   timeZone: 'Europe/Paris',
-  tzLabel: 'CET·프랑스 파리시간'
 };
 
 function updateGate(){
+  const t = i18n[currentLang];
   const now = Date.now();
   const draws = findOccurrences(GAME.drawDays, GAME.drawTime.h, GAME.drawTime.min, GAME.timeZone);
   const cutoffs = findOccurrences(GAME.drawDays, GAME.cutoffTime.h, GAME.cutoffTime.min, GAME.timeZone);
@@ -351,7 +534,7 @@ function updateGate(){
   const isClosed = now >= thisCutoff.getTime() && now < nextDraw.getTime();
 
   document.getElementById('drawCountdown').textContent = fmtCountdown(nextDraw - now);
-  document.getElementById('drawAbsolute').textContent = fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel);
+  document.getElementById('drawAbsolute').textContent = fmtAbsolute(nextDraw, GAME.timeZone, t.tzLabel);
 
   const regRow = document.getElementById('regGateRow');
   const regCountdown = document.getElementById('regCountdown');
@@ -360,27 +543,20 @@ function updateGate(){
 
   if (isClosed) {
     regRow.classList.add('closed'); regRow.classList.remove('urgent');
-    regCountdown.textContent = '마감됨';
-    regAbsolute.textContent = `재개: ${fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel)}`;
-    ctaArea.innerHTML = `<div class="reg-cta-closed"><b>⏰ 이번 회차 등록이 마감되었습니다</b>다음 회차 등록은 <strong>${fmtAbsolute(nextDraw, GAME.timeZone, GAME.tzLabel)}</strong>부터 재개됩니다.</div>`;
+    regCountdown.textContent = t.closedLabel;
+    regAbsolute.textContent = `${t.reopenLabel} ${fmtAbsolute(nextDraw, GAME.timeZone, t.tzLabel)}`;
+    ctaArea.innerHTML = `<div class="reg-cta-closed"><b>${t.closedTitle}</b>${t.closedBody(fmtAbsolute(nextDraw, GAME.timeZone, t.tzLabel))}</div>`;
   } else {
     const diff = thisCutoff - now;
     regRow.classList.remove('closed');
     if (diff < 3*3600000) regRow.classList.add('urgent'); else regRow.classList.remove('urgent');
     regCountdown.textContent = fmtCountdown(diff);
-    regAbsolute.textContent = fmtAbsolute(thisCutoff, GAME.timeZone, GAME.tzLabel);
-    ctaArea.innerHTML = `<a href="#" class="reg-cta-open">내 전략 번호 가상 등록하기 →</a>`;
+    regAbsolute.textContent = fmtAbsolute(thisCutoff, GAME.timeZone, t.tzLabel);
+    ctaArea.innerHTML = `<a href="#" class="reg-cta-open">${t.ctaOpen}</a>`;
   }
 }
-updateGate();
+applyLang(currentLang);
 setInterval(updateGate, 1000);
-
-document.querySelectorAll('.lang-toggle button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
 </script>
 
 </body>
