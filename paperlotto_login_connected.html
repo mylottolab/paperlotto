@@ -100,56 +100,54 @@ input:focus{ border-color:var(--gold); }
 
   <div class="card">
     <div class="tabs">
-      <button class="active" id="tabLogin" type="button">로그인</button>
-      <button id="tabSignup" type="button">회원가입</button>
+      <button class="active" id="tabLogin" type="button" data-i18n="tabLogin">로그인</button>
+      <button id="tabSignup" type="button" data-i18n="tabSignup">회원가입</button>
     </div>
 
     <div id="panelLogin">
-      <div class="subtitle" style="font-size:16px; font-weight:700; color:var(--ink); margin-top:2px;">등록해둔 전략번호와 통계를 이어서 확인하세요.</div>
-
       <button class="google-btn" type="button" id="googleLoginBtn">
         <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3c-7.5 0-14 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.2-5l-6.6-5.4C29.6 36.3 27 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.9 40.5 16.4 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.6 5.4C41.5 36 45 30.5 45 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
-        Google로 계속하기
+        <span data-i18n="googleLogin">Google로 계속하기</span>
       </button>
 
-      <div class="divider">또는</div>
+      <div class="divider" data-i18n="or">또는</div>
 
-      <label for="loginEmail">이메일</label>
+      <label for="loginEmail" data-i18n="email">이메일</label>
       <input type="email" id="loginEmail" placeholder="you@example.com">
-      <label for="loginPw">비밀번호</label>
+      <label for="loginPw" data-i18n="password">비밀번호</label>
       <input type="password" id="loginPw" placeholder="••••••••">
 
       <div id="loginMsg" style="display:none; font-size:12.5px; margin-bottom:14px; padding:10px 12px; border-radius:8px; line-height:1.5;"></div>
 
-      <button class="submit-btn" type="button" id="loginSubmitBtn">로그인</button>
-      <div class="fine-print"><a href="#">비밀번호를 잊으셨나요?</a></div>
+      <button class="submit-btn" type="button" id="loginSubmitBtn" data-i18n="loginBtn">로그인</button>
+      <div class="fine-print"><a href="#" data-i18n="forgotPw">비밀번호를 잊으셨나요?</a></div>
     </div>
 
     <div id="panelSignup" style="display:none;">
-      <h1 class="title">가입은 30초면 충분해요</h1>
-      <div class="subtitle">이메일과 비밀번호만 있으면 바로 시작할 수 있어요. 닉네임과 언어 설정은 자동으로 입력되며, 나중에 마이페이지에서 언제든 바꾸실 수 있어요.</div>
+      <h1 class="title" data-i18n="signupTitle">가입은 30초면 충분해요</h1>
+      <div class="subtitle" data-i18n="signupSubtitle">이메일과 비밀번호만 있으면 바로 시작할 수 있어요. 닉네임과 언어 설정은 자동으로 입력되며, 나중에 마이페이지에서 언제든 바꾸실 수 있어요.</div>
 
       <button class="google-btn" type="button" id="googleSignupBtn">
         <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3c-7.5 0-14 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.2-5l-6.6-5.4C29.6 36.3 27 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.9 40.5 16.4 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.6 5.4C41.5 36 45 30.5 45 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
-        Google로 가입하기
+        <span data-i18n="googleSignup">Google로 가입하기</span>
       </button>
 
-      <div class="divider">또는</div>
+      <div class="divider" data-i18n="or">또는</div>
 
-      <label for="suEmail">이메일</label>
+      <label for="suEmail" data-i18n="email">이메일</label>
       <input type="email" id="suEmail" placeholder="you@example.com">
-      <label for="suPw">비밀번호</label>
-      <input type="password" id="suPw" placeholder="8자 이상">
+      <label for="suPw" data-i18n="password">비밀번호</label>
+      <input type="password" id="suPw" placeholder="8자 이상" data-i18n-placeholder="pwPlaceholder">
 
       <div id="signupMsg" style="display:none; font-size:12.5px; margin-bottom:14px; padding:10px 12px; border-radius:8px; line-height:1.5;"></div>
 
-      <button class="submit-btn" type="button" id="signupSubmitBtn">계정 만들기</button>
-      <div class="fine-print">가입 시 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.</div>
+      <button class="submit-btn" type="button" id="signupSubmitBtn" data-i18n="signupBtn">계정 만들기</button>
+      <div class="fine-print" data-i18n="terms">가입 시 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.</div>
     </div>
   </div>
 
   <div class="lang-note">
-    🌐 Site language:
+    🌐 <span data-i18n="siteLang">Site language</span>:
     <select id="langSelect">
       <option value="ko">한국어</option>
       <option value="en" selected>English</option>
@@ -157,7 +155,7 @@ input:focus{ border-color:var(--gold); }
     </select>
   </div>
 
-  <div class="footer-note">
+  <div class="footer-note" data-i18n="footerNote">
     PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.<br>
     가입 없이도 <a href="#" style="color:#a7adc7;text-decoration:underline;">비회원으로 둘러보기</a>가 가능합니다.
   </div>
@@ -177,6 +175,100 @@ tabSignup.addEventListener('click', () => {
   tabSignup.classList.add('active'); tabLogin.classList.remove('active');
   panelSignup.style.display = 'block'; panelLogin.style.display = 'none';
 });
+
+// =====================================================
+// 다국어(i18n) — 한국어 / 영어 / 일본어
+// =====================================================
+const i18n = {
+  ko: {
+    pageTitle: "로그인 / 가입 — PaperLotto",
+    tabLogin: "로그인", tabSignup: "회원가입",
+    googleLogin: "Google로 계속하기", googleSignup: "Google로 가입하기",
+    or: "또는", email: "이메일", password: "비밀번호",
+    loginBtn: "로그인", loginBtnLoading: "로그인 중...",
+    forgotPw: "비밀번호를 잊으셨나요?",
+    signupTitle: "가입은 30초면 충분해요",
+    signupSubtitle: "이메일과 비밀번호만 있으면 바로 시작할 수 있어요. 닉네임과 언어 설정은 자동으로 입력되며, 나중에 마이페이지에서 언제든 바꾸실 수 있어요.",
+    pwPlaceholder: "8자 이상",
+    signupBtn: "계정 만들기", signupBtnLoading: "계정 만드는 중...",
+    terms: '가입 시 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.',
+    siteLang: "언어 설정",
+    footerNote: 'PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.<br>가입 없이도 <a href="#" style="color:#a7adc7;text-decoration:underline;">비회원으로 둘러보기</a>가 가능합니다.',
+    errFillBoth: "이메일과 비밀번호를 입력해주세요.",
+    errPwLength: "비밀번호는 8자 이상이어야 합니다.",
+    errLoginFail: "로그인 실패: ",
+    errSignupFail: "가입 실패: ",
+    msgLoginSuccess: "로그인 성공! 잠시 후 이동합니다...",
+    msgSignupSuccess: "가입이 완료되었습니다! 닉네임과 언어는 자동으로 설정되었어요. 마이페이지에서 언제든 변경하실 수 있습니다. 잠시 후 이동합니다...",
+    errGoogleFail: "Google 로그인 실패: ",
+  },
+  en: {
+    pageTitle: "Login / Sign up — PaperLotto",
+    tabLogin: "Log in", tabSignup: "Sign up",
+    googleLogin: "Continue with Google", googleSignup: "Sign up with Google",
+    or: "or", email: "Email", password: "Password",
+    loginBtn: "Log in", loginBtnLoading: "Logging in...",
+    forgotPw: "Forgot your password?",
+    signupTitle: "Sign up takes 30 seconds",
+    signupSubtitle: "All you need is an email and password. Your nickname and language are set automatically — you can change them anytime in My Page.",
+    pwPlaceholder: "8+ characters",
+    signupBtn: "Create account", signupBtnLoading: "Creating account...",
+    terms: 'By signing up, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.',
+    siteLang: "Site language",
+    footerNote: 'PaperLotto does not sell lottery tickets and does not pay out any prizes.<br>You can also <a href="#" style="color:#a7adc7;text-decoration:underline;">browse as a guest</a> without signing up.',
+    errFillBoth: "Please enter both email and password.",
+    errPwLength: "Password must be at least 8 characters.",
+    errLoginFail: "Login failed: ",
+    errSignupFail: "Sign up failed: ",
+    msgLoginSuccess: "Login successful! Redirecting...",
+    msgSignupSuccess: "Account created! Your nickname and language were set automatically — you can change them anytime in My Page. Redirecting...",
+    errGoogleFail: "Google login failed: ",
+  },
+  ja: {
+    pageTitle: "ログイン / 新規登録 — PaperLotto",
+    tabLogin: "ログイン", tabSignup: "新規登録",
+    googleLogin: "Googleで続ける", googleSignup: "Googleで登録",
+    or: "または", email: "メールアドレス", password: "パスワード",
+    loginBtn: "ログイン", loginBtnLoading: "ログイン中...",
+    forgotPw: "パスワードをお忘れですか？",
+    signupTitle: "登録は30秒で完了します",
+    signupSubtitle: "メールアドレスとパスワードだけで始められます。ニックネームと言語設定は自動で入力され、マイページでいつでも変更できます。",
+    pwPlaceholder: "8文字以上",
+    signupBtn: "アカウント作成", signupBtnLoading: "作成中...",
+    terms: '登録すると<a href="#">利用規約</a>および<a href="#">プライバシーポリシー</a>に同意したことになります。',
+    siteLang: "表示言語",
+    footerNote: 'PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。<br>登録なしでも<a href="#" style="color:#a7adc7;text-decoration:underline;">ゲストとして閲覧</a>できます。',
+    errFillBoth: "メールアドレスとパスワードを入力してください。",
+    errPwLength: "パスワードは8文字以上で入力してください。",
+    errLoginFail: "ログイン失敗: ",
+    errSignupFail: "登録失敗: ",
+    msgLoginSuccess: "ログイン成功！まもなく移動します...",
+    msgSignupSuccess: "登録が完了しました！ニックネームと言語は自動設定されました。マイページでいつでも変更できます。まもなく移動します...",
+    errGoogleFail: "Googleログイン失敗: ",
+  },
+};
+
+let currentLang = "ko";
+
+function applyLang(lang) {
+  currentLang = i18n[lang] ? lang : "ko";
+  const t = i18n[currentLang];
+  document.documentElement.lang = currentLang;
+  document.title = t.pageTitle;
+
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (t[key] !== undefined) el.innerHTML = t[key];
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (t[key] !== undefined) el.setAttribute("placeholder", t[key]);
+  });
+}
+
+const langSelectEl = document.getElementById("langSelect");
+langSelectEl.addEventListener("change", () => applyLang(langSelectEl.value));
+applyLang(langSelectEl.value); // 초기 로드 시 select의 기본값(en)으로 적용
 
 // =====================================================
 // Supabase 연결
@@ -205,28 +297,29 @@ const loginMsg = document.getElementById('loginMsg');
 const loginSubmitBtn = document.getElementById('loginSubmitBtn');
 
 loginSubmitBtn.addEventListener('click', async () => {
+  const t = i18n[currentLang];
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPw').value;
 
   if (!email || !password) {
-    showMsg(loginMsg, '이메일과 비밀번호를 입력해주세요.', 'error');
+    showMsg(loginMsg, t.errFillBoth, 'error');
     return;
   }
 
   loginSubmitBtn.disabled = true;
-  loginSubmitBtn.textContent = '로그인 중...';
+  loginSubmitBtn.textContent = t.loginBtnLoading;
 
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
   loginSubmitBtn.disabled = false;
-  loginSubmitBtn.textContent = '로그인';
+  loginSubmitBtn.textContent = t.loginBtn;
 
   if (error) {
-    showMsg(loginMsg, '로그인 실패: ' + error.message, 'error');
+    showMsg(loginMsg, t.errLoginFail + error.message, 'error');
     return;
   }
 
-  showMsg(loginMsg, '로그인 성공! 잠시 후 이동합니다...', 'success');
+  showMsg(loginMsg, t.msgLoginSuccess, 'success');
   setTimeout(() => { window.location.href = REDIRECT_AFTER_AUTH; }, 800);
 });
 
@@ -235,21 +328,22 @@ const signupMsg = document.getElementById('signupMsg');
 const signupSubmitBtn = document.getElementById('signupSubmitBtn');
 
 signupSubmitBtn.addEventListener('click', async () => {
+  const t = i18n[currentLang];
   const email = document.getElementById('suEmail').value.trim();
   const password = document.getElementById('suPw').value;
   const preferredLang = document.getElementById('langSelect').value;
 
   if (!email || !password) {
-    showMsg(signupMsg, '이메일과 비밀번호를 입력해주세요.', 'error');
+    showMsg(signupMsg, t.errFillBoth, 'error');
     return;
   }
   if (password.length < 8) {
-    showMsg(signupMsg, '비밀번호는 8자 이상이어야 합니다.', 'error');
+    showMsg(signupMsg, t.errPwLength, 'error');
     return;
   }
 
   signupSubmitBtn.disabled = true;
-  signupSubmitBtn.textContent = '계정 만드는 중...';
+  signupSubmitBtn.textContent = t.signupBtnLoading;
 
   const { data, error } = await sb.auth.signUp({
     email,
@@ -263,18 +357,14 @@ signupSubmitBtn.addEventListener('click', async () => {
   });
 
   signupSubmitBtn.disabled = false;
-  signupSubmitBtn.textContent = '계정 만들기';
+  signupSubmitBtn.textContent = t.signupBtn;
 
   if (error) {
-    showMsg(signupMsg, '가입 실패: ' + error.message, 'error');
+    showMsg(signupMsg, t.errSignupFail + error.message, 'error');
     return;
   }
 
-  showMsg(
-    signupMsg,
-    '가입이 완료되었습니다! 닉네임과 언어는 자동으로 설정되었어요. 마이페이지에서 언제든 변경하실 수 있습니다. 잠시 후 이동합니다...',
-    'success'
-  );
+  showMsg(signupMsg, t.msgSignupSuccess, 'success');
   setTimeout(() => { window.location.href = REDIRECT_AFTER_AUTH; }, 1600);
 });
 
@@ -285,7 +375,7 @@ async function loginWithGoogle() {
     options: { redirectTo: REDIRECT_AFTER_AUTH }
   });
   if (error) {
-    alert('Google 로그인 실패: ' + error.message);
+    alert(i18n[currentLang].errGoogleFail + error.message);
   }
 }
 document.getElementById('googleLoginBtn').addEventListener('click', loginWithGoogle);
