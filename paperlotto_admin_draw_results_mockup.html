@@ -74,6 +74,12 @@ select, input[type="text"], input[type="date"], input[type="number"], input[type
 
 <main>
 
+  <div class="panel" style="border:1.5px solid rgba(198,90,46,0.3);">
+    <h2>🔑 관리자 키</h2>
+    <div class="desc">아래 모든 기능(가격 설정, 결과 입력)에 공통으로 사용됩니다. 한 번만 입력하시면 돼요.</div>
+    <input type="password" id="adminKey" placeholder="ADMIN_API_KEY">
+  </div>
+
   <div class="panel">
     <h2>💰 조합당 가격 설정</h2>
     <div class="desc">1개 조합 등록 시 차감되는 포인트입니다. 여기서 바꾸면 사이트 전체에 즉시 반영됩니다.</div>
@@ -88,9 +94,6 @@ select, input[type="text"], input[type="date"], input[type="number"], input[type
   <div class="panel">
     <h2>📋 당첨결과 수동 입력</h2>
     <div class="desc">자동 수집이 아직 안 되는 게임의 결과를 여기서 직접 입력합니다. 입력한 내용은 Edge Function을 통해 draw_results 테이블에 저장됩니다.</div>
-
-    <label>관리자 키</label>
-    <input type="password" id="adminKey" placeholder="ADMIN_API_KEY">
 
     <label>게임 선택</label>
     <select id="gameSelect"></select>
@@ -153,7 +156,7 @@ document.getElementById('savePriceBtn').addEventListener('click', async () => {
   const newPrice = document.getElementById('newPrice').value;
 
   if (!adminKey) {
-    statusEl.textContent = '위쪽 "관리자 키"란에 먼저 키를 입력해주세요.';
+    statusEl.textContent = '맨 위 "관리자 키"란에 먼저 키를 입력해주세요.';
     statusEl.className = 'status-msg err';
     return;
   }
