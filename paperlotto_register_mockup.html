@@ -283,6 +283,7 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
     <div>
       <div class="co-summary" id="coSummary"></div>
       <div class="co-warn" id="coWarn" style="display:none;" data-i18n="insufficientWarn">보유 포인트가 부족합니다. 개수를 줄이거나 포인트를 충전해주세요.</div>
+      <a class="co-warn" id="coWarnLink" href="paperlotto_recharge_mockup.html" style="display:none; text-decoration:underline; font-weight:600;" data-i18n="rechargeLink">충전하러 가기 →</a>
     </div>
     <button class="co-btn" id="submitBtn" disabled data-i18n="registerBtn">번호 등록하기</button>
   </div>
@@ -322,6 +323,7 @@ const i18n = {
     genComboBtn:"조합 생성하기 →",
     pendingTitle:"등록 예정 목록", pendingEmpty:"아직 등록 예정인 조합이 없어요. 위에서 번호를 추가해보세요.",
     insufficientWarn:"보유 포인트가 부족합니다. 개수를 줄이거나 포인트를 충전해주세요.",
+    rechargeLink:"충전하러 가기 →",
     registerBtn:"번호 등록하기", insufficientBtn:"포인트 부족",
     mNumSelect:"개 선택", mBonusAdd:"+ 보너스", mNextDraw:"다음 추첨",
     mBonusLabel:"보너스 번호", mSamePool:"메인과 같은 풀",
@@ -346,6 +348,7 @@ const i18n = {
     genComboBtn:"Generate combinations →",
     pendingTitle:"Pending Entries", pendingEmpty:"No pending combinations yet. Add numbers above to get started.",
     insufficientWarn:"Insufficient points balance. Reduce the quantity or top up your points.",
+    rechargeLink:"Go recharge →",
     registerBtn:"Register Numbers", insufficientBtn:"Insufficient points",
     mNumSelect:" picks", mBonusAdd:"+ bonus", mNextDraw:"Next draw",
     mBonusLabel:"Bonus number(s)", mSamePool:"same pool as main",
@@ -370,6 +373,7 @@ const i18n = {
     genComboBtn:"組み合わせを生成 →",
     pendingTitle:"登録予定リスト", pendingEmpty:"まだ登録予定の組み合わせがありません。上で番号を追加してください。",
     insufficientWarn:"保有ポイントが不足しています。数を減らすかポイントをチャージしてください。",
+    rechargeLink:"チャージしに行く →",
     registerBtn:"番号を登録する", insufficientBtn:"ポイント不足",
     mNumSelect:"個選択", mBonusAdd:"+ ボーナス", mNextDraw:"次回抽選",
     mBonusLabel:"ボーナス番号", mSamePool:"メインと同じプール",
@@ -643,8 +647,10 @@ function updateCheckout(){
   document.getElementById('balanceLabel').textContent = balance;
 
   const warn = document.getElementById('coWarn');
+  const warnLink = document.getElementById('coWarnLink');
   const insufficient = cost > balance;
   warn.style.display = insufficient ? 'block' : 'none';
+  warnLink.style.display = insufficient ? 'inline-block' : 'none';
 
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.disabled = count === 0 || insufficient;
