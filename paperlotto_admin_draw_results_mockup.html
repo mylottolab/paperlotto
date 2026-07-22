@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>당첨결과 입력 (관리자) — PaperLotto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -121,6 +122,19 @@ select, input[type="text"], input[type="date"], input[type="number"], input[type
     <button type="button" class="add-tier-btn" id="addTierBtn">+ 등수 추가</button>
   </div>
 
+  <div class="panel">
+    <h2>📊 전체 데이터 엑셀 다운로드</h2>
+    <div class="desc">지금까지 입력·수집된 draw_results 전체(또는 특정 게임)를 엑셀 파일로 받습니다.</div>
+
+    <label>다운로드 범위</label>
+    <select id="exportGameSelect">
+      <option value="">전체 게임</option>
+    </select>
+
+    <button type="button" class="btn-primary" id="exportBtn" style="background:#8a5b1c;">엑셀 다운로드</button>
+    <div class="status-msg" id="exportStatusMsg"></div>
+  </div>
+
   <button class="btn-primary" id="submitBtn">결과 저장하기</button>
   <div class="status-msg" id="statusMsg"></div>
 
@@ -135,6 +149,7 @@ select, input[type="text"], input[type="date"], input[type="number"], input[type
 // ⚠ 실제 배포 시 이 값을 채워주세요 (Supabase 프로젝트 설정 → Edge Functions에서 확인)
 const SUPABASE_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/admin-save-draw-result';
 const PRICING_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/pricing';
+const EXPORT_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/export-draw-results';
 
 // ── 가격 설정 패널 ──
 async function loadPricing(){
@@ -208,6 +223,9 @@ function updateMainHint(){
 gameSelect.addEventListener('change', updateMainHint);
 updateMainHint();
 
+const exportGameSelect = document.getElementById('exportGameSelect');
+exportGameSelect.innerHTML += GAMES.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+
 // ── 등수 입력 행 ──
 let tierCount = 0;
 const tiersBox = document.getElementById('tiersBox');
@@ -280,6 +298,76 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     statusEl.className = 'status-msg err';
   } finally {
     btn.disabled = false; btn.textContent = '결과 저장하기';
+  }
+});
+
+// ── 전체 데이터 엑셀 다운로드 ──
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('exportStatusMsg');
+  statusEl.className = 'status-msg';
+
+  const adminKey = document.getElementById('adminKey').value.trim();
+  if (!adminKey) {
+    statusEl.textContent = '맨 위 "관리자 키"란에 먼저 키를 입력해주세요.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+
+  const gameId = document.getElementById('exportGameSelect').value;
+  const btn2 = document.getElementById('exportBtn');
+  btn2.disabled = true; btn2.textContent = '불러오는 중…';
+
+  try {
+    const url = gameId ? `${EXPORT_FUNCTION_URL}?game_id=${encodeURIComponent(gameId)}` : EXPORT_FUNCTION_URL;
+    const resp = await fetch(url, { headers: { 'x-admin-key': adminKey } });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '조회 실패');
+
+    if (!data.rows || data.rows.length === 0) {
+      statusEl.textContent = '해당 범위에 데이터가 없습니다.';
+      statusEl.className = 'status-msg err';
+      return;
+    }
+
+    // 게임별로 등수(tiers) 개수가 다르므로, 데이터 전체에서 최대 등수 개수를 찾아 컬럼을 동적으로 만듭니다.
+    let maxTiers = 1;
+    data.rows.forEach(r => {
+      if (Array.isArray(r.tiers) && r.tiers.length > maxTiers) maxTiers = r.tiers.length;
+    });
+
+    const sheetRows = data.rows.map(r => {
+      const row = {
+        '게임': r.game_id,
+        '회차': r.round_no,
+        '추첨일': r.draw_date,
+        '메인번호': (r.main_numbers || []).join(', '),
+        '보너스번호': (r.bonus_numbers || []).join(', '),
+      };
+      for (let i = 1; i <= maxTiers; i++) {
+        const t = (r.tiers || []).find(x => Number(x.tier) === i);
+        row[`${i}등 당첨자수`] = t && t.winners != null ? t.winners : '';
+        row[`${i}등 당첨금`] = t && t.prize != null ? t.prize : '';
+      }
+      row['출처'] = r.collection_type || '';
+      row['업데이트'] = r.updated_at ? new Date(r.updated_at).toLocaleString('ko-KR') : '';
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(sheetRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'draw_results');
+
+    const today = new Date().toISOString().slice(0,10);
+    const filename = gameId ? `paperlotto_${gameId}_${today}.xlsx` : `paperlotto_전체게임_${today}.xlsx`;
+    XLSX.writeFile(wb, filename);
+
+    statusEl.textContent = `✅ ${data.count}건 다운로드 완료 (${filename})`;
+    statusEl.className = 'status-msg ok';
+  } catch (e) {
+    statusEl.textContent = `다운로드 실패: ${e.message}`;
+    statusEl.className = 'status-msg err';
+  } finally {
+    btn2.disabled = false; btn2.textContent = '엑셀 다운로드';
   }
 });
 </script>
