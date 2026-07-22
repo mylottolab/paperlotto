@@ -150,6 +150,7 @@ select, input[type="text"], input[type="date"], input[type="number"], input[type
 const SUPABASE_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/admin-save-draw-result';
 const PRICING_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/pricing';
 const EXPORT_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/export-draw-results';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC';
 
 // ── 가격 설정 패널 ──
 async function loadPricing(){
@@ -319,7 +320,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
 
   try {
     const url = gameId ? `${EXPORT_FUNCTION_URL}?game_id=${encodeURIComponent(gameId)}` : EXPORT_FUNCTION_URL;
-    const resp = await fetch(url, { headers: { 'x-admin-key': adminKey } });
+    const resp = await fetch(url, { headers: { 'x-admin-key': adminKey, 'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY } });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || '조회 실패');
 
