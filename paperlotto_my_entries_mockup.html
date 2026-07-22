@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>내 등록내역 — PaperLotto</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -149,8 +152,10 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
     <select id="filterYear"><option value="" data-i18n="filterAllYears">전체 연도</option></select>
     <div class="spacer"></div>
     <button class="tb-btn" id="bulkGradeBtn" data-i18n="bulkGrade">전체 채점하기</button>
-    <button class="tb-btn" id="exportSelectedBtn" data-i18n="exportSelected">선택 항목 내보내기 (50P)</button>
+    <button class="tb-btn" id="exportExcelBtn" data-i18n="exportExcel">엑셀 다운로드 (50P)</button>
+    <button class="tb-btn" id="exportPdfBtn" data-i18n="exportPdf">PDF 생성 (50P)</button>
     <button class="tb-btn primary" id="toWatchlistBtn" data-i18n="toWatchlist">관심번호로 이동</button>
+    <a class="tb-btn" href="paperlotto_watchlist_mockup.html" style="text-decoration:none; display:inline-block;" data-i18n="goWatchlist">관심번호 보기 →</a>
   </div>
 
   <div class="list-wrap" id="listWrap">
@@ -164,31 +169,40 @@ const i18n = {
     navBack:"← 전체 게임", pageTitle:"내 등록내역",
     badgeTotal:"전체 등록", badgeGraded:"채점 완료", badgePending:"채점 대기", badgeWin:"당첨(1~5등)",
     filterAllGames:"전체 게임", filterAllYears:"전체 연도",
-    bulkGrade:"전체 채점하기", exportSelected:"선택 항목 내보내기 (50P)", toWatchlist:"관심번호로 이동",
+    bulkGrade:"전체 채점하기", exportExcel:"엑셀 다운로드 (50P)", exportPdf:"PDF 생성 (50P)",
+    toWatchlist:"관심번호로 이동", goWatchlist:"관심번호 보기 →",
     loading:"불러오는 중…", empty:"아직 등록한 조합이 없습니다.", loginNeeded:"로그인이 필요합니다.",
     gradeWait:"채점 대기", gradeLose:"낙첨", gradeBtn:"확인", gradeBtnLoading:"확인 중…",
     gradeTier:function(n){ return n + "등"; },
     selectAtLeastOne:"먼저 항목을 선택해주세요.",
+    exportSuccess:function(n){ return n + "건 내보내기 완료 (50P 차감)"; },
+    watchlistSuccess:function(n){ return n + "건 관심번호로 이동했습니다."; },
   },
   en: {
     navBack:"← All Games", pageTitle:"My Entries",
     badgeTotal:"Total Entries", badgeGraded:"Graded", badgePending:"Pending", badgeWin:"Winners (Tier 1–5)",
     filterAllGames:"All Games", filterAllYears:"All Years",
-    bulkGrade:"Grade All", exportSelected:"Export Selected (50P)", toWatchlist:"Move to Watchlist",
+    bulkGrade:"Grade All", exportExcel:"Download Excel (50P)", exportPdf:"Generate PDF (50P)",
+    toWatchlist:"Move to Watchlist", goWatchlist:"View Watchlist →",
     loading:"Loading…", empty:"No entries registered yet.", loginNeeded:"Please log in.",
     gradeWait:"Pending", gradeLose:"No win", gradeBtn:"Check", gradeBtnLoading:"Checking…",
     gradeTier:function(n){ return "Tier " + n; },
     selectAtLeastOne:"Please select at least one item first.",
+    exportSuccess:function(n){ return n + " item(s) exported (50P charged)"; },
+    watchlistSuccess:function(n){ return n + " item(s) moved to watchlist."; },
   },
   ja: {
     navBack:"← すべてのゲーム", pageTitle:"登録した番号",
     badgeTotal:"登録合計", badgeGraded:"採点済み", badgePending:"採点待ち", badgeWin:"当選(1〜5等)",
     filterAllGames:"すべてのゲーム", filterAllYears:"すべての年",
-    bulkGrade:"一括採点", exportSelected:"選択項目をエクスポート (50P)", toWatchlist:"関心番号へ移動",
+    bulkGrade:"一括採点", exportExcel:"エクセルダウンロード (50P)", exportPdf:"PDF生成 (50P)",
+    toWatchlist:"関心番号へ移動", goWatchlist:"関心番号を見る →",
     loading:"読み込み中…", empty:"まだ登録した組み合わせがありません。", loginNeeded:"ログインが必要です。",
     gradeWait:"採点待ち", gradeLose:"落選", gradeBtn:"確認", gradeBtnLoading:"確認中…",
     gradeTier:function(n){ return n + "等"; },
     selectAtLeastOne:"まず項目を選択してください。",
+    exportSuccess:function(n){ return n + "件エクスポート完了 (50P消費)"; },
+    watchlistSuccess:function(n){ return n + "件を関心番号へ移動しました。"; },
   },
 };
 let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
@@ -209,12 +223,19 @@ document.querySelectorAll('.lang-toggle button').forEach(function(btn){ btn.addE
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const SELF_GRADE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/self-grade";
+const WATCHLIST_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/watchlist";
+const EXPORT_CHARGE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/export-charge";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const GAME_LABELS = {
   kr_lotto645:'KR', us_powerball:'US-PB', us_megamillions:'US-MM', eu_euromillions:'EU',
   jp_miniloto:'JP-MINI', jp_loto7:'JP-L7', jp_loto6:'JP-L6', ca_lottomax:'CA-MAX',
   ca_lotto649:'CA-649', au_powerball:'AU-PB', au_ozlotto:'AU-OZ', au_tattslotto:'AU-TATTS',
+};
+const GAME_FULL = {
+  kr_lotto645:'KR Lotto 6/45', us_powerball:'Powerball', us_megamillions:'Mega Millions', eu_euromillions:'EuroMillions',
+  jp_miniloto:'Mini Loto', jp_loto7:'Loto 7', jp_loto6:'Loto 6', ca_lottomax:'Lotto Max',
+  ca_lotto649:'Lotto 6/49', au_powerball:'AU Powerball', au_ozlotto:'Oz Lotto', au_tattslotto:'Tatts Lotto',
 };
 
 let allEntries = [];
@@ -359,18 +380,117 @@ document.getElementById('bulkGradeBtn').addEventListener('click', async function
   }
 });
 
-document.getElementById('exportSelectedBtn').addEventListener('click', function(){
+function getSelectedIds(){
+  return Array.from(document.querySelectorAll('.entry-check:checked')).map(c => c.dataset.id);
+}
+
+async function chargeAndFetch(ids){
+  const resp = await fetch(EXPORT_CHARGE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+    body: JSON.stringify({ source: 'entries', ids }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || 'Failed');
+  return data;
+}
+
+function buildTitle(rows){
   const t = i18n[currentLang];
-  const ids = Array.from(document.querySelectorAll('.entry-check:checked')).map(c => c.dataset.id);
+  const gameIds = [...new Set(rows.map(r => r.game_id))];
+  const gameLabel = gameIds.length === 1 ? (GAME_FULL[gameIds[0]] || gameIds[0]) : (currentLang==='ko' ? '전체 게임' : currentLang==='ja' ? '全ゲーム' : 'All Games');
+  const today = new Date().toISOString().slice(0,10);
+  const suffix = currentLang==='ko' ? '응모내역' : currentLang==='ja' ? '応募内訳' : 'Entries';
+  return gameLabel + ' ' + today + ' ' + suffix;
+}
+
+document.getElementById('exportExcelBtn').addEventListener('click', async function(){
+  const t = i18n[currentLang];
+  const ids = getSelectedIds();
   if (ids.length === 0) { alert(t.selectAtLeastOne); return; }
-  alert('Excel/PDF export (50P) — coming soon. Selected: ' + ids.length);
+  const btn = this;
+  btn.disabled = true;
+  try {
+    const data = await chargeAndFetch(ids);
+    const sheetRows = data.rows.map(function(r){
+      return {
+        '게임': GAME_FULL[r.game_id] || r.game_id,
+        '회차': r.round_no,
+        '메인번호': (r.main_numbers||[]).join(', '),
+        '보너스번호': (r.bonus_numbers||[]).join(', '),
+        '등수': (r.grade === null || r.grade === undefined) ? '' : (r.grade === 0 ? t.gradeLose : t.gradeTier(r.grade)),
+        '메모': r.memo || '',
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(sheetRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'entries');
+    XLSX.writeFile(wb, buildTitle(data.rows).replace(/\s+/g,'_') + '.xlsx');
+    alert(t.exportSuccess(data.rows.length));
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+  }
 });
 
-document.getElementById('toWatchlistBtn').addEventListener('click', function(){
+document.getElementById('exportPdfBtn').addEventListener('click', async function(){
   const t = i18n[currentLang];
-  const ids = Array.from(document.querySelectorAll('.entry-check:checked')).map(c => c.dataset.id);
+  const ids = getSelectedIds();
   if (ids.length === 0) { alert(t.selectAtLeastOne); return; }
-  alert('Watchlist feature — coming soon. Selected: ' + ids.length);
+  const btn = this;
+  btn.disabled = true;
+  try {
+    const data = await chargeAndFetch(ids);
+    const title = buildTitle(data.rows);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text(title, 14, 18);
+    const body = data.rows.map(function(r){
+      return [
+        GAME_FULL[r.game_id] || r.game_id,
+        String(r.round_no),
+        (r.main_numbers||[]).join(', '),
+        (r.bonus_numbers||[]).join(', '),
+        (r.grade === null || r.grade === undefined) ? '-' : (r.grade === 0 ? t.gradeLose : t.gradeTier(r.grade)),
+      ];
+    });
+    doc.autoTable({
+      startY: 26,
+      head: [['Game', 'Round', 'Main', 'Bonus', 'Grade']],
+      body: body,
+      styles: { fontSize: 9 },
+    });
+    doc.save(title.replace(/\s+/g,'_') + '.pdf');
+    alert(t.exportSuccess(data.rows.length));
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('toWatchlistBtn').addEventListener('click', async function(){
+  const t = i18n[currentLang];
+  const ids = getSelectedIds();
+  if (ids.length === 0) { alert(t.selectAtLeastOne); return; }
+  const btn = this;
+  btn.disabled = true;
+  try {
+    const resp = await fetch(WATCHLIST_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ action: 'add_from_entries', entry_ids: ids }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Failed');
+    alert(t.watchlistSuccess(data.added));
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 applyLang(currentLang);
