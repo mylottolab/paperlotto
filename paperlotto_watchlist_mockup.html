@@ -167,6 +167,9 @@ const i18n = {
     selectAtLeastOne:"먼저 항목을 선택해주세요.", deleteConfirm:"선택한 항목을 삭제할까요?",
     addNeedsMain:"메인 번호를 입력해주세요.",
     exportSuccess:function(n){ return n + "건 내보내기 완료 (50P 차감)"; },
+    insufficientPointsMsg:function(balance, required){
+      return "포인트가 부족합니다. (보유 " + balance + "P / 필요 " + required + "P)\n\n지금 포인트 충전 페이지로 이동할까요?";
+    },
   },
   en: {
     navEntries:"← My Entries", pageTitle:"Watchlist",
@@ -178,6 +181,9 @@ const i18n = {
     selectAtLeastOne:"Please select at least one item first.", deleteConfirm:"Delete the selected items?",
     addNeedsMain:"Please enter main numbers.",
     exportSuccess:function(n){ return n + " item(s) exported (50P charged)"; },
+    insufficientPointsMsg:function(balance, required){
+      return "You don't have enough points. (Balance: " + balance + "P / Needed: " + required + "P)\n\nGo to the points recharge page now?";
+    },
   },
   ja: {
     navEntries:"← 登録した番号", pageTitle:"関心番号",
@@ -189,6 +195,9 @@ const i18n = {
     selectAtLeastOne:"まず項目を選択してください。", deleteConfirm:"選択した項目を削除しますか？",
     addNeedsMain:"メイン番号を入力してください。",
     exportSuccess:function(n){ return n + "件エクスポート完了 (50P消費)"; },
+    insufficientPointsMsg:function(balance, required){
+      return "ポイントが不足しています。（保有 " + balance + "P / 必要 " + required + "P）\n\n今すぐポイント充電ページへ移動しますか？";
+    },
   },
 };
 let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
@@ -355,8 +364,25 @@ async function chargeAndFetch(ids){
     body: JSON.stringify({ source: 'watchlist', ids: ids }),
   });
   const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error || 'Failed');
+  if (!resp.ok) {
+    const err = new Error(data.error || 'Failed');
+    err.code = data.code;
+    err.required = data.required;
+    err.balance = data.balance;
+    throw err;
+  }
   return data;
+}
+
+function showExportError(e){
+  const t = i18n[currentLang];
+  if (e.code === 'INSUFFICIENT_POINTS') {
+    if (confirm(t.insufficientPointsMsg(e.balance, e.required))) {
+      window.location.href = 'paperlotto_recharge_mockup.html';
+    }
+  } else {
+    alert(e.message);
+  }
 }
 
 document.getElementById('exportExcelBtn').addEventListener('click', async function(){
@@ -383,7 +409,7 @@ document.getElementById('exportExcelBtn').addEventListener('click', async functi
     XLSX.writeFile(wb, buildTitle(data.rows).replace(/\s+/g,'_') + '.xlsx');
     alert(t.exportSuccess(data.rows.length));
   } catch (e) {
-    alert(e.message);
+    showExportError(e);
   } finally {
     btn.disabled = false;
   }
@@ -410,7 +436,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
     doc.save(title.replace(/\s+/g,'_') + '.pdf');
     alert(t.exportSuccess(data.rows.length));
   } catch (e) {
-    alert(e.message);
+    showExportError(e);
   } finally {
     btn.disabled = false;
   }
