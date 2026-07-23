@@ -1,0 +1,111 @@
+<!--
+=====================================================
+PaperLotto — 관리자 화면에 추가할 "자동수집 실패" 패널
+=====================================================
+기존 admin.html의 적절한 위치(당첨결과 입력 탭 근처)에 이 블록을 붙여넣고,
+SUPABASE_FUNCTIONS_URL / ADMIN_API_KEY는 기존 admin.html에서 쓰는 변수를 그대로 재사용하세요.
+=====================================================
+-->
+
+<section id="scrapeFailuresPanel" style="margin-top:24px;">
+  <h2 style="display:flex;align-items:center;gap:8px;">
+    자동수집 실패 목록
+    <span id="scrapeFailBadge" style="display:none;background:#c0392b;color:#fff;border-radius:12px;padding:2px 10px;font-size:13px;"></span>
+  </h2>
+  <button id="scrapeFailRefreshBtn" type="button">새로고침</button>
+  <table id="scrapeFailTable" style="width:100%;margin-top:12px;border-collapse:collapse;">
+    <thead>
+      <tr style="text-align:left;border-bottom:1px solid #444;">
+        <th style="padding:6px;">게임</th>
+        <th style="padding:6px;">회차</th>
+        <th style="padding:6px;">예상 추첨일</th>
+        <th style="padding:6px;">시도횟수</th>
+        <th style="padding:6px;">마지막 에러</th>
+        <th style="padding:6px;">상태</th>
+        <th style="padding:6px;">조치</th>
+      </tr>
+    </thead>
+    <tbody id="scrapeFailTbody"></tbody>
+  </table>
+  <p id="scrapeFailEmpty" style="display:none;opacity:.7;">실패한 자동수집 건이 없습니다.</p>
+</section>
+
+<script>
+(function () {
+  // 기존 admin.html에 이미 정의돼 있다면 아래 두 줄은 지우고 기존 변수를 쓰세요.
+  const FUNCTIONS_URL = window.SUPABASE_FUNCTIONS_URL || 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1';
+  const ADMIN_API_KEY = window.ADMIN_API_KEY; // 기존 admin.html의 로그인/키 입력 로직 재사용
+
+  async function loadFailures() {
+    const res = await fetch(`${FUNCTIONS_URL}/scrape-failures`, {
+      headers: { 'x-admin-api-key': ADMIN_API_KEY },
+    });
+    const data = await res.json();
+    renderFailures(data.jobs || []);
+  }
+
+  function renderFailures(jobs) {
+    const tbody = document.getElementById('scrapeFailTbody');
+    const empty = document.getElementById('scrapeFailEmpty');
+    const badge = document.getElementById('scrapeFailBadge');
+    tbody.innerHTML = '';
+
+    if (jobs.length === 0) {
+      empty.style.display = 'block';
+      badge.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    const manualCount = jobs.filter((j) => j.status === 'needs_manual').length;
+    if (manualCount > 0) {
+      badge.textContent = manualCount;
+      badge.style.display = 'inline-block';
+    }
+
+    for (const job of jobs) {
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid #333';
+      tr.innerHTML = `
+        <td style="padding:6px;">${job.game_id}</td>
+        <td style="padding:6px;">${job.round_no}</td>
+        <td style="padding:6px;">${job.expected_date ?? '-'}</td>
+        <td style="padding:6px;">${job.attempts}/${job.max_attempts}</td>
+        <td style="padding:6px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(job.last_error || '').replace(/"/g, '&quot;')}">${job.last_error ?? '-'}</td>
+        <td style="padding:6px;">${job.status === 'needs_manual' ? '수동입력 대기' : '재시도 중'}</td>
+        <td style="padding:6px;">
+          <button type="button" data-action="manual" data-id="${job.id}" data-game="${job.game_id}" data-round="${job.round_no}">수동입력으로 이동</button>
+          <button type="button" data-action="retry" data-id="${job.id}">다시 시도</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  document.getElementById('scrapeFailTbody').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    if (btn.dataset.action === 'manual') {
+      // 기존 "당첨결과 수동 입력" 폼으로 게임/회차를 채워서 이동시키는 로직
+      // (admin.html에 이미 있는 함수/폼 id에 맞춰 연결하세요)
+      if (typeof window.openManualEntryForm === 'function') {
+        window.openManualEntryForm(btn.dataset.game, btn.dataset.round);
+      } else {
+        alert(`admin-save-draw-result로 ${btn.dataset.game} ${btn.dataset.round}회를 수동입력해주세요.`);
+      }
+    }
+
+    if (btn.dataset.action === 'retry') {
+      await fetch(`${FUNCTIONS_URL}/scrape-failures`, {
+        method: 'POST',
+        headers: { 'x-admin-api-key': ADMIN_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'retry', job_id: Number(btn.dataset.id) }),
+      });
+      loadFailures();
+    }
+  });
+
+  document.getElementById('scrapeFailRefreshBtn').addEventListener('click', loadFailures);
+  loadFailures();
+})();
+</script>
