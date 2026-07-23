@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>포인트 충전 — PaperLotto</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://stdpay.inicis.com/stdjs/INIStdPay.js" charset="UTF-8"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -13,6 +14,7 @@
   --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
   --gold:#b8862e; --gold-bright:#e0aa4e;
   --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
 }
 *{box-sizing:border-box;}
 body{
@@ -35,25 +37,69 @@ header{
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
 nav{ font-size:13.5px; color:var(--text-mid); }
 
-main{ max-width:560px; margin:0 auto; padding:60px 24px 90px; text-align:center; }
-.balance-panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:32px; margin-bottom:24px; }
+main{ max-width:560px; margin:0 auto; padding:40px 24px 90px; }
+.balance-panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:28px; margin-bottom:22px; text-align:center; }
 .balance-label{ font-size:12.5px; color:var(--ink-dim); margin-bottom:8px; }
-.balance-num{ font-family:'IBM Plex Mono',monospace; font-size:32px; font-weight:700; color:#8a5b1c; }
+.balance-num{ font-family:'IBM Plex Mono',monospace; font-size:30px; font-weight:700; color:#8a5b1c; }
 
-.pack-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
-.pack-card{
-  background:var(--paper); color:var(--ink); border-radius:12px; padding:20px 12px;
-  opacity:0.5; cursor:not-allowed;
+.login-notice{
+  background:var(--paper); color:var(--ink); border-radius:14px; padding:28px; text-align:center; font-size:13.5px;
 }
-.pack-card .pts{ font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:700; }
-.pack-card .price{ font-size:12px; color:var(--ink-dim); margin-top:4px; }
+.login-notice a{ color:#8a5b1c; text-decoration:underline; font-weight:600; }
 
-.notice{
-  background:rgba(184,134,46,0.1); border:1px solid rgba(184,134,46,0.3); border-radius:12px;
-  padding:20px; font-size:13.5px; color:var(--text-mid); line-height:1.7;
+.tabs{ display:flex; background:var(--board-2); border-radius:10px; padding:4px; margin-bottom:18px; }
+.tabs button{
+  flex:1; padding:11px; border:none; background:transparent; border-radius:7px;
+  font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; color:var(--text-mid); cursor:pointer;
 }
+.tabs button.active{ background:var(--gold); color:var(--ink); }
+
+.panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:26px; }
+.panel h3{ font-size:14.5px; margin-bottom:6px; }
+.panel .desc{ font-size:12px; color:var(--ink-dim); margin-bottom:18px; line-height:1.6; }
+
+.quick-amounts{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.quick-amounts button{
+  padding:10px 0; border-radius:8px; border:1.5px solid rgba(28,33,48,0.15); background:#fff;
+  font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink);
+}
+.quick-amounts button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+
+label{ display:block; font-size:12px; font-weight:600; color:var(--ink-dim); margin:12px 0 6px; }
+label:first-of-type{ margin-top:0; }
+input[type="text"], input[type="number"]{
+  width:100%; padding:11px 13px; border:1.5px solid rgba(28,33,48,0.15); border-radius:8px;
+  font-size:13.5px; font-family:'Inter',sans-serif; color:var(--ink); background:#fff;
+}
+.est-points{ font-size:12.5px; color:var(--ink-dim); margin-top:8px; }
+.est-points b{ color:#8a5b1c; font-family:'IBM Plex Mono',monospace; }
+
+#paypal-button-container{ margin-top:16px; min-height:45px; }
+
+.bank-info-box{
+  background:rgba(184,134,46,0.08); border:1px solid rgba(184,134,46,0.25); border-radius:10px;
+  padding:16px; font-size:13px; line-height:1.9; margin-bottom:16px;
+}
+.bank-info-box b{ color:#8a5b1c; }
+
+.submit-btn{
+  width:100%; padding:13px; border:none; border-radius:9px; background:var(--ink); color:var(--paper);
+  font-size:14px; font-weight:600; cursor:pointer; margin-top:16px;
+}
+.submit-btn:hover{ background:#2a3145; }
+.submit-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+.status-msg{ margin-top:14px; padding:12px 16px; border-radius:8px; font-size:13px; display:none; }
+.status-msg.ok{ display:block; background:rgba(31,122,79,0.12); color:var(--ok); }
+.status-msg.err{ display:block; background:rgba(198,90,46,0.12); color:var(--err); }
+
 @media (max-width:480px){
-  .pack-grid{ grid-template-columns:1fr; }
+  header{ padding:14px 16px; }
+  main{ padding:24px 14px 70px; }
+  .panel{ padding:18px; }
+  .quick-amounts{ grid-template-columns:repeat(2,1fr); }
+  .tabs{ flex-direction:column; gap:4px; }
+  .tabs button{ font-size:12.5px; padding:10px; }
 }
 </style>
 </head>
@@ -73,28 +119,419 @@ main{ max-width:560px; margin:0 auto; padding:60px 24px 90px; text-align:center;
     <div class="balance-num" id="balanceNum">–</div>
   </div>
 
-  <div class="pack-grid">
-    <div class="pack-card"><div class="pts">500P</div><div class="price">준비 중</div></div>
-    <div class="pack-card"><div class="pts">1,200P</div><div class="price">준비 중</div></div>
-    <div class="pack-card"><div class="pts">3,000P</div><div class="price">준비 중</div></div>
+  <div id="loginNotice" class="login-notice" style="display:none;">
+    포인트를 충전하려면 먼저 <a href="paperlotto_login_mockup.html">로그인</a>이 필요합니다.
   </div>
 
-  <div class="notice">
-    💳 포인트 충전(결제) 기능은 현재 준비 중입니다.<br>
-    곧 PayPal · 나이스페이 결제를 통해 충전하실 수 있게 됩니다.
+  <div id="chargeArea" style="display:none;">
+    <div class="tabs">
+      <button id="tabPaypal" class="active" type="button">💳 PayPal (해외카드/달러)</button>
+      <button id="tabCard" type="button">💳 신용카드 (원화)</button>
+      <button id="tabBank" type="button">🏦 무통장입금 (원화)</button>
+    </div>
+
+    <!-- PayPal 패널 -->
+    <div class="panel" id="panelPaypal">
+      <h3>PayPal로 충전하기</h3>
+      <div class="desc">환율: $1 = <span id="paypalRateLabel">2,000</span>P · $1 ~ $1,000까지 가능</div>
+
+      <div class="quick-amounts" id="quickAmounts">
+        <button type="button" data-amt="5">$5</button>
+        <button type="button" data-amt="10">$10</button>
+        <button type="button" data-amt="25">$25</button>
+        <button type="button" data-amt="50">$50</button>
+      </div>
+
+      <label>직접 입력 (USD)</label>
+      <input type="number" id="usdAmount" min="1" max="1000" placeholder="예: 10" value="5">
+      <div class="est-points" id="estPoints">→ 약 <b>10,000</b>P 적립 예정</div>
+
+      <div id="paypal-button-container"></div>
+      <div class="status-msg" id="paypalMsg"></div>
+    </div>
+
+    <!-- 신용카드(이니시스) 패널 -->
+    <div class="panel" id="panelCard" style="display:none;">
+      <h3>신용카드로 충전하기</h3>
+      <div class="desc">환율: ₩1 = <span id="cardRateLabel">2</span>P · 최소 1,000원부터 가능</div>
+
+      <div class="quick-amounts" id="cardQuickAmounts">
+        <button type="button" data-amt="1000">1,000원</button>
+        <button type="button" data-amt="5000">5,000원</button>
+        <button type="button" data-amt="10000">10,000원</button>
+        <button type="button" data-amt="50000">50,000원</button>
+      </div>
+
+      <label>직접 입력 (원)</label>
+      <input type="number" id="cardKrwAmount" min="1000" step="1000" placeholder="예: 10000" value="1000">
+      <div class="est-points" id="cardEstPoints">→ 약 <b>2,000</b>P 적립 예정</div>
+
+      <label>구매자 이름</label>
+      <input type="text" id="cardBuyerName" placeholder="이름을 입력하세요">
+      <label>구매자 연락처</label>
+      <input type="text" id="cardBuyerTel" placeholder="010-0000-0000">
+      <label>구매자 이메일</label>
+      <input type="text" id="cardBuyerEmail" placeholder="이메일을 입력하세요">
+
+      <button class="submit-btn" id="cardPayBtn">결제창 열기</button>
+      <div class="status-msg" id="cardMsg"></div>
+    </div>
+
+    <!-- 무통장입금 패널 -->
+    <div class="panel" id="panelBank" style="display:none;">
+      <h3>무통장입금으로 충전하기</h3>
+      <div class="desc">아래 계좌로 입금 후, 입금자명과 금액을 정확히 입력해 신청해주세요. 확인 후 통상 12시간 이내 포인트가 적립됩니다.</div>
+
+      <div class="bank-info-box" id="bankInfoBox">계좌 정보 불러오는 중…</div>
+
+      <label>입금자명</label>
+      <input type="text" id="depositorName" placeholder="실제 입금하시는 분의 성함">
+
+      <label>입금 금액 (원)</label>
+      <input type="number" id="krwAmount" min="1000" step="1000" placeholder="예: 10000">
+      <div class="est-points" id="bankEstPoints">→ 약 <b>0</b>P 적립 예정 (환율: ₩1 = <span id="bankRateLabel">2</span>P)</div>
+
+      <button class="submit-btn" id="bankSubmitBtn">입금 신청하기</button>
+      <div class="status-msg" id="bankMsg"></div>
+    </div>
   </div>
 </main>
+
+<form id="inicisForm" method="post">
+  <input type="hidden" name="version" value="1.0">
+  <input type="hidden" name="mid" id="f_mid">
+  <input type="hidden" name="goodname" id="f_goodname">
+  <input type="hidden" name="oid" id="f_oid">
+  <input type="hidden" name="price" id="f_price">
+  <input type="hidden" name="currency" value="WON">
+  <input type="hidden" name="buyername" id="f_buyername">
+  <input type="hidden" name="buyertel" id="f_buyertel">
+  <input type="hidden" name="buyeremail" id="f_buyeremail">
+  <input type="hidden" name="timestamp" id="f_timestamp">
+  <input type="hidden" name="signature" id="f_signature">
+  <input type="hidden" name="verification" id="f_verification">
+  <input type="hidden" name="mKey" id="f_mkey">
+  <input type="hidden" name="returnUrl" id="f_returnUrl">
+  <input type="hidden" name="closeUrl" id="f_closeUrl">
+  <input type="hidden" name="gopaymethod" value="Card">
+  <input type="hidden" name="charset" value="UTF-8">
+  <input type="hidden" name="acceptmethod" value="CARDPOINT">
+</form>
 
 <script>
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const PAYPAL_CLIENT_ID_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-client-id";
+const PAYPAL_CREATE_ORDER_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-create-order";
+const PAYPAL_CAPTURE_ORDER_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-capture-order";
+const BANK_INFO_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-info";
+const BANK_REQUEST_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-request";
 
-(async () => {
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let accessToken = null;
+let usdRate = 2000;
+let krwRate = 2;
+
+async function refreshBalance(){
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) { document.getElementById('balanceNum').textContent = '–'; return; }
+  if (!session) {
+    document.getElementById('loginNotice').style.display = 'block';
+    document.getElementById('chargeArea').style.display = 'none';
+    document.getElementById('balanceNum').textContent = '–';
+    return false;
+  }
+  accessToken = session.access_token;
+  document.getElementById('loginNotice').style.display = 'none';
+  document.getElementById('chargeArea').style.display = 'block';
   const { data: profile } = await sb.from('profiles').select('points_balance').eq('id', session.user.id).maybeSingle();
   document.getElementById('balanceNum').textContent = (profile ? profile.points_balance : 0) + 'P';
+  return true;
+}
+
+async function loadExchangeRate(){
+  try {
+    const { data } = await sb.from('exchange_rate').select('usd_to_point, krw_to_point').eq('id', 1).maybeSingle();
+    if (data) {
+      usdRate = Number(data.usd_to_point);
+      krwRate = Number(data.krw_to_point);
+    }
+  } catch (e) { /* 기본값 유지 */ }
+  document.getElementById('paypalRateLabel').textContent = usdRate.toLocaleString();
+  document.getElementById('bankRateLabel').textContent = krwRate;
+  document.getElementById('cardRateLabel').textContent = krwRate;
+  updateEstPoints();
+  updateBankEstPoints();
+  updateCardEstPoints();
+}
+
+function updateCardEstPoints(){
+  const krw = Number(document.getElementById('cardKrwAmount').value) || 0;
+  const pts = Math.round(krw * krwRate);
+  document.getElementById('cardEstPoints').innerHTML = `→ 약 <b>${pts.toLocaleString()}</b>P 적립 예정`;
+}
+
+function updateEstPoints(){
+  const usd = Number(document.getElementById('usdAmount').value) || 0;
+  const pts = Math.round(usd * usdRate);
+  document.getElementById('estPoints').innerHTML = `→ 약 <b>${pts.toLocaleString()}</b>P 적립 예정`;
+}
+function updateBankEstPoints(){
+  const krw = Number(document.getElementById('krwAmount').value) || 0;
+  const pts = Math.round(krw * krwRate);
+  document.getElementById('bankEstPoints').innerHTML = `→ 약 <b>${pts.toLocaleString()}</b>P 적립 예정 (환율: ₩1 = <span id="bankRateLabel">${krwRate}</span>P)`;
+}
+
+// ── 탭 전환 ──
+const TABS = {
+  paypal: { tab: 'tabPaypal', panel: 'panelPaypal' },
+  card: { tab: 'tabCard', panel: 'panelCard' },
+  bank: { tab: 'tabBank', panel: 'panelBank' },
+};
+function switchTab(active){
+  Object.keys(TABS).forEach(key => {
+    const t = document.getElementById(TABS[key].tab);
+    const p = document.getElementById(TABS[key].panel);
+    if (key === active) { t.classList.add('active'); p.style.display = 'block'; }
+    else { t.classList.remove('active'); p.style.display = 'none'; }
+  });
+}
+document.getElementById('tabPaypal').addEventListener('click', () => switchTab('paypal'));
+document.getElementById('tabCard').addEventListener('click', () => switchTab('card'));
+document.getElementById('tabBank').addEventListener('click', () => switchTab('bank'));
+
+// ── 빠른 금액 선택 ──
+document.querySelectorAll('#quickAmounts button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#quickAmounts button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('usdAmount').value = btn.dataset.amt;
+    updateEstPoints();
+    renderPaypalButtons();
+  });
+});
+document.getElementById('usdAmount').addEventListener('input', () => {
+  document.querySelectorAll('#quickAmounts button').forEach(b => b.classList.remove('active'));
+  updateEstPoints();
+});
+document.getElementById('krwAmount').addEventListener('input', updateBankEstPoints);
+
+// ── 신용카드(이니시스) ──
+document.querySelectorAll('#cardQuickAmounts button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#cardQuickAmounts button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('cardKrwAmount').value = btn.dataset.amt;
+    updateCardEstPoints();
+  });
+});
+document.getElementById('cardKrwAmount').addEventListener('input', () => {
+  document.querySelectorAll('#cardQuickAmounts button').forEach(b => b.classList.remove('active'));
+  updateCardEstPoints();
+});
+
+const INICIS_PREPARE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/inicis-prepare";
+
+document.getElementById('cardPayBtn').addEventListener('click', async () => {
+  const msgEl = document.getElementById('cardMsg');
+  msgEl.className = 'status-msg';
+
+  const price = Number(document.getElementById('cardKrwAmount').value);
+  const buyername = document.getElementById('cardBuyerName').value.trim();
+  const buyertel = document.getElementById('cardBuyerTel').value.trim();
+  const buyeremail = document.getElementById('cardBuyerEmail').value.trim();
+
+  if (!price || price < 1000) {
+    msgEl.textContent = '충전금액은 1,000원 이상이어야 합니다.';
+    msgEl.className = 'status-msg err';
+    return;
+  }
+  if (!buyername) {
+    msgEl.textContent = '구매자 이름을 입력해주세요.';
+    msgEl.className = 'status-msg err';
+    return;
+  }
+
+  const btn = document.getElementById('cardPayBtn');
+  btn.disabled = true; btn.textContent = '준비 중…';
+
+  try {
+    const resp = await fetch(INICIS_PREPARE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({
+        price, goodname: 'PaperLotto 포인트 충전', buyername, buyertel, buyeremail,
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '결제 준비 실패');
+
+    document.getElementById('f_mid').value = data.mid;
+    document.getElementById('f_goodname').value = data.goodname;
+    document.getElementById('f_oid').value = data.oid;
+    document.getElementById('f_price').value = data.price;
+    document.getElementById('f_buyername').value = data.buyername;
+    document.getElementById('f_buyertel').value = data.buyertel;
+    document.getElementById('f_buyeremail').value = data.buyeremail;
+    document.getElementById('f_timestamp').value = data.timestamp;
+    document.getElementById('f_signature').value = data.signature;
+    document.getElementById('f_verification').value = data.verification;
+    document.getElementById('f_mkey').value = data.mkey;
+    document.getElementById('f_returnUrl').value = data.returnUrl;
+    document.getElementById('f_closeUrl').value = data.closeUrl;
+
+    INIStdPay.pay('inicisForm');
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = 'status-msg err';
+  } finally {
+    btn.disabled = false; btn.textContent = '결제창 열기';
+  }
+});
+
+// ── PayPal SDK 동적 로드 + 버튼 렌더링 ──
+let paypalSdkLoaded = false;
+let paypalSdkLoading = null;
+
+function loadPaypalSdk(clientId){
+  if (paypalSdkLoaded) return Promise.resolve();
+  if (paypalSdkLoading) return paypalSdkLoading;
+  paypalSdkLoading = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD`;
+    script.onload = () => { paypalSdkLoaded = true; resolve(); };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return paypalSdkLoading;
+}
+
+function renderPaypalButtons(){
+  const container = document.getElementById('paypal-button-container');
+  if (!window.paypal) return;
+  container.innerHTML = '';
+  const msgEl = document.getElementById('paypalMsg');
+  msgEl.className = 'status-msg';
+
+  window.paypal.Buttons({
+    style: { layout: 'horizontal', color: 'gold', shape: 'rect', label: 'paypal', height: 45 },
+    createOrder: async () => {
+      const usdAmount = Number(document.getElementById('usdAmount').value);
+      if (!usdAmount || usdAmount < 1) {
+        msgEl.textContent = '올바른 금액을 입력해주세요 ($1 이상).';
+        msgEl.className = 'status-msg err';
+        throw new Error('invalid amount');
+      }
+      const resp = await fetch(PAYPAL_CREATE_ORDER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+        body: JSON.stringify({ usdAmount }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        msgEl.textContent = data.error || '주문 생성 실패';
+        msgEl.className = 'status-msg err';
+        throw new Error(data.error || 'order failed');
+      }
+      return data.id;
+    },
+    onApprove: async (data) => {
+      const resp = await fetch(PAYPAL_CAPTURE_ORDER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+        body: JSON.stringify({ orderID: data.orderID }),
+      });
+      const result = await resp.json();
+      if (!resp.ok) {
+        msgEl.textContent = result.error || '결제 승인 실패';
+        msgEl.className = 'status-msg err';
+        return;
+      }
+      msgEl.textContent = `✅ 결제 완료! ${result.points.toLocaleString()}P가 적립되었습니다.`;
+      msgEl.className = 'status-msg ok';
+      await refreshBalance();
+    },
+    onError: (err) => {
+      console.error('[PayPal] 버튼 오류:', err);
+      msgEl.textContent = '결제 중 오류가 발생했습니다. 다시 시도해주세요.';
+      msgEl.className = 'status-msg err';
+    },
+  }).render('#paypal-button-container');
+}
+
+async function initPaypal(){
+  try {
+    const resp = await fetch(PAYPAL_CLIENT_ID_URL);
+    const data = await resp.json();
+    if (!resp.ok || !data.clientId) throw new Error(data.error || 'PayPal 설정을 불러오지 못했습니다.');
+    await loadPaypalSdk(data.clientId);
+    renderPaypalButtons();
+  } catch (e) {
+    document.getElementById('paypal-button-container').innerHTML =
+      `<div style="font-size:12.5px; color:var(--err);">PayPal 결제 버튼을 불러오지 못했습니다: ${e.message}</div>`;
+  }
+}
+
+// ── 무통장입금 ──
+async function loadBankInfo(){
+  try {
+    const resp = await fetch(BANK_INFO_URL);
+    const data = await resp.json();
+    document.getElementById('bankInfoBox').innerHTML =
+      `<b>은행</b>: ${data.bankName}<br><b>계좌번호</b>: ${data.accountNumber}<br><b>예금주</b>: ${data.accountHolder}`;
+  } catch (e) {
+    document.getElementById('bankInfoBox').textContent = '계좌 정보를 불러오지 못했습니다.';
+  }
+}
+
+document.getElementById('bankSubmitBtn').addEventListener('click', async () => {
+  const msgEl = document.getElementById('bankMsg');
+  msgEl.className = 'status-msg';
+  const depositorName = document.getElementById('depositorName').value.trim();
+  const krwAmount = Number(document.getElementById('krwAmount').value);
+
+  if (!depositorName) {
+    msgEl.textContent = '입금자명을 입력해주세요.';
+    msgEl.className = 'status-msg err';
+    return;
+  }
+  if (!krwAmount || krwAmount < 1000) {
+    msgEl.textContent = '충전금액은 1,000원 이상이어야 합니다.';
+    msgEl.className = 'status-msg err';
+    return;
+  }
+
+  const btn = document.getElementById('bankSubmitBtn');
+  btn.disabled = true; btn.textContent = '신청 중…';
+  try {
+    const resp = await fetch(BANK_REQUEST_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ depositorName, amountKrw: krwAmount }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '신청 실패');
+
+    msgEl.textContent = '✅ ' + data.message;
+    msgEl.className = 'status-msg ok';
+    document.getElementById('depositorName').value = '';
+    document.getElementById('krwAmount').value = '';
+    updateBankEstPoints();
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = 'status-msg err';
+  } finally {
+    btn.disabled = false; btn.textContent = '입금 신청하기';
+  }
+});
+
+// ── 초기화 ──
+(async () => {
+  const loggedIn = await refreshBalance();
+  if (loggedIn) {
+    await loadExchangeRate();
+    await initPaypal();
+    await loadBankInfo();
+  }
 })();
 </script>
 
