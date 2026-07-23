@@ -1,0 +1,32 @@
+# =====================================================
+# PaperLotto — 자동 스크래핑 cron
+# 저장 위치: mylottolab/paperlotto 저장소의 .github/workflows/scrape-cron.yml
+# =====================================================
+# Supabase Edge Function은 스스로 스케줄을 갖지 않으므로,
+# GitHub Actions의 schedule 트리거로 30분마다 HTTP 호출합니다.
+# (Supabase pg_cron + pg_net을 쓰는 방법도 있지만, 이미 GitHub을 쓰고 있으므로
+#  별도 설정 없이 바로 쓸 수 있는 이 방식을 추천합니다.)
+#
+# 필요한 GitHub Secrets (저장소 Settings > Secrets and variables > Actions):
+#   SCRAPE_FUNCTION_URL   예: https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/scrape-draw-results
+#   CRON_SECRET           scrape-draw-results Edge Function의 CRON_SECRET과 동일한 값
+# =====================================================
+
+name: PaperLotto auto scrape
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # 30분마다 (UTC 기준, GitHub Actions는 타임존 지정 불가)
+  workflow_dispatch: {}       # 수동 실행 버튼도 활성화
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call scrape-draw-results
+        run: |
+          curl -sS -X POST "${{ secrets.SCRAPE_FUNCTION_URL }}" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --max-time 60 \
+            --fail-with-body
