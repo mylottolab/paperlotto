@@ -27,7 +27,7 @@
 
   const style = document.createElement('style');
   style.textContent = `
-    .auth-widget{ display:flex; align-items:center; gap:10px; font-size:12.5px; }
+    .auth-widget{ display:flex; align-items:center; gap:10px; font-size:12.5px; margin-top:2px; }
     .auth-login-btn{
       color:inherit; text-decoration:none; border:1px solid rgba(167,173,199,0.35);
       border-radius:16px; padding:5px 14px; white-space:nowrap;

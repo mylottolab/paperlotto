@@ -31,7 +31,7 @@ header{
   padding:18px 32px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
   background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
 }
-.brand{ display:flex; align-items:center; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
 .brand-mark{ width:30px; height:30px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
 .brand-name{ font-size:17px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
@@ -106,10 +106,10 @@ input[type="text"], input[type="number"]{
 <body>
 
 <header>
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
-  </div>
+  </a>
   <nav><a href="paperlotto_hub_mockup.html">← 전체 게임</a></nav>
 </header>
 
@@ -133,7 +133,7 @@ input[type="text"], input[type="number"]{
     <!-- PayPal 패널 -->
     <div class="panel" id="panelPaypal">
       <h3>PayPal로 충전하기</h3>
-      <div class="desc">환율: $1 = <span id="paypalRateLabel">2,000</span>P · $1 ~ $1,000까지 가능</div>
+      <div class="desc">환율: $1 = <span id="paypalRateLabel">1,400</span>P · $1 ~ $1,000까지 가능</div>
 
       <div class="quick-amounts" id="quickAmounts">
         <button type="button" data-amt="5">$5</button>
@@ -153,7 +153,7 @@ input[type="text"], input[type="number"]{
     <!-- 신용카드(이니시스) 패널 -->
     <div class="panel" id="panelCard" style="display:none;">
       <h3>신용카드로 충전하기</h3>
-      <div class="desc">환율: ₩1 = <span id="cardRateLabel">2</span>P · 최소 1,000원부터 가능</div>
+      <div class="desc">환율: ₩1 = <span id="cardRateLabel">1</span>P · 최소 1,000원부터 가능</div>
 
       <div class="quick-amounts" id="cardQuickAmounts">
         <button type="button" data-amt="1000">1,000원</button>
@@ -189,7 +189,7 @@ input[type="text"], input[type="number"]{
 
       <label>입금 금액 (원)</label>
       <input type="number" id="krwAmount" min="1000" step="1000" placeholder="예: 10000">
-      <div class="est-points" id="bankEstPoints">→ 약 <b>0</b>P 적립 예정 (환율: ₩1 = <span id="bankRateLabel">2</span>P)</div>
+      <div class="est-points" id="bankEstPoints">→ 약 <b>0</b>P 적립 예정 (환율: ₩1 = <span id="bankRateLabel">1</span>P)</div>
 
       <button class="submit-btn" id="bankSubmitBtn">입금 신청하기</button>
       <div class="status-msg" id="bankMsg"></div>
@@ -224,13 +224,14 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC
 const PAYPAL_CLIENT_ID_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-client-id";
 const PAYPAL_CREATE_ORDER_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-create-order";
 const PAYPAL_CAPTURE_ORDER_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-capture-order";
-const BANK_INFO_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-info";
+const BANK_INFO_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-request";
 const BANK_REQUEST_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-request";
+const POINTS_BALANCE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/points-balance";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 let accessToken = null;
-let usdRate = 2000;
-let krwRate = 2;
+let usdRate = 1400;
+const krwRate = 1; // 원화는 1원=1포인트 고정 정책 (DB 조회 불필요)
 
 async function refreshBalance(){
   const { data: { session } } = await sb.auth.getSession();
@@ -243,19 +244,23 @@ async function refreshBalance(){
   accessToken = session.access_token;
   document.getElementById('loginNotice').style.display = 'none';
   document.getElementById('chargeArea').style.display = 'block';
-  const { data: profile } = await sb.from('profiles').select('points_balance').eq('id', session.user.id).maybeSingle();
-  document.getElementById('balanceNum').textContent = (profile ? profile.points_balance : 0) + 'P';
+  try {
+    const resp = await fetch(POINTS_BALANCE_URL, {
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+    });
+    const data = await resp.json();
+    document.getElementById('balanceNum').textContent = (resp.ok ? data.total : 0).toLocaleString() + 'P';
+  } catch (e) {
+    document.getElementById('balanceNum').textContent = '0P';
+  }
   return true;
 }
 
 async function loadExchangeRate(){
   try {
-    const { data } = await sb.from('exchange_rate').select('usd_to_point, krw_to_point').eq('id', 1).maybeSingle();
-    if (data) {
-      usdRate = Number(data.usd_to_point);
-      krwRate = Number(data.krw_to_point);
-    }
-  } catch (e) { /* 기본값 유지 */ }
+    const { data } = await sb.from('exchange_rate').select('usd_to_point').eq('id', 1).maybeSingle();
+    if (data) usdRate = Number(data.usd_to_point);
+  } catch (e) { /* 기본값(1400) 유지 */ }
   document.getElementById('paypalRateLabel').textContent = usdRate.toLocaleString();
   document.getElementById('bankRateLabel').textContent = krwRate;
   document.getElementById('cardRateLabel').textContent = krwRate;
@@ -506,7 +511,7 @@ document.getElementById('bankSubmitBtn').addEventListener('click', async () => {
     const resp = await fetch(BANK_REQUEST_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
-      body: JSON.stringify({ depositorName, amountKrw: krwAmount }),
+      body: JSON.stringify({ depositorName, amount: krwAmount }),
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || '신청 실패');
