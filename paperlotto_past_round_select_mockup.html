@@ -30,7 +30,7 @@ header{
   padding:18px 32px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
   background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
 }
-.brand{ display:flex; align-items:center; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
 .brand-mark{ width:30px; height:30px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
 .brand-name{ font-size:17px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
@@ -116,12 +116,13 @@ main{ max-width:720px; margin:0 auto; padding:28px 24px 90px; }
 <body>
 
 <header>
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
-  </div>
+  </a>
   <nav>
     <a href="paperlotto_hub_mockup.html" data-i18n="navBack">← 전체 게임</a>
+    <div id="authWidget"></div>
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
@@ -219,7 +220,7 @@ const GAMES = [
   { id:'ca_lotto649', flag:'🇨🇦', nameKo:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト6/49' },
   { id:'au_powerball', flag:'🇦🇺', nameKo:'호주 파워볼', nameEn:'AU Powerball', nameJa:'豪パワーボール' },
   { id:'au_ozlotto', flag:'🇦🇺', nameKo:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト' },
-  { id:'au_tattslotto', flag:'🇦🇺', nameKo:'새터데이로또', nameEn:'Tatts Lotto', nameJa:'サタデーロト' },
+  { id:'au_tattslotto', flag:'🇦🇺', nameKo:'새터데이로또(Tatts Lotto)', nameEn:'Saturday Lotto (Tatts Lotto)', nameJa:'サタデーロト（Tatts Lotto）' },
 ];
 
 let selectedGame = null;
@@ -325,5 +326,6 @@ function renderRounds(){
 applyLang(currentLang);
 </script>
 
+<script src="auth-widget.js"></script>
 </body>
 </html>

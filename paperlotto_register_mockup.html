@@ -35,7 +35,7 @@ header{
   padding:18px 32px; border-bottom:1px solid var(--board-line);
   background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
 }
-.brand{ display:flex; align-items:center; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
 .brand-mark{ width:32px; height:32px; border-radius:7px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-size:16px; transform:rotate(-4deg); }
 .brand-name{ font-size:18px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
@@ -193,11 +193,12 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
 <body>
 
 <header>
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
-  </div>
+  </a>
   <div style="display:flex; align-items:center; gap:12px;">
+    <div id="authWidget"></div>
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
@@ -303,7 +304,7 @@ const GAMES = [
   { id:'ca_lotto649', accent:'ca', nameKo:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', sub:'CA', main:6, range:49, bonus:1, days:[3,6] },
   { id:'au_powerball', accent:'au', nameKo:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', sub:'AU', main:7, range:35, bonus:1, bonusRange:20, days:[4] },
   { id:'au_ozlotto', accent:'au', nameKo:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', sub:'AU', main:7, range:47, bonus:3, days:[2] },
-  { id:'au_tattslotto', accent:'au', nameKo:'새터데이로또', nameEn:'Tatts Lotto', nameJa:'タッツロト', sub:'AU', main:6, range:45, bonus:2, days:[6] },
+  { id:'au_tattslotto', accent:'au', nameKo:'새터데이로또(Tatts Lotto)', nameEn:'Saturday Lotto (Tatts Lotto)', nameJa:'サタデーロト（Tatts Lotto）', sub:'AU', main:6, range:45, bonus:2, days:[6] },
 ];
 
 // =====================================================
@@ -682,5 +683,6 @@ applyLang(currentLang);
 loadPricing();
 </script>
 
+<script src="auth-widget.js"></script>
 </body>
 </html>

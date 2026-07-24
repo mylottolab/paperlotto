@@ -98,6 +98,7 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
     <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
     <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
     <a href="#" data-i18n="navGuide" style="color:var(--gold-bright);">전략 가이드</a>
+    <div id="authWidget"></div>
     <div class="lang-toggle">
       <button data-lang="ko" class="active" type="button">KR</button>
       <button data-lang="en" type="button">EN</button>
@@ -593,5 +594,6 @@ document.querySelectorAll('.lang-toggle button').forEach(btn=>{
 openCards.add(GAMES[4].id); // jp_miniloto (완료된 것 중 하나를 예시로)
 render();
 </script>
+<script src="auth-widget.js"></script>
 </body>
 </html>
