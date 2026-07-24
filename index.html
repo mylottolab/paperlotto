@@ -420,12 +420,14 @@ function zonedTimeToUtc(dateStr, hour, minute, timeZone){
 }
 // 각 게임의 실제 현지 추첨시각·시간대를 반영해 다음 추첨 일시(UTC)를 계산
 // (이전 버전은 모든 게임을 "보는 사람의 로컬 20:00"으로 잘못 계산하고 있었음 — 수정됨)
+const WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
 function nextDrawDate(days, hour, minute, timeZone){
   const now = new Date();
   let best = null;
   for (let addDays = 0; addDays < 8; addDays++){
     const candidate = new Date(now.getTime() + addDays * 86400000);
-    const wd = Number(new Intl.DateTimeFormat('en-US', { timeZone, weekday:'numeric' }).format(candidate)) % 7;
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(candidate);
+    const wd = WEEKDAY_NUM[wdName];
     if (!days.includes(wd)) continue;
     const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone }).format(candidate);
     const drawUtc = zonedTimeToUtc(dateStr, hour, minute, timeZone);
