@@ -35,7 +35,7 @@ header{
   padding:18px 32px; border-bottom:1px solid var(--board-line);
   background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
 }
-.brand{ display:flex; align-items:center; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
 .brand-mark{ width:32px; height:32px; border-radius:7px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-size:16px; transform:rotate(-4deg); }
 .brand-name{ font-size:18px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
@@ -193,10 +193,10 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
 <body>
 
 <header>
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
-  </div>
+  </a>
   <div style="display:flex; align-items:center; gap:12px;">
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>

@@ -59,7 +59,7 @@ header{
   background:rgba(12,16,32,0.85); backdrop-filter:blur(6px);
   position:sticky; top:0;
 }
-.brand{ display:flex; align-items:center; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
 .brand-mark{
   width:34px; height:34px; border-radius:7px;
   background:linear-gradient(135deg, var(--gold-bright), var(--gold));
@@ -232,6 +232,13 @@ footer{
 }
 footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560px; margin:0 auto; }
 footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--text-mid); margin-bottom:10px; }
+.foot-legal{
+  margin-top:18px; padding-top:16px; border-top:1px solid var(--board-line);
+  font-size:11px; color:var(--text-dim); line-height:1.9; max-width:720px; margin-left:auto; margin-right:auto;
+}
+.foot-legal a{ color:var(--text-mid); text-decoration:underline; cursor:pointer; }
+.foot-legal a:hover{ color:var(--text-hi); }
+.foot-legal .sep{ margin:0 6px; opacity:.5; }
 
 @media (max-width:640px){
   header{ padding:14px 16px; flex-wrap:wrap; gap:10px; }
@@ -240,19 +247,20 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   .lang-toggle button{ padding:5px 9px; font-size:11px; }
   .hero{ padding:56px 20px 40px; }
   main{ padding:0 18px 70px; }
+  .foot-legal{ font-size:10px; line-height:2; }
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div>
       <div class="brand-name">Paper<em>Lotto</em></div>
       <div class="brand-tag">GLOBAL DRAW SIMULATOR</div>
     </div>
-  </div>
+  </a>
   <nav>
     <a href="#board" data-i18n="navGames">전체 게임</a>
     <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
@@ -320,6 +328,9 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   <div class="foot-brand">PaperLotto</div>
   <p data-i18n="footerNote">본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>
   복권을 판매하거나 구매를 대행하지 않으며, 상금을 지급하지 않습니다.</p>
+  <div class="foot-legal">
+    위브앱솔루션<span class="sep">·</span>대표 이미화<span class="sep">·</span>사업자등록번호 206-08-71754<span class="sep">·</span>경기도 수원시 권선구 수성로47 10동 501호<span class="sep">·</span>010-9237-9042<span class="sep">·</span>통신판매업신고 2022-수원권선-1701<span class="sep">·</span><a href="paperlotto_terms.html" target="_blank" rel="noopener" data-i18n="footerTerms">이용약관</a><span class="sep">·</span><a href="paperlotto_privacy-policy.html" target="_blank" rel="noopener" data-i18n="footerPrivacy">개인정보처리방침</a>
+  </div>
 </footer>
 
 <script>
@@ -352,6 +363,7 @@ const i18n = {
     heroNote:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
     regionUS:"미국", regionEU:"유로밀리언스", regionJP:"일본", regionCA:"캐나다", regionAU:"호주", regionKR:"대한민국",
     footerNote:'본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>복권을 판매하거나 구매를 대행하지 않으며, 상금을 지급하지 않습니다.',
+    footerTerms:"이용약관", footerPrivacy:"개인정보처리방침",
     ballDraw:"구 추첨", perGame:"1게임", tier1Odds:"1등 확률", untilNext:"다음 추첨까지", registerCta:"가상 번호 등록하기",
     day:"일", hour:"시간",
     gameCount1:"GAME", gameCountN:"GAMES",
@@ -366,6 +378,7 @@ const i18n = {
     heroNote:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
     regionUS:"United States", regionEU:"EuroMillions", regionJP:"Japan", regionCA:"Canada", regionAU:"Australia", regionKR:"Korea",
     footerNote:'This site stores and manages numbers chosen by users, and compares them against real draw results as a simulation service.<br>It does not sell tickets, act as a purchase agent, or pay out prizes.',
+    footerTerms:"Terms of Service", footerPrivacy:"Privacy Policy",
     ballDraw:"-ball draw", perGame:"1 line", tier1Odds:"Tier 1 odds", untilNext:"Until next draw", registerCta:"Register virtual numbers",
     day:"d", hour:"h",
     gameCount1:"GAME", gameCountN:"GAMES",
@@ -380,6 +393,7 @@ const i18n = {
     heroNote:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
     regionUS:"アメリカ", regionEU:"ユーロミリオンズ", regionJP:"日本", regionCA:"カナダ", regionAU:"オーストラリア", regionKR:"韓国",
     footerNote:'当サイトはユーザーが選んだ番号を保存・管理し、実際の抽選結果と比較するシミュレーションサービスです。<br>宝くじの販売や購入代行は行わず、賞金の支払いもありません。',
+    footerTerms:"利用規約", footerPrivacy:"プライバシーポリシー",
     ballDraw:"球抽選", perGame:"1口", tier1Odds:"1等確率", untilNext:"次回抽選まで", registerCta:"仮想番号を登録する",
     day:"日", hour:"時間",
     gameCount1:"GAME", gameCountN:"GAMES",
@@ -420,12 +434,14 @@ function zonedTimeToUtc(dateStr, hour, minute, timeZone){
 }
 // 각 게임의 실제 현지 추첨시각·시간대를 반영해 다음 추첨 일시(UTC)를 계산
 // (이전 버전은 모든 게임을 "보는 사람의 로컬 20:00"으로 잘못 계산하고 있었음 — 수정됨)
+const WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
 function nextDrawDate(days, hour, minute, timeZone){
   const now = new Date();
   let best = null;
   for (let addDays = 0; addDays < 8; addDays++){
     const candidate = new Date(now.getTime() + addDays * 86400000);
-    const wd = Number(new Intl.DateTimeFormat('en-US', { timeZone, weekday:'numeric' }).format(candidate)) % 7;
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(candidate);
+    const wd = WEEKDAY_NUM[wdName];
     if (!days.includes(wd)) continue;
     const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone }).format(candidate);
     const drawUtc = zonedTimeToUtc(dateStr, hour, minute, timeZone);

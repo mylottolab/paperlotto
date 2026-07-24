@@ -33,7 +33,7 @@ header{
   padding:20px 32px; border-bottom:1px solid var(--board-line);
   background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
 }
-.brand{ display:flex; align-items:center; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
 .brand-mark{ width:34px; height:34px; border-radius:7px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-size:17px; transform:rotate(-4deg); }
 .brand-name{ font-size:20px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
@@ -137,10 +137,10 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 <body>
 
 <header>
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div><div class="brand-name">Paper<em>Lotto</em></div><div class="brand-tag">GLOBAL DRAW SIMULATOR</div></div>
-  </div>
+  </a>
   <nav>
     <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
     <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>

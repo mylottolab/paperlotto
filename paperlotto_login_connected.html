@@ -29,7 +29,7 @@ a{ color:inherit; }
 :focus-visible{ outline:2px solid var(--gold-bright); outline-offset:2px; border-radius:4px; }
 
 .wrap{ width:100%; max-width:400px; }
-.brand{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:32px; }
+.brand{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:32px; text-decoration:none; cursor:pointer; }
 .brand-mark{ width:34px; height:34px; border-radius:7px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-size:17px; transform:rotate(-4deg); }
 .brand-name{ font-size:19px; font-weight:600; color:var(--text-hi); }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
@@ -102,10 +102,10 @@ input:focus{ border-color:var(--gold); }
 <body>
 
 <div class="wrap">
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
-  </div>
+  </a>
 
   <div class="card">
     <div class="tabs">
