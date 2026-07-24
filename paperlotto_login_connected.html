@@ -88,6 +88,15 @@ input:focus{ border-color:var(--gold); }
 }
 
 .footer-note{ margin-top:28px; text-align:center; font-size:11px; color:var(--text-dim); line-height:1.8; }
+
+@media (max-width:640px){
+  body{ padding:24px 16px; }
+  .card{ padding:28px 22px; }
+  /* 입력창 글자가 16px보다 작으면 iOS Safari가 탭할 때마다 화면을 자동으로 확대합니다 — 16px로 고정해서 방지 */
+  input[type="email"], input[type="password"], input[type="text"], .lang-note select{
+    font-size:16px;
+  }
+}
 </style>
 </head>
 <body>
