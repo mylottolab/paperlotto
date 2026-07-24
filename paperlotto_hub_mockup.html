@@ -155,7 +155,7 @@ nav a:hover{ color:var(--text-hi); }
 }
 
 /* ══════════════ SECTIONS / GRID ══════════════ */
-main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10px 32px 100px; }
+main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10px 32px 100px; scroll-margin-top:110px; }
 
 .region{ margin-top:54px; }
 .region-head{
@@ -234,8 +234,10 @@ footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560p
 footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--text-mid); margin-bottom:10px; }
 
 @media (max-width:640px){
-  header{ padding:16px 18px; }
-  nav{ display:none; }
+  header{ padding:14px 16px; flex-wrap:wrap; gap:10px; }
+  nav{ width:100%; justify-content:space-between; gap:6px; font-size:11px; }
+  nav a{ white-space:nowrap; }
+  .lang-toggle button{ padding:5px 9px; font-size:11px; }
   .hero{ padding:56px 20px 40px; }
   main{ padding:0 18px 70px; }
 }
@@ -253,8 +255,8 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   </div>
   <nav>
     <a href="#board" data-i18n="navGames">전체 게임</a>
-    <a href="#" data-i18n="navMyEntries">내 등록번호</a>
-    <a href="#" data-i18n="navGuide">전략 가이드</a>
+    <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
@@ -275,7 +277,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   <p data-i18n="heroSub">한국·미국·일본·캐나다·호주·유럽 — 당신의 전략 번호를 가상으로 등록하고, 실제 추첨 결과와 비교하며 데이터로 검증합니다.</p>
   <div class="hero-actions">
     <a href="#board" class="btn btn-primary" data-i18n="heroBtnBoard">게임 보드 보기 ↓</a>
-    <a href="#" class="btn btn-ghost" data-i18n="heroBtnGuide">전략 가이드 읽기</a>
+    <a href="paperlotto_guide_mockup.html" class="btn btn-ghost" data-i18n="heroBtnGuide">전략 가이드 읽기</a>
   </div>
   <div class="hero-note" data-i18n="heroNote">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
 </section>
@@ -323,18 +325,18 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 <script>
 // ─── 12개 게임 데이터 (games 테이블 값 기준) ─────────────────────────────
 const GAMES = [
-  { id:'us_powerball', region:'us', accent:'us', nameKr:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', main:5, mainRange:69, bonus:1, price:'$2', odds:'292,201,338', days:[1,3,6], detail:'paperlotto_detail_powerball_mockup.html' },
-  { id:'us_megamillions', region:'us', accent:'us', nameKr:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', main:5, mainRange:70, bonus:1, price:'$5', odds:'290,472,336', days:[2,5], detail:'paperlotto_detail_megamillions_mockup.html' },
-  { id:'eu_euromillions', region:'eu', accent:'eu', nameKr:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', main:5, mainRange:50, bonus:2, price:'€2.50', odds:'139,838,160', days:[2,5], detail:'paperlotto_detail_euromillions_mockup.html' },
-  { id:'jp_miniloto', region:'jp', accent:'jp', nameKr:'미니로또', nameEn:'ミニロト · Mini Loto', nameJa:'ミニロト', main:5, mainRange:31, bonus:1, price:'¥200', odds:'169,911', days:[2], detail:'paperlotto_detail_miniloto_mockup.html' },
-  { id:'jp_loto7', region:'jp', accent:'jp', nameKr:'로또7', nameEn:'ロト7 · Loto 7', nameJa:'ロト7', main:7, mainRange:37, bonus:2, price:'¥300', odds:'10,295,472', days:[5], detail:'paperlotto_detail_loto7_mockup.html' },
-  { id:'jp_loto6', region:'jp', accent:'jp', nameKr:'로또6', nameEn:'ロト6 · Loto 6', nameJa:'ロト6', main:6, mainRange:43, bonus:1, price:'¥200', odds:'6,096,454', days:[1,4], detail:'paperlotto_detail_loto6_mockup.html' },
-  { id:'ca_lottomax', region:'ca', accent:'ca', nameKr:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', main:7, mainRange:52, bonus:1, price:'$6', odds:'33,446,140', days:[2,5], detail:'paperlotto_detail_lottomax_mockup.html' },
-  { id:'ca_lotto649', region:'ca', accent:'ca', nameKr:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', main:6, mainRange:49, bonus:1, price:'$3', odds:'13,983,816', days:[3,6], detail:'paperlotto_detail_lotto649_mockup.html' },
-  { id:'au_powerball', region:'au', accent:'au', nameKr:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', main:7, mainRange:35, bonus:1, price:'$1.80', odds:'134,490,400', days:[4], detail:'paperlotto_detail_aupowerball_mockup.html' },
-  { id:'au_ozlotto', region:'au', accent:'au', nameKr:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', main:7, mainRange:47, bonus:3, price:'$1.65', odds:'62,891,499', days:[2], detail:'paperlotto_detail_ozlotto_mockup.html' },
-  { id:'au_tattslotto', region:'au', accent:'au', nameKr:'새터데이로또', nameEn:'Tatts Lotto', nameJa:'タッツロト', main:6, mainRange:45, bonus:2, price:'$1.20', odds:'8,145,060', days:[6], detail:'paperlotto_detail_tattslotto_mockup.html' },
-  { id:'kr_lotto645', region:'kr', accent:'kr', nameKr:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', main:6, mainRange:45, bonus:1, price:'₩1,000', odds:'8,145,060', days:[6], detail:'paperlotto_detail_korea_mockup.html' },
+  { id:'us_powerball', region:'us', accent:'us', nameKr:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', main:5, mainRange:69, bonus:1, price:'$2', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York', detail:'paperlotto_detail_powerball_mockup.html' },
+  { id:'us_megamillions', region:'us', accent:'us', nameKr:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', main:5, mainRange:70, bonus:1, price:'$5', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York', detail:'paperlotto_detail_megamillions_mockup.html' },
+  { id:'eu_euromillions', region:'eu', accent:'eu', nameKr:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', main:5, mainRange:50, bonus:2, price:'€2.50', odds:'139,838,160', days:[2,5], drawHour:21, drawMinute:0, tz:'Europe/Paris', detail:'paperlotto_detail_euromillions_mockup.html' },
+  { id:'jp_miniloto', region:'jp', accent:'jp', nameKr:'미니로또', nameEn:'ミニロト · Mini Loto', nameJa:'ミニロト', main:5, mainRange:31, bonus:1, price:'¥200', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo', detail:'paperlotto_detail_miniloto_mockup.html' },
+  { id:'jp_loto7', region:'jp', accent:'jp', nameKr:'로또7', nameEn:'ロト7 · Loto 7', nameJa:'ロト7', main:7, mainRange:37, bonus:2, price:'¥300', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo', detail:'paperlotto_detail_loto7_mockup.html' },
+  { id:'jp_loto6', region:'jp', accent:'jp', nameKr:'로또6', nameEn:'ロト6 · Loto 6', nameJa:'ロト6', main:6, mainRange:43, bonus:1, price:'¥200', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo', detail:'paperlotto_detail_loto6_mockup.html' },
+  { id:'ca_lottomax', region:'ca', accent:'ca', nameKr:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', main:7, mainRange:52, bonus:1, price:'$6', odds:'33,446,140', days:[2,5], drawHour:22, drawMinute:30, tz:'America/Toronto', detail:'paperlotto_detail_lottomax_updated.html' },
+  { id:'ca_lotto649', region:'ca', accent:'ca', nameKr:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', main:6, mainRange:49, bonus:1, price:'$3', odds:'13,983,816', days:[3,6], drawHour:22, drawMinute:30, tz:'America/Toronto', detail:'paperlotto_detail_lotto649_updated.html' },
+  { id:'au_powerball', region:'au', accent:'au', nameKr:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', main:7, mainRange:35, bonus:1, price:'$1.80', odds:'134,490,400', days:[4], drawHour:20, drawMinute:30, tz:'Australia/Sydney', detail:'paperlotto_detail_aupowerball_mockup.html' },
+  { id:'au_ozlotto', region:'au', accent:'au', nameKr:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', main:7, mainRange:47, bonus:3, price:'$1.65', odds:'62,891,499', days:[2], drawHour:20, drawMinute:30, tz:'Australia/Sydney', detail:'paperlotto_detail_ozlotto_mockup.html' },
+  { id:'au_tattslotto', region:'au', accent:'au', nameKr:'새터데이로또(Tatts Lotto)', nameEn:'Saturday Lotto (Tatts Lotto)', nameJa:'サタデーロト（Tatts Lotto）', main:6, mainRange:45, bonus:2, price:'$1.20', odds:'8,145,060', days:[6], drawHour:20, drawMinute:30, tz:'Australia/Sydney', detail:'paperlotto_detail_tattslotto_mockup.html' },
+  { id:'kr_lotto645', region:'kr', accent:'kr', nameKr:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', main:6, mainRange:45, bonus:1, price:'₩1,000', odds:'8,145,060', days:[6], drawHour:20, drawMinute:45, tz:'Asia/Seoul', detail:'paperlotto_detail_korea_mockup.html' },
 ];
 
 // =====================================================
@@ -408,17 +410,29 @@ document.querySelectorAll('.lang-toggle button').forEach(btn => {
 });
 
 // ─── 다음 추첨 시각 계산 (데모용: 방문자 로컬 시간 20:00 기준, 실제 서비스에서는 국가별 타임존 반영 필요) ───
-function nextDrawDate(days){
+// 특정 타임존의 로컬 날짜/시각(YYYY-MM-DD, hour, minute)을 정확한 UTC Date로 변환
+function zonedTimeToUtc(dateStr, hour, minute, timeZone){
+  const naiveUtc = new Date(`${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);
+  const tzDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone }));
+  const utcDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const offset = utcDate.getTime() - tzDate.getTime();
+  return new Date(naiveUtc.getTime() + offset);
+}
+// 각 게임의 실제 현지 추첨시각·시간대를 반영해 다음 추첨 일시(UTC)를 계산
+// (이전 버전은 모든 게임을 "보는 사람의 로컬 20:00"으로 잘못 계산하고 있었음 — 수정됨)
+const WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+function nextDrawDate(days, hour, minute, timeZone){
   const now = new Date();
   let best = null;
-  days.forEach(d => {
-    const candidate = new Date(now);
-    candidate.setHours(20,0,0,0);
-    let diff = (d - now.getDay() + 7) % 7;
-    if (diff === 0 && candidate <= now) diff = 7;
-    candidate.setDate(candidate.getDate() + diff);
-    if (!best || candidate < best) best = candidate;
-  });
+  for (let addDays = 0; addDays < 8; addDays++){
+    const candidate = new Date(now.getTime() + addDays * 86400000);
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(candidate);
+    const wd = WEEKDAY_NUM[wdName];
+    if (!days.includes(wd)) continue;
+    const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone }).format(candidate);
+    const drawUtc = zonedTimeToUtc(dateStr, hour, minute, timeZone);
+    if (drawUtc > now && (!best || drawUtc < best)) best = drawUtc;
+  }
   return best;
 }
 function fmtCountdown(target){
@@ -432,7 +446,7 @@ function fmtCountdown(target){
 }
 
 // ─── 카드 렌더 ─────────────────────────────────────────────────────────
-GAMES.forEach(g => { g.next = nextDrawDate(g.days); });
+GAMES.forEach(g => { g.next = nextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz); });
 
 function renderCards(){
   const t = i18n[currentLang];
@@ -465,7 +479,9 @@ function renderCards(){
 setInterval(() => {
   document.querySelectorAll('[data-cd]').forEach(el => {
     const g = GAMES.find(x => x.id === el.dataset.cd);
-    if (g) el.textContent = fmtCountdown(g.next);
+    if (!g) return;
+    if (new Date() >= g.next) g.next = nextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz);
+    el.textContent = fmtCountdown(g.next);
   });
 }, 1000);
 
@@ -484,7 +500,9 @@ function renderTicker(){
 setInterval(() => {
   document.querySelectorAll('[data-tcd]').forEach(el => {
     const g = GAMES.find(x => x.id === el.dataset.tcd);
-    if (g) el.textContent = fmtCountdown(g.next);
+    if (!g) return;
+    if (new Date() >= g.next) g.next = nextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz);
+    el.textContent = fmtCountdown(g.next);
   });
 }, 1000);
 
