@@ -234,8 +234,10 @@ footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560p
 footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--text-mid); margin-bottom:10px; }
 
 @media (max-width:640px){
-  header{ padding:16px 18px; }
-  nav{ display:none; }
+  header{ padding:14px 16px; flex-wrap:wrap; gap:10px; }
+  nav{ width:100%; justify-content:space-between; gap:6px; font-size:11px; }
+  nav a{ white-space:nowrap; }
+  .lang-toggle button{ padding:5px 9px; font-size:11px; }
   .hero{ padding:56px 20px 40px; }
   main{ padding:0 18px 70px; }
 }

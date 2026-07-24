@@ -124,7 +124,7 @@ footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560p
 footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--text-mid); margin-bottom:10px; }
 
 @media (max-width:640px){
-  header{ padding:16px 18px; } nav{ display:none; }
+  header{ padding:14px 16px; flex-wrap:wrap; gap:10px; } nav{ width:100%; justify-content:space-between; gap:6px; font-size:11px; } nav a{ white-space:nowrap; } .lang-toggle button{ padding:5px 9px; font-size:11px; }
   .hero-ticket{ padding:24px 20px; } .sheet-body{ padding:22px 20px; } main{ padding:0 18px 70px; }
   table.prize-table{ font-size:11px; }
 }
@@ -139,8 +139,8 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   </div>
   <nav>
     <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
-    <a href="#" data-i18n="navMyEntries">내 등록번호</a>
-    <a href="#" data-i18n="navGuide">전략 가이드</a>
+    <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
