@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 — PaperLotto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --err:#c65a2e; --ok:#3fb37f;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  word-break:keep-all;
+}
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+
+/* ── 관리자 인증 게이트 ── */
+#gate{ max-width:380px; margin:120px auto; padding:0 20px; text-align:center; }
+#gate h1{ font-size:20px; margin-bottom:18px; }
+#gate input{ width:100%; padding:12px 14px; border-radius:9px; border:1px solid var(--board-line); background:var(--board-2); color:var(--text-hi); font-size:14px; margin-bottom:12px; }
+#gate button{ width:100%; padding:12px; border:none; border-radius:9px; background:var(--gold); color:var(--ink); font-weight:700; cursor:pointer; }
+#gateMsg{ font-size:12.5px; color:var(--err); margin-top:10px; min-height:16px; }
+
+/* ── 본문 ── */
+#app{ display:none; max-width:960px; margin:0 auto; padding:36px 24px 80px; }
+.page-title{ font-size:26px; font-weight:600; margin-bottom:26px; }
+.section{ background:var(--paper); color:var(--ink); border-radius:14px; padding:24px; margin-bottom:22px; }
+.section h2{ font-size:16px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.section .sub{ font-size:12px; color:var(--ink-dim); margin-bottom:16px; }
+
+table{ width:100%; border-collapse:collapse; font-size:13px; }
+th,td{ text-align:left; padding:8px 10px; border-bottom:1px solid rgba(28,33,48,0.08); }
+th{ color:var(--ink-dim); font-weight:600; font-size:12px; }
+
+.row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+input[type="number"], input[type="text"]{
+  padding:8px 10px; border-radius:7px; border:1px solid rgba(28,33,48,0.15);
+  font-size:13px; font-family:'IBM Plex Mono',monospace; width:120px;
+}
+button.small{
+  padding:7px 14px; border-radius:7px; border:none; background:var(--ink); color:var(--paper);
+  font-size:12.5px; font-weight:600; cursor:pointer;
+}
+button.small:hover{ background:#2a3145; }
+button.small:disabled{ opacity:.5; cursor:default; }
+button.approve{ background:var(--ok); color:#fff; }
+.badge{ display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.badge.pending{ background:rgba(224,170,78,.18); color:#8a5b1c; }
+.badge.approved{ background:rgba(63,179,127,.15); color:#2f7a4d; }
+.msg{ font-size:12px; margin-top:8px; min-height:16px; }
+.msg.ok{ color:var(--ok); } .msg.err{ color:var(--err); }
+.empty{ font-size:12.5px; color:var(--ink-dim); padding:10px 0; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h1>🔐 관리자 인증</h1>
+  <input type="text" id="adminKeyInput" placeholder="관리자 API 키 입력">
+  <button id="gateBtn">입장</button>
+  <div id="gateMsg"></div>
+</div>
+
+<div id="app">
+  <div class="page-title">⚙️ PaperLotto 관리자</div>
+
+  <div class="section">
+    <h2>💱 USD 환율 (1달러 = 몇 포인트)</h2>
+    <div class="sub">원화는 1원=1포인트로 고정이라 조정 대상이 아닙니다. 이 값만 바꾸면 이후 모든 PayPal 결제에 즉시 반영됩니다.</div>
+    <div class="row">
+      <input type="number" id="rateInput" min="1">
+      <button class="small" id="rateSaveBtn">저장</button>
+      <span class="mono" style="font-size:11.5px; color:var(--ink-dim);" id="rateUpdatedAt"></span>
+    </div>
+    <div class="msg" id="rateMsg"></div>
+  </div>
+
+  <div class="section">
+    <h2>📋 메뉴별 포인트 차감 단가</h2>
+    <div class="sub">항목별 가격을 바꾸면 즉시 전체 서비스에 반영됩니다.</div>
+    <table id="costsTable">
+      <thead><tr><th>항목</th><th>가격(P)</th><th></th></tr></thead>
+      <tbody id="costsBody"></tbody>
+    </table>
+    <div class="msg" id="costsMsg"></div>
+  </div>
+
+  <div class="section">
+    <h2>🏦 무통장입금 대기목록</h2>
+    <div class="sub">입금 확인 후 승인 버튼을 누르면 즉시 포인트가 적립됩니다.</div>
+    <table id="bankTable">
+      <thead><tr><th>신청일</th><th>입금자명</th><th>금액</th><th>상태</th><th></th></tr></thead>
+      <tbody id="bankBody"></tbody>
+    </table>
+    <div class="empty" id="bankEmpty" style="display:none;">대기 중인 신청이 없습니다.</div>
+    <div class="msg" id="bankMsg"></div>
+  </div>
+
+  <div class="section">
+    <h2>📊 일자별 매출 (최근 30일, 완료된 결제 기준)</h2>
+    <table id="revenueTable">
+      <thead><tr><th>날짜</th><th>PayPal</th><th>카드(이니시스)</th><th>무통장입금</th><th>합계</th></tr></thead>
+      <tbody id="revenueBody"></tbody>
+    </table>
+    <div class="empty" id="revenueEmpty" style="display:none;">최근 30일 내 완료된 결제가 없습니다.</div>
+  </div>
+
+  <div class="section">
+    <h2>👥 회원 명단</h2>
+    <table id="membersTable">
+      <thead><tr><th>이메일</th><th>가입일</th></tr></thead>
+      <tbody id="membersBody"></tbody>
+    </table>
+    <div class="empty" id="membersEmpty" style="display:none;">회원이 없습니다.</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SETTINGS_URL = `${SUPABASE_URL}/functions/v1/admin-settings`;
+const DASHBOARD_URL = `${SUPABASE_URL}/functions/v1/admin-dashboard`;
+const APPROVE_URL = `${SUPABASE_URL}/functions/v1/bank-transfer-approve`;
+
+let adminKey = sessionStorage.getItem('paperlotto_admin_key') || '';
+
+function authHeaders(extra){
+  return Object.assign({ 'x-admin-api-key': adminKey }, extra || {});
+}
+
+// ── 인증 게이트 ──
+async function tryEnter(){
+  const gateMsg = document.getElementById('gateMsg');
+  gateMsg.textContent = '';
+  try {
+    const resp = await fetch(SETTINGS_URL, { headers: authHeaders() });
+    if (!resp.ok) throw new Error('키가 올바르지 않습니다.');
+    sessionStorage.setItem('paperlotto_admin_key', adminKey);
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAll();
+  } catch (e) {
+    gateMsg.textContent = e.message;
+  }
+}
+document.getElementById('gateBtn').addEventListener('click', () => {
+  adminKey = document.getElementById('adminKeyInput').value.trim();
+  if (!adminKey) return;
+  tryEnter();
+});
+document.getElementById('adminKeyInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('gateBtn').click();
+});
+
+// 세션에 저장된 키가 있으면 자동 재입장 시도
+if (adminKey) tryEnter();
+
+function loadAll(){
+  loadSettings();
+  loadBankTransfers();
+  loadRevenue();
+  loadMembers();
+}
+
+// ── 1) 환율 + 포인트 단가 ──
+async function loadSettings(){
+  const resp = await fetch(SETTINGS_URL, { headers: authHeaders() });
+  const data = await resp.json();
+  if (!resp.ok) return;
+
+  document.getElementById('rateInput').value = data.exchangeRate ?? '';
+  document.getElementById('rateUpdatedAt').textContent = data.updatedAt ? '마지막 수정: ' + new Date(data.updatedAt).toLocaleString() : '';
+
+  const tbody = document.getElementById('costsBody');
+  tbody.innerHTML = (data.pointCosts || []).map(c => `
+    <tr data-key="${c.action_key}">
+      <td>${c.label_kr}</td>
+      <td><input type="number" min="0" value="${c.cost_points}" class="cost-input"></td>
+      <td><button class="small cost-save-btn">저장</button></td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('.cost-save-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr = btn.closest('tr');
+      const actionKey = tr.dataset.key;
+      const costPoints = tr.querySelector('.cost-input').value;
+      btn.disabled = true;
+      const msgEl = document.getElementById('costsMsg');
+      try {
+        const resp = await fetch(SETTINGS_URL, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ section: 'point_cost', actionKey, costPoints }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error);
+        msgEl.textContent = '✅ ' + data.message;
+        msgEl.className = 'msg ok';
+      } catch (e) {
+        msgEl.textContent = e.message;
+        msgEl.className = 'msg err';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+document.getElementById('rateSaveBtn').addEventListener('click', async () => {
+  const msgEl = document.getElementById('rateMsg');
+  const usdToPoint = document.getElementById('rateInput').value;
+  try {
+    const resp = await fetch(SETTINGS_URL, {
+      method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ section: 'exchange_rate', usdToPoint }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error);
+    msgEl.textContent = '✅ ' + data.message;
+    msgEl.className = 'msg ok';
+    loadSettings();
+  } catch (e) {
+    msgEl.textContent = e.message;
+    msgEl.className = 'msg err';
+  }
+});
+
+// ── 2) 무통장입금 대기목록 ──
+async function loadBankTransfers(){
+  const resp = await fetch(`${DASHBOARD_URL}?section=bank_transfers`, { headers: authHeaders() });
+  const data = await resp.json();
+  if (!resp.ok) return;
+
+  const items = (data.items || []).filter(x => x.status === 'pending');
+  const tbody = document.getElementById('bankBody');
+  document.getElementById('bankEmpty').style.display = items.length ? 'none' : 'block';
+
+  tbody.innerHTML = items.map(item => `
+    <tr data-id="${item.id}">
+      <td>${new Date(item.created_at).toLocaleString()}</td>
+      <td>${item.depositor_name}</td>
+      <td>${Number(item.amount_krw).toLocaleString()}원</td>
+      <td><span class="badge pending">대기</span></td>
+      <td><button class="small approve approve-btn">승인</button></td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('.approve-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const tr = btn.closest('tr');
+      const requestId = tr.dataset.id;
+      btn.disabled = true; btn.textContent = '처리 중…';
+      const msgEl = document.getElementById('bankMsg');
+      try {
+        const resp = await fetch(APPROVE_URL, {
+          method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ requestId }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error);
+        msgEl.textContent = '✅ ' + data.message;
+        msgEl.className = 'msg ok';
+        loadBankTransfers();
+        loadRevenue();
+      } catch (e) {
+        msgEl.textContent = e.message;
+        msgEl.className = 'msg err';
+        btn.disabled = false; btn.textContent = '승인';
+      }
+    });
+  });
+}
+
+// ── 3) 일자별 매출 ──
+async function loadRevenue(){
+  const resp = await fetch(`${DASHBOARD_URL}?section=revenue`, { headers: authHeaders() });
+  const data = await resp.json();
+  if (!resp.ok) return;
+
+  const items = data.items || [];
+  document.getElementById('revenueEmpty').style.display = items.length ? 'none' : 'block';
+  document.getElementById('revenueBody').innerHTML = items.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td>${(r.paypal || 0).toLocaleString()}P</td>
+      <td>${(r.inicis || 0).toLocaleString()}P</td>
+      <td>${(r.bank_transfer || 0).toLocaleString()}P</td>
+      <td><b>${(r.total || 0).toLocaleString()}P</b></td>
+    </tr>
+  `).join('');
+}
+
+// ── 4) 회원 명단 ──
+async function loadMembers(){
+  const resp = await fetch(`${DASHBOARD_URL}?section=members`, { headers: authHeaders() });
+  const data = await resp.json();
+  if (!resp.ok) return;
+
+  const items = data.items || [];
+  document.getElementById('membersEmpty').style.display = items.length ? 'none' : 'block';
+  document.getElementById('membersBody').innerHTML = items.map(m => `
+    <tr><td>${m.email || '-'}</td><td>${new Date(m.created_at).toLocaleDateString()}</td></tr>
+  `).join('');
+}
+</script>
+</body>
+</html>
