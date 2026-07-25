@@ -5,11 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>포인트 충전 — PaperLotto</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://stdpay.inicis.com/stdjs/INIStdPay.js" charset="UTF-8"></script>
-<!-- ★★★ 임시 디버그 도구 (원인 확인 후 삭제할 것) ★★★ -->
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-<!-- ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ -->
+<script src="https://paypro.inicis.com/std/payment/js/INIPayPro_v2.js" charset="UTF-8"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -201,27 +197,6 @@ input[type="text"], input[type="number"]{
   </div>
 </main>
 
-<form id="inicisForm" method="post">
-  <input type="hidden" name="version" value="1.0">
-  <input type="hidden" name="mid" id="f_mid">
-  <input type="hidden" name="goodname" id="f_goodname">
-  <input type="hidden" name="oid" id="f_oid">
-  <input type="hidden" name="price" id="f_price">
-  <input type="hidden" name="currency" value="WON">
-  <input type="hidden" name="buyername" id="f_buyername">
-  <input type="hidden" name="buyertel" id="f_buyertel">
-  <input type="hidden" name="buyeremail" id="f_buyeremail">
-  <input type="hidden" name="timestamp" id="f_timestamp">
-  <input type="hidden" name="signature" id="f_signature">
-  <input type="hidden" name="verification" id="f_verification">
-  <input type="hidden" name="mKey" id="f_mkey">
-  <input type="hidden" name="returnUrl" id="f_returnUrl">
-  <input type="hidden" name="closeUrl" id="f_closeUrl">
-  <input type="hidden" name="gopaymethod" value="Card">
-  <input type="hidden" name="charset" value="UTF-8">
-  <input type="hidden" name="acceptmethod" value="CARDPOINT">
-</form>
-
 <script>
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
@@ -374,21 +349,27 @@ document.getElementById('cardPayBtn').addEventListener('click', async () => {
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || '결제 준비 실패');
 
-    document.getElementById('f_mid').value = data.mid;
-    document.getElementById('f_goodname').value = data.goodname;
-    document.getElementById('f_oid').value = data.oid;
-    document.getElementById('f_price').value = data.price;
-    document.getElementById('f_buyername').value = data.buyername;
-    document.getElementById('f_buyertel').value = data.buyertel;
-    document.getElementById('f_buyeremail').value = data.buyeremail;
-    document.getElementById('f_timestamp').value = data.timestamp;
-    document.getElementById('f_signature').value = data.signature;
-    document.getElementById('f_verification').value = data.verification;
-    document.getElementById('f_mkey').value = data.mkey;
-    document.getElementById('f_returnUrl').value = data.returnUrl;
-    document.getElementById('f_closeUrl').value = data.closeUrl;
+    // PC/모바일 자동 감지 (INIpay PRO는 이 값 하나로 PC/모바일을 구분함)
+    const deviceType = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'MOBILE' : 'WEB';
 
-    INIStdPay.pay('inicisForm');
+    INIPayPro.requestPayment({
+      P_MID: data.mid,
+      P_OID: data.oid,
+      P_PAY_TYPE: 'CARD',
+      P_DEVICE_TYPE: deviceType,
+      P_IDCCODE: 'Y',
+      P_AMT: data.amt,
+      P_GOODS: data.goodname,
+      P_UNAME: data.buyername,
+      P_MOBILE: data.buyertel || '',
+      P_EMAIL: data.buyeremail || '',
+      P_NEXT_URL: data.nextUrl,
+      P_NOTI_URL: data.notiUrl,
+      P_CLOSE_URL: data.closeUrl,
+      P_CHARSET: 'UTF-8',
+      P_TIMESTAMP: data.timestamp,
+      P_CHKFAKE: data.chkfake,
+    });
   } catch (e) {
     msgEl.textContent = e.message;
     msgEl.className = 'status-msg err';
