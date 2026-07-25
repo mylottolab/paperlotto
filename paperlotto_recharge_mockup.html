@@ -387,7 +387,11 @@ function loadPaypalSdk(clientId){
   if (paypalSdkLoading) return paypalSdkLoading;
   paypalSdkLoading = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD`;
+    // PayPal 카드입력창(SDK가 자체 렌더링하는 부분) 언어 — locale을 안 넘기면
+    // PayPal이 계정/브라우저 설정 기준으로 임의 결정해버려서, 해외 이용자에게
+    // 한글 카드입력창이 뜨는 문제가 있었음 (2026-07-26 긴급수정).
+    const paypalLocale = navigator.language && navigator.language.toLowerCase().startsWith('ko') ? 'ko_KR' : 'en_US';
+    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&locale=${paypalLocale}`;
     script.onload = () => { paypalSdkLoaded = true; resolve(); };
     script.onerror = reject;
     document.head.appendChild(script);
