@@ -166,6 +166,13 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   .sheet-body{ padding:22px 20px; }
   main{ padding:0 18px 70px; }
   table.prize-table{ font-size:12px; }
+
+  /* ── 마감 카운트다운 줄이 좁은 화면에서 글자 하나씩 세로로 쌓이던 버그 수정 ──
+     원인: .gate-abs가 줄바꿈 없이 폭을 고정 요구해서, 옆의 .gate-text가 거의 0px로
+     눌려버림. 모바일에서는 줄을 세로로 자연스럽게 감싸도록 변경. */
+  .gate-row{ flex-wrap:wrap; }
+  .gate-text{ flex-basis:100%; }
+  .gate-abs{ flex-shrink:1; flex-basis:auto; text-align:left; margin-left:29px; margin-top:2px; white-space:normal; }
 }
 </style>
 </head>
