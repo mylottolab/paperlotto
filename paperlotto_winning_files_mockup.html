@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>역대 당첨번호 다운로드 — PaperLotto</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi); min-height:100vh;
+  font-family:'Inter',sans-serif; word-break:keep-all;
+  background-image:linear-gradient(var(--board-line) 1px, transparent 1px), linear-gradient(90deg, var(--board-line) 1px, transparent 1px);
+  background-size:64px 64px;
+}
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+a{ color:inherit; text-decoration:none; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:18px 32px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
+.brand-mark{ width:30px; height:30px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:17px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav{ font-size:13.5px; color:var(--text-mid); }
+
+main{ max-width:920px; margin:0 auto; padding:40px 24px 90px; }
+.page-title{ font-size:24px; margin-bottom:6px; }
+.page-desc{ font-size:13.5px; color:var(--text-mid); margin-bottom:24px; line-height:1.7; }
+
+.balance-panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:22px 28px; margin-bottom:22px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.balance-label{ font-size:12.5px; color:var(--ink-dim); }
+.balance-num{ font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:700; color:#8a5b1c; }
+
+.login-notice{ background:var(--paper); color:var(--ink); border-radius:14px; padding:28px; text-align:center; font-size:13.5px; margin-bottom:22px; }
+.login-notice a{ color:#8a5b1c; text-decoration:underline; font-weight:600; }
+
+.grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+.card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px; position:relative; }
+.card .flag{ font-size:20px; margin-right:6px; }
+.card .name{ font-size:15px; font-weight:700; margin-bottom:10px; }
+.card .range{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#8a5b1c; font-weight:600; margin-bottom:4px; }
+.card .count{ font-size:11.5px; color:var(--ink-dim); margin-bottom:14px; }
+.card .free-badge{ position:absolute; top:16px; right:16px; background:rgba(31,122,79,0.15); color:var(--ok); font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px; }
+
+.dl-btn{
+  width:100%; padding:11px; border:none; border-radius:8px; background:var(--gold); color:var(--ink);
+  font-size:13px; font-weight:700; cursor:pointer;
+}
+.dl-btn:hover{ background:var(--gold-bright); }
+.dl-btn:disabled{ opacity:0.6; cursor:not-allowed; }
+
+.empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:40px 0; grid-column:1/-1; }
+
+@media (max-width:480px){
+  header{ padding:14px 16px; }
+  main{ padding:24px 14px 70px; }
+  .grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+  .card{ padding:14px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em></div>
+  </a>
+  <nav><a href="paperlotto_hub_mockup.html">← 전체 게임</a></nav>
+</header>
+
+<main>
+  <h1 class="page-title">📄 역대 당첨번호 다운로드</h1>
+  <p class="page-desc">12개국 복권의 역대 당첨번호 전체를 CSV 파일로 다운로드합니다. 다운로드 1회당 2,500P가 차감되며, 같은 게임을 24시간 이내에 다시 다운로드하면 무료입니다.</p>
+
+  <div class="balance-panel">
+    <div><div class="balance-label">현재 보유 포인트</div><div class="balance-num" id="balanceNum">–</div></div>
+  </div>
+
+  <div id="loginNotice" class="login-notice" style="display:none;">
+    다운로드하려면 먼저 <a href="paperlotto_login_mockup.html">로그인</a>이 필요합니다.
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="empty-state">불러오는 중…</div>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const META_URL = SUPABASE_URL + "/functions/v1/winning-files-meta";
+const DOWNLOAD_URL = SUPABASE_URL + "/functions/v1/winning-files-download";
+const POINTS_BALANCE_URL = SUPABASE_URL + "/functions/v1/points-balance";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let accessToken = null;
+
+// game_id → 표시용 국기/이름. DB의 실제 game_id 값에 맞춰 필요시 추가/수정하세요.
+// (여기 없는 game_id가 와도 화면에는 정상적으로 뜨고, 국기 없이 game_id 그대로 표시됩니다.)
+const DISPLAY = {
+  kr_lotto645:      { flag:'🇰🇷', name:'한국 로또 6/45' },
+  us_powerball:     { flag:'🇺🇸', name:'파워볼' },
+  us_megamillions:  { flag:'🇺🇸', name:'메가밀리언스' },
+  jp_loto6:         { flag:'🇯🇵', name:'일본 로또6' },
+  jp_loto7:         { flag:'🇯🇵', name:'일본 로또7' },
+  jp_minilotto:     { flag:'🇯🇵', name:'일본 미니로또' },
+  ca_lotto649:      { flag:'🇨🇦', name:'캐나다 로또 6/49' },
+  ca_lottomax:      { flag:'🇨🇦', name:'캐나다 로또맥스' },
+  au_powerball:     { flag:'🇦🇺', name:'호주 파워볼' },
+  au_ozlotto:       { flag:'🇦🇺', name:'호주 오즈로또' },
+  au_saturdaylotto: { flag:'🇦🇺', name:'호주 새터데이로또' },
+  eu_euromillions:  { flag:'🇪🇺', name:'유로밀리언스' },
+};
+
+async function refreshBalance(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    document.getElementById('loginNotice').style.display = 'block';
+    document.getElementById('balanceNum').textContent = '–';
+    accessToken = null;
+    return false;
+  }
+  accessToken = session.access_token;
+  document.getElementById('loginNotice').style.display = 'none';
+  try {
+    const resp = await fetch(POINTS_BALANCE_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    document.getElementById('balanceNum').textContent = (resp.ok ? data.total : 0).toLocaleString() + 'P';
+  } catch (e) {
+    document.getElementById('balanceNum').textContent = '0P';
+  }
+  return true;
+}
+
+async function loadGrid(){
+  const grid = document.getElementById('grid');
+  try {
+    const headers = accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {};
+    const resp = await fetch(META_URL, { headers });
+    const data = await resp.json();
+    if (!resp.ok || !data.items || data.items.length === 0) {
+      grid.innerHTML = '<div class="empty-state">표시할 데이터가 없습니다.</div>';
+      return;
+    }
+    grid.innerHTML = data.items.map(renderCard).join('');
+  } catch (e) {
+    grid.innerHTML = '<div class="empty-state">불러오는 중 오류가 발생했습니다.</div>';
+  }
+}
+
+function renderCard(item){
+  const disp = DISPLAY[item.game_id] || { flag:'🎟️', name:item.game_id };
+  const isFree = item.freeRedownloadUntil && new Date(item.freeRedownloadUntil).getTime() > Date.now();
+  const badge = isFree ? '<div class="free-badge">무료 재다운로드</div>' : '';
+  const btnLabel = isFree ? '⬇ 무료로 다시 다운로드' : '⬇ 다운로드 (2,500P)';
+  return (
+    '<div class="card">' +
+      badge +
+      '<div class="name"><span class="flag">' + disp.flag + '</span>' + disp.name + '</div>' +
+      '<div class="range">' + (item.range_start || '-') + ' ~ ' + (item.range_end || '-') + '</div>' +
+      '<div class="count">' + Number(item.count).toLocaleString() + '개 회차 데이터</div>' +
+      '<button class="dl-btn" onclick="downloadFile(\'' + item.game_id + '\',' + isFree + ')">' + btnLabel + '</button>' +
+    '</div>'
+  );
+}
+
+async function downloadFile(gameId, isFree){
+  if (!accessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
+  const disp = DISPLAY[gameId] || { name:gameId };
+  const msg = isFree
+    ? (disp.name + ' 파일을 24시간 이내 무료로 다시 다운로드합니다.')
+    : (disp.name + ' 역대 당첨번호 파일을 2,500포인트로 다운로드하시겠습니까?');
+  if (!confirm(msg)) return;
+
+  try {
+    const resp = await fetch(DOWNLOAD_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ gameId }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      alert(err.error === 'INSUFFICIENT_POINTS' ? '포인트가 부족합니다.' : '다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = gameId + '_winning_numbers.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+    await refreshBalance();
+    await loadGrid();
+  } catch (e) {
+    alert('다운로드 중 오류가 발생했습니다.');
+  }
+}
+
+(async function init(){
+  await refreshBalance();
+  await loadGrid();
+})();
+</script>
+</body>
+</html>

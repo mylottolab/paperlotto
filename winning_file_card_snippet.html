@@ -1,0 +1,90 @@
+<!--
+=====================================================
+PaperLotto — 게임 상세페이지용 "역대 당첨번호 다운로드" 접점 스니펫
+=====================================================
+사용법:
+1. 이 블록 전체를 각 게임 상세페이지의 메인 카드 근처(예: 전략가이드 링크 옆)에 붙여넣으세요.
+2. 아래 GAME_ID 값을 그 페이지가 다루는 게임의 실제 game_id로 바꿔주세요.
+   (Supabase draw_results 테이블의 game_id 컬럼 값과 정확히 같아야 합니다. 예: 'kr_lotto645')
+3. 이미 그 페이지에 Supabase client(sb)와 로그인 세션(accessToken)이 있다면
+   아래 스크립트의 "공용 초기화" 부분은 생략하고, downloadWinningFile() 함수만 가져다 쓰세요.
+4. 통합 다운로드 페이지로 보내고 싶다면, 카드 대신 아래처럼 링크 하나만 둬도 됩니다:
+   <a href="paperlotto_winning_files_mockup.html">📄 역대 당첨번호 전체 다운로드 →</a>
+=====================================================
+-->
+
+<div class="card" style="background:var(--paper); color:var(--ink); border-radius:14px; padding:20px; margin-top:16px;">
+  <div style="font-size:14.5px; font-weight:700; margin-bottom:6px;">📄 역대 당첨번호 파일 다운로드</div>
+  <div id="wfRange" style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#8a5b1c; font-weight:600; margin-bottom:4px;">불러오는 중…</div>
+  <div id="wfCount" style="font-size:11.5px; color:var(--ink-dim); margin-bottom:14px;"></div>
+  <button id="wfBtn" style="width:100%; padding:11px; border:none; border-radius:8px; background:var(--gold); color:var(--ink); font-size:13px; font-weight:700; cursor:pointer;" onclick="downloadWinningFile()">⬇ 다운로드 (2,500P)</button>
+  <div style="text-align:center; margin-top:10px;">
+    <a href="paperlotto_winning_files_mockup.html" style="font-size:12px; color:var(--ink-dim); text-decoration:underline;">전체 12개국 목록 보기 →</a>
+  </div>
+</div>
+
+<script>
+// ★ 이 페이지가 다루는 게임의 실제 game_id로 바꿔주세요 (draw_results.game_id와 동일해야 함)
+const GAME_ID = 'kr_lotto645';
+
+const WF_SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const WF_META_URL = WF_SUPABASE_URL + "/functions/v1/winning-files-meta";
+const WF_DOWNLOAD_URL = WF_SUPABASE_URL + "/functions/v1/winning-files-download";
+
+let wfFreeUntil = null;
+
+async function loadWinningFileMeta(){
+  try {
+    // 이 페이지에 이미 로그인 토큰(accessToken 변수 등)이 있다면 여기 헤더에 실어주세요.
+    const headers = (typeof accessToken !== 'undefined' && accessToken) ? { 'Authorization': 'Bearer ' + accessToken } : {};
+    const resp = await fetch(WF_META_URL, { headers });
+    const data = await resp.json();
+    const item = (data.items || []).find(it => it.game_id === GAME_ID);
+    if (!item) {
+      document.getElementById('wfRange').textContent = '데이터 없음';
+      return;
+    }
+    document.getElementById('wfRange').textContent = item.range_start + ' ~ ' + item.range_end;
+    document.getElementById('wfCount').textContent = Number(item.count).toLocaleString() + '개 회차 데이터';
+    wfFreeUntil = item.freeRedownloadUntil;
+    const isFree = wfFreeUntil && new Date(wfFreeUntil).getTime() > Date.now();
+    document.getElementById('wfBtn').textContent = isFree ? '⬇ 무료로 다시 다운로드' : '⬇ 다운로드 (2,500P)';
+  } catch(e) {
+    document.getElementById('wfRange').textContent = '불러오기 실패';
+  }
+}
+
+async function downloadWinningFile(){
+  if (typeof accessToken === 'undefined' || !accessToken) {
+    window.location.href = 'paperlotto_login_mockup.html';
+    return;
+  }
+  const isFree = wfFreeUntil && new Date(wfFreeUntil).getTime() > Date.now();
+  const msg = isFree ? '24시간 이내 무료로 다시 다운로드합니다.' : '역대 당첨번호 파일을 2,500포인트로 다운로드하시겠습니까?';
+  if (!confirm(msg)) return;
+
+  try {
+    const resp = await fetch(WF_DOWNLOAD_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ gameId: GAME_ID }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      alert(err.error === 'INSUFFICIENT_POINTS' ? '포인트가 부족합니다.' : '다운로드에 실패했습니다.');
+      return;
+    }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = GAME_ID + '_winning_numbers.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    await loadWinningFileMeta();
+  } catch(e) {
+    alert('다운로드 중 오류가 발생했습니다.');
+  }
+}
+
+loadWinningFileMeta();
+</script>
