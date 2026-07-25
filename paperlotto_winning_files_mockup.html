@@ -112,18 +112,18 @@ let accessToken = null;
 // game_id → 표시용 국기/이름. DB의 실제 game_id 값에 맞춰 필요시 추가/수정하세요.
 // (여기 없는 game_id가 와도 화면에는 정상적으로 뜨고, 국기 없이 game_id 그대로 표시됩니다.)
 const DISPLAY = {
-  kr_lotto645:      { flag:'🇰🇷', name:'한국 로또 6/45' },
-  us_powerball:     { flag:'🇺🇸', name:'파워볼' },
-  us_megamillions:  { flag:'🇺🇸', name:'메가밀리언스' },
-  jp_loto6:         { flag:'🇯🇵', name:'일본 로또6' },
-  jp_loto7:         { flag:'🇯🇵', name:'일본 로또7' },
-  jp_minilotto:     { flag:'🇯🇵', name:'일본 미니로또' },
-  ca_lotto649:      { flag:'🇨🇦', name:'캐나다 로또 6/49' },
-  ca_lottomax:      { flag:'🇨🇦', name:'캐나다 로또맥스' },
-  au_powerball:     { flag:'🇦🇺', name:'호주 파워볼' },
-  au_ozlotto:       { flag:'🇦🇺', name:'호주 오즈로또' },
-  au_saturdaylotto: { flag:'🇦🇺', name:'호주 새터데이로또' },
-  eu_euromillions:  { flag:'🇪🇺', name:'유로밀리언스' },
+  kr_lotto645:     { flag:'🇰🇷', name:'한국 로또 6/45' },
+  us_powerball:    { flag:'🇺🇸', name:'파워볼' },
+  us_megamillions: { flag:'🇺🇸', name:'메가밀리언스' },
+  jp_loto6:        { flag:'🇯🇵', name:'일본 로또6' },
+  jp_loto7:        { flag:'🇯🇵', name:'일본 로또7' },
+  jp_miniloto:     { flag:'🇯🇵', name:'일본 미니로또' },
+  ca_lotto649:     { flag:'🇨🇦', name:'캐나다 로또 6/49' },
+  ca_lottomax:     { flag:'🇨🇦', name:'캐나다 로또맥스' },
+  au_powerball:    { flag:'🇦🇺', name:'호주 파워볼' },
+  au_ozlotto:      { flag:'🇦🇺', name:'호주 오즈로또' },
+  au_tattslotto:   { flag:'🇦🇺', name:'새터데이로또 (Tatts Lotto)' },
+  eu_euromillions: { flag:'🇪🇺', name:'유로밀리언스' },
 };
 
 async function refreshBalance(){
