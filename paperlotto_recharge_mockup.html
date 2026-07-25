@@ -465,7 +465,9 @@ function renderPaypalButtons(){
 
 async function initPaypal(){
   try {
-    const resp = await fetch(PAYPAL_CLIENT_ID_URL);
+    const resp = await fetch(PAYPAL_CLIENT_ID_URL, {
+      headers: { 'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY, 'apikey': SUPABASE_PUBLISHABLE_KEY },
+    });
     const data = await resp.json();
     if (!resp.ok || !data.clientId) throw new Error(data.error || 'PayPal 설정을 불러오지 못했습니다.');
     await loadPaypalSdk(data.clientId);
@@ -479,8 +481,11 @@ async function initPaypal(){
 // ── 무통장입금 ──
 async function loadBankInfo(){
   try {
-    const resp = await fetch(BANK_INFO_URL);
+    const resp = await fetch(BANK_INFO_URL, {
+      headers: { 'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY, 'apikey': SUPABASE_PUBLISHABLE_KEY },
+    });
     const data = await resp.json();
+    if (!resp.ok || !data.bankName) throw new Error(data.error || '계좌 정보를 불러오지 못했습니다.');
     document.getElementById('bankInfoBox').innerHTML =
       `<b>은행</b>: ${data.bankName}<br><b>계좌번호</b>: ${data.accountNumber}<br><b>예금주</b>: ${data.accountHolder}`;
   } catch (e) {
