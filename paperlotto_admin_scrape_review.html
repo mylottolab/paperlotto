@@ -325,7 +325,7 @@ document.getElementById('runScrapeBtn').addEventListener('click', async () => {
   try {
     const resp = await fetch(SCRAPE_URL, {
       method: 'POST',
-      headers: { 'x-admin-key': adminKey },
+      headers: { 'x-admin-key': adminKey, 'Authorization': 'Bearer ' + accessToken },
     });
     const data = await resp.json();
     if (!resp.ok) {
