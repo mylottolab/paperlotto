@@ -525,7 +525,7 @@ function updateGate(){
     if (diff < 3*3600000) regRow.classList.add('urgent'); else regRow.classList.remove('urgent');
     regCountdown.textContent = fmtCountdown(diff);
     regAbsolute.textContent = fmtAbsolute(thisCutoff, GAME.timeZone, t.tzLabel);
-    ctaArea.innerHTML = `<a href="#" class="reg-cta-open">${t.ctaOpen}</a>`;
+    ctaArea.innerHTML = `<a href="paperlotto_register_mockup.html?game=jp_loto7" class="reg-cta-open">${t.ctaOpen}</a>`;
   }
 }
 
