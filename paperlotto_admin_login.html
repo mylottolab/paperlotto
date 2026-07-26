@@ -66,8 +66,8 @@ button:disabled{ opacity:0.55; cursor:not-allowed; }
     <h2>관리자 키 입력</h2>
     <div class="sub">저장/승인 등 쓰기 작업에 필요합니다. (Supabase의 ADMIN_API_KEY와 동일한 값)</div>
     <label for="adminKey">관리자 키</label>
-    <input type="password" id="adminKey" autocomplete="off">
-    <div class="hint">이 값은 브라우저 세션에만 저장되고, 탭을 닫으면 사라집니다.</div>
+    <input type="text" id="adminKey" autocomplete="new-password" spellcheck="false">
+    <div class="hint">직접 타이핑하거나 붙여넣기 해주세요. 브라우저가 자동으로 다른 값을 채워넣지 않았는지 확인 후 진행해주세요.</div>
     <button id="enterBtn">검수 화면으로 이동</button>
   </div>
 
