@@ -100,7 +100,7 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
 .num-grid{ display:grid; grid-template-columns:repeat(9, 1fr); gap:6px; margin-bottom:14px; }
 .num-pip{
   aspect-ratio:1; border-radius:50%; border:none; background:rgba(28,33,48,0.07); color:var(--ink);
-  font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; cursor:pointer;
+  font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:700; cursor:pointer;
   display:flex; align-items:center; justify-content:center; min-width:0;
 }
 .num-pip.selected{ background:var(--accent); color:#fff; }
@@ -204,8 +204,8 @@ input[type="file"]{
 .pr-method.auto{ background:rgba(31,122,110,0.13); color:#1f7a6e; }
 .pr-pips{ display:flex; gap:5px; flex:1; flex-wrap:wrap; }
 .pr-pip{
-  width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; background:rgba(28,33,48,0.08); color:var(--ink);
+  width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:700; background:rgba(28,33,48,0.08); color:var(--ink);
 }
 .pr-pip.bonus{ background:var(--gold); color:#fff; }
 .pr-del{
@@ -213,6 +213,11 @@ input[type="file"]{
   cursor:pointer; font-size:14px; flex-shrink:0;
 }
 .pending-empty{ text-align:center; padding:36px 20px; color:var(--text-dim); font-size:13px; background:rgba(255,255,255,0.02); border-radius:12px; border:1.5px dashed var(--board-line); }
+
+.notify-pref-row{
+  display:flex; align-items:center; gap:8px; margin-top:16px; font-size:12.5px; color:var(--text-mid); cursor:pointer;
+}
+.notify-pref-row input{ width:16px; height:16px; cursor:pointer; accent-color:var(--gold); }
 
 /* ── 하단 고정 결제 요약바 ── */
 .checkout-bar{
@@ -379,6 +384,11 @@ input[type="file"]{
     </div>
   </div>
 
+  <label class="notify-pref-row">
+    <input type="checkbox" id="notifyOptIn" checked>
+    <span data-i18n="notifyPrefLabel">1~3등 당첨 시 이메일로 알려주세요</span>
+  </label>
+
 </main>
 
 <div class="checkout-bar">
@@ -444,6 +454,7 @@ const i18n = {
     excelFormatHint:(main,bonus)=>`형식: 앞 ${main}칸 = 메인 번호${bonus?`, 다음 ${bonus}칸 = 보너스 번호`:''}, 마지막 칸(선택) = 메모. 헤더(제목) 줄 없이 숫자만 입력해주세요.`,
     excelSummary:(total,valid,invalid)=>`총 ${total}행 중 ${valid}개 유효, ${invalid}개 오류`,
     excelInvalidReason:(reason)=>`오류: ${reason}`,
+    notifyPrefLabel:"1~3등 당첨 시 이메일로 알려주세요",
     coSummary:(count,cost,price)=>`총 ${count}개 조합 · ${cost}P (1조합당 ${price}P)`,
     registerBtnWithCost:(cost)=>`번호 등록하기 (${cost}P 사용)`,
     submitAlert:(count,cost)=>`${count}개 조합이 등록되었습니다. (${cost}P 사용)\n\n※ 데모 화면입니다 — 실제 저장은 아직 연결되지 않았습니다.`,
@@ -481,6 +492,7 @@ const i18n = {
     excelFormatHint:(main,bonus)=>`Format: first ${main} columns = main numbers${bonus?`, next ${bonus} columns = bonus number(s)`:''}, last column (optional) = memo. No header row — numbers only.`,
     excelSummary:(total,valid,invalid)=>`${valid} of ${total} rows valid, ${invalid} error(s)`,
     excelInvalidReason:(reason)=>`Error: ${reason}`,
+    notifyPrefLabel:"Email me if I win Tier 1–3",
     coSummary:(count,cost,price)=>`Total ${count} combos · ${cost}P (${price}P per combo)`,
     registerBtnWithCost:(cost)=>`Register Numbers (${cost}P)`,
     submitAlert:(count,cost)=>`${count} combination(s) registered. (${cost}P used)\n\n※ This is a demo screen — saving isn't connected yet.`,
@@ -518,6 +530,7 @@ const i18n = {
     excelFormatHint:(main,bonus)=>`形式：先頭${main}列＝メイン番号${bonus?`、次の${bonus}列＝ボーナス番号`:''}、最後の列（任意）＝メモ。見出し行なしで数字のみ入力してください。`,
     excelSummary:(total,valid,invalid)=>`全${total}行中 ${valid}件有効、${invalid}件エラー`,
     excelInvalidReason:(reason)=>`エラー: ${reason}`,
+    notifyPrefLabel:"1〜3等当選時にメールでお知らせします",
     coSummary:(count,cost,price)=>`合計 ${count}組 · ${cost}P（1組${price}P）`,
     registerBtnWithCost:(cost)=>`番号を登録する（${cost}P使用）`,
     submitAlert:(count,cost)=>`${count}組の組み合わせが登録されました。（${cost}P使用）\n\n※デモ画面です — 実際の保存はまだ接続されていません。`,
@@ -1016,6 +1029,50 @@ document.getElementById('submitBtn').addEventListener('click', () => {
   pending = [];
   renderPending();
 });
+
+// ─── 1~3등 이메일 알림 수신 여부 (프로필 전역 설정) ──────────────────────────────
+(function initNotifyPref(){
+  const SB_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+  const SB_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+  const NOTIFY_PREF_URL = SB_URL + "/functions/v1/notify-pref";
+  const checkbox = document.getElementById('notifyOptIn');
+  let npToken = null;
+
+  function loadSbScript(){
+    return new Promise((resolve) => {
+      if (window.supabase) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      s.onload = resolve;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function init(){
+    await loadSbScript();
+    const sb = window.supabase.createClient(SB_URL, SB_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    npToken = session.access_token;
+
+    try {
+      const res = await fetch(NOTIFY_PREF_URL, { headers: { Authorization: 'Bearer ' + npToken } });
+      const data = await res.json();
+      if (res.ok) checkbox.checked = !data.emailOptOut;
+    } catch(e) {}
+
+    checkbox.addEventListener('change', async () => {
+      try {
+        await fetch(NOTIFY_PREF_URL, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + npToken },
+          body: JSON.stringify({ emailOptOut: !checkbox.checked }),
+        });
+      } catch(e) {}
+    });
+  }
+  init();
+})();
 
 // ─── 초기화 ──────────────────────────────────────────────────────────
 document.querySelectorAll('.mode-tab').forEach(tab => {
