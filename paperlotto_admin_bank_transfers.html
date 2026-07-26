@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>계좌이체 관리 — PaperLotto Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; }
+nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
+nav.admin-nav a:hover{ color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-mid); }
+.hdr-right button{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:6px 12px; border-radius:7px; font-size:12px; cursor:pointer; }
+.hdr-right button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+main{ max-width:900px; margin:0 auto; padding:28px 20px 90px; }
+section{ margin-bottom:36px; }
+.section-title{ font-size:18px; margin-bottom:4px; }
+.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 16px; }
+
+.card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:22px 24px; margin-bottom:14px; }
+.form-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.form-row.full{ grid-template-columns:1fr; }
+.field label{ display:block; font-size:11px; font-weight:600; color:var(--ink-dim); margin-bottom:4px; }
+.field input{ width:100%; padding:10px 11px; border:1px solid #d9d1ba; border-radius:7px; font-size:13.5px; background:#fff; color:var(--ink); font-family:'IBM Plex Mono',monospace; }
+.save-btn{ margin-top:8px; background:var(--ink); color:var(--paper); border:none; padding:11px 20px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; }
+.save-btn:hover{ background:#2a3145; }
+.save-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+.updated-note{ font-size:11px; color:var(--ink-dim); margin-top:10px; }
+.save-msg{ font-size:12px; margin-top:10px; display:none; padding:8px 10px; border-radius:7px; }
+.save-msg.ok{ display:block; background:rgba(31,122,79,0.12); color:var(--ok); }
+.save-msg.err{ display:block; background:rgba(198,90,46,0.12); color:var(--err); }
+
+.tabs{ display:flex; gap:6px; margin-bottom:16px; }
+.tab{ padding:8px 16px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--board-line); color:var(--text-mid); background:transparent; }
+.tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+
+.req-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.req-title{ font-size:15px; font-weight:700; }
+.badge{ font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; }
+.badge.pending{ background:rgba(184,134,46,0.18); color:#8a5b1c; }
+.badge.approved{ background:rgba(31,122,79,0.15); color:var(--ok); }
+.badge.rejected{ background:rgba(198,90,46,0.15); color:var(--err); }
+.req-meta{ font-size:11.5px; color:var(--ink-dim); margin-bottom:4px; }
+.req-amount{ font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:700; margin:8px 0; }
+.est-points{ font-size:12px; color:#8a5b1c; }
+.action-row{ display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+.btn{ padding:10px 18px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; border:none; }
+.btn-approve{ background:var(--ok); color:#fff; }
+.btn-approve:hover{ background:#25945f; }
+.btn-reject{ background:var(--err); color:#fff; }
+.btn-reject:hover{ background:#b04d24; }
+.btn:disabled{ opacity:0.5; cursor:not-allowed; }
+.override-field{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink-dim); }
+.override-field input{ width:100px; padding:6px 8px; border:1px solid #d9d1ba; border-radius:6px; font-size:12.5px; font-family:'IBM Plex Mono',monospace; }
+.note-field{ margin-top:10px; }
+.note-field input{ width:100%; padding:8px 10px; border:1px solid #d9d1ba; border-radius:6px; font-size:12.5px; }
+
+.empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:50px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em> Admin</div>
+  </div>
+  <nav class="admin-nav">
+    <a href="paperlotto_admin_scrape_review.html">당첨번호 검수</a>
+    <a href="paperlotto_admin_bank_transfers.html" style="color:var(--gold-bright);">계좌이체 관리</a>
+  </nav>
+  <div class="hdr-right">
+    <span id="adminEmail"></span>
+    <button id="logoutBtn">로그아웃</button>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h1 class="section-title">입금계좌 정보</h1>
+    <p class="section-desc">이용자 충전 화면(무통장입금)에 그대로 표시됩니다. 계좌를 바꾸면 저장 즉시 반영됩니다.</p>
+    <div class="card">
+      <div class="form-row">
+        <div class="field"><label>은행명</label><input type="text" id="bankName" placeholder="예: 국민은행"></div>
+        <div class="field"><label>예금주</label><input type="text" id="accountHolder" placeholder="예: 위브앱솔루션"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>계좌번호</label><input type="text" id="accountNumber" placeholder="예: 123456-78-901234"></div>
+        <div class="field"><label>환율 (1원당 포인트)</label><input type="number" id="krwRate" step="0.01" placeholder="예: 1"></div>
+      </div>
+      <button class="save-btn" id="saveBankBtn">저장</button>
+      <div class="save-msg" id="saveBankMsg"></div>
+      <div class="updated-note" id="bankUpdatedNote"></div>
+    </div>
+  </section>
+
+  <section>
+    <h1 class="section-title">무통장입금 승인</h1>
+    <p class="section-desc">이용자가 신청한 입금 내역입니다. 실제 입금을 확인하신 후 승인해주세요. 승인하면 포인트가 즉시 적립됩니다.</p>
+    <div class="tabs">
+      <button class="tab active" data-status="pending">대기중</button>
+      <button class="tab" data-status="approved">승인됨</button>
+      <button class="tab" data-status="rejected">반려됨</button>
+    </div>
+    <div id="reqList"></div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const BANK_CONFIG_URL = SUPABASE_URL + "/functions/v1/admin-bank-account-config";
+const LIST_URL = SUPABASE_URL + "/functions/v1/admin-list-bank-transfer-requests";
+const REVIEW_URL = SUPABASE_URL + "/functions/v1/admin-review-bank-transfer";
+
+const accessToken = sessionStorage.getItem('pl_admin_token');
+const adminKey = sessionStorage.getItem('pl_admin_key');
+const adminEmail = sessionStorage.getItem('pl_admin_email');
+
+if (!accessToken || !adminKey) {
+  window.location.href = 'paperlotto_admin_login.html';
+}
+
+document.getElementById('adminEmail').textContent = adminEmail || '';
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('pl_admin_token');
+  sessionStorage.removeItem('pl_admin_key');
+  sessionStorage.removeItem('pl_admin_email');
+  window.location.href = 'paperlotto_admin_login.html';
+});
+
+// ── 계좌정보 ──
+async function loadBankConfig() {
+  try {
+    const resp = await fetch(BANK_CONFIG_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return null;
+    }
+    if (!resp.ok) return null;
+    document.getElementById('bankName').value = data.bankName || '';
+    document.getElementById('accountNumber').value = data.accountNumber || '';
+    document.getElementById('accountHolder').value = data.accountHolder || '';
+    document.getElementById('krwRate').value = data.krwToPointRate ?? 1;
+    if (data.updatedAt) {
+      document.getElementById('bankUpdatedNote').textContent = '최근 수정: ' + new Date(data.updatedAt).toLocaleString('ko-KR');
+    }
+    return data;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+document.getElementById('saveBankBtn').addEventListener('click', async () => {
+  const bankName = document.getElementById('bankName').value.trim();
+  const accountNumber = document.getElementById('accountNumber').value.trim();
+  const accountHolder = document.getElementById('accountHolder').value.trim();
+  const krwToPointRate = Number(document.getElementById('krwRate').value) || 1;
+  const msgEl = document.getElementById('saveBankMsg');
+  msgEl.className = 'save-msg';
+
+  if (!bankName || !accountNumber || !accountHolder) {
+    msgEl.textContent = '은행명, 계좌번호, 예금주는 필수입니다.';
+    msgEl.className = 'save-msg err';
+    return;
+  }
+
+  const btn = document.getElementById('saveBankBtn');
+  btn.disabled = true; btn.textContent = '저장 중…';
+  try {
+    const resp = await fetch(BANK_CONFIG_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken, 'x-admin-key': adminKey },
+      body: JSON.stringify({ bankName, accountNumber, accountHolder, krwToPointRate }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      msgEl.textContent = '저장 실패: ' + (data.error || '알 수 없는 오류');
+      msgEl.className = 'save-msg err';
+      return;
+    }
+    msgEl.textContent = '✅ 저장되었습니다.';
+    msgEl.className = 'save-msg ok';
+    currentRate = krwToPointRate;
+    loadBankConfig();
+  } catch (e) {
+    msgEl.textContent = '오류가 발생했습니다: ' + e.message;
+    msgEl.className = 'save-msg err';
+  } finally {
+    btn.disabled = false; btn.textContent = '저장';
+  }
+});
+
+// ── 입금신청 목록 ──
+let currentStatus = 'pending';
+let currentRate = 1;
+
+async function loadRequests() {
+  const list = document.getElementById('reqList');
+  list.innerHTML = '<div class="empty-state">불러오는 중…</div>';
+  try {
+    const resp = await fetch(LIST_URL + '?status=' + currentStatus + '&limit=200', {
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+    });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok) {
+      list.innerHTML = '<div class="empty-state">불러오지 못했습니다: ' + (data.error || '') + '</div>';
+      return;
+    }
+    renderRequests(data.items || []);
+  } catch (e) {
+    list.innerHTML = '<div class="empty-state">오류가 발생했습니다.</div>';
+  }
+}
+
+function renderRequests(items) {
+  const list = document.getElementById('reqList');
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty-state">해당하는 신청건이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  items.forEach(item => list.appendChild(renderCard(item)));
+}
+
+function renderCard(item) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  const badgeMap = { pending: ['대기중', 'pending'], approved: ['승인됨', 'approved'], rejected: ['반려됨', 'rejected'] };
+  const badgeInfo = badgeMap[item.status] || ['-', 'pending'];
+  const badgeText = badgeInfo[0];
+  const badgeClass = badgeInfo[1];
+  const estPoints = Math.floor(Number(item.amount_krw) * currentRate);
+
+  let inner = '<div class="req-top">' +
+    '<div class="req-title">' + (item.requester_nickname || item.user_id) + '</div>' +
+    '<span class="badge ' + badgeClass + '">' + badgeText + '</span>' +
+  '</div>' +
+  '<div class="req-meta">신청 시각: ' + new Date(item.submitted_at).toLocaleString('ko-KR') + '</div>' +
+  '<div class="req-meta">입금자명: ' + item.depositor_name + '</div>' +
+  '<div class="req-amount">₩' + Number(item.amount_krw).toLocaleString() + '</div>';
+
+  if (item.status === 'pending') {
+    inner += '<div class="est-points">예상 적립 포인트: ' + estPoints.toLocaleString() + 'P (환율 ' + currentRate + ')</div>';
+    div.innerHTML = inner;
+  } else {
+    inner += '<div class="req-meta">' + (item.status === 'approved' ? '적립된 포인트: ' + Number(item.points_credited || 0).toLocaleString() + 'P' : '반려 사유: ' + (item.admin_note || '-')) + '</div>';
+    inner += '<div class="req-meta">처리 시각: ' + (item.reviewed_at ? new Date(item.reviewed_at).toLocaleString('ko-KR') : '-') + '</div>';
+    div.innerHTML = inner;
+    return div;
+  }
+
+  const idPrefix = 'req_' + item.id;
+  const actionRow = document.createElement('div');
+  actionRow.className = 'action-row';
+  actionRow.innerHTML =
+    '<div class="override-field">직접 지정(선택) <input type="number" id="' + idPrefix + '_override" placeholder="' + estPoints + '"></div>';
+
+  const approveBtn = document.createElement('button');
+  approveBtn.className = 'btn btn-approve';
+  approveBtn.textContent = '✓ 승인 (포인트 적립)';
+  approveBtn.onclick = () => reviewRequest(item.id, 'approve', idPrefix, approveBtn);
+
+  const rejectBtn = document.createElement('button');
+  rejectBtn.className = 'btn btn-reject';
+  rejectBtn.textContent = '✕ 반려';
+  rejectBtn.onclick = () => reviewRequest(item.id, 'reject', idPrefix, rejectBtn);
+
+  actionRow.appendChild(approveBtn);
+  actionRow.appendChild(rejectBtn);
+  div.appendChild(actionRow);
+
+  const noteWrap = document.createElement('div');
+  noteWrap.className = 'note-field';
+  noteWrap.innerHTML = '<input type="text" id="' + idPrefix + '_note" placeholder="메모(반려 사유 등, 선택)">';
+  div.appendChild(noteWrap);
+
+  return div;
+}
+
+async function reviewRequest(requestId, action, idPrefix, btnEl) {
+  const overrideVal = document.getElementById(idPrefix + '_override').value;
+  const note = document.getElementById(idPrefix + '_note').value.trim();
+
+  const confirmMsg = action === 'approve'
+    ? '이 신청을 승인하고 포인트를 적립하시겠습니까?'
+    : '이 신청을 반려하시겠습니까? (포인트는 적립되지 않습니다)';
+  if (!confirm(confirmMsg)) return;
+
+  btnEl.disabled = true;
+  const originalText = btnEl.textContent;
+  btnEl.textContent = '처리 중…';
+
+  try {
+    const resp = await fetch(REVIEW_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken, 'x-admin-key': adminKey },
+      body: JSON.stringify({
+        requestId,
+        action,
+        adminNote: note || null,
+        overridePoints: (action === 'approve' && overrideVal) ? Number(overrideVal) : undefined,
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      alert('처리 실패: ' + (data.error || '알 수 없는 오류'));
+      btnEl.disabled = false;
+      btnEl.textContent = originalText;
+      return;
+    }
+    alert(action === 'approve' ? ('승인 완료. 적립 포인트: ' + (data.pointsCredited ?? '-') + 'P') : '반려 처리되었습니다.');
+    loadRequests();
+  } catch (e) {
+    alert('오류가 발생했습니다: ' + e.message);
+    btnEl.disabled = false;
+    btnEl.textContent = originalText;
+  }
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentStatus = tab.dataset.status;
+    loadRequests();
+  });
+});
+
+// ── 초기화 ──
+(async () => {
+  const cfg = await loadBankConfig();
+  currentRate = cfg?.krwToPointRate ?? 1;
+  await loadRequests();
+})();
+</script>
+</body>
+</html>

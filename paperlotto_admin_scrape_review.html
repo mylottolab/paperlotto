@@ -34,6 +34,9 @@ header{
 .hdr-right{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-mid); }
 .hdr-right button{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:6px 12px; border-radius:7px; font-size:12px; cursor:pointer; }
 .hdr-right button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; }
+nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
+nav.admin-nav a:hover{ color:var(--gold-bright); }
 
 main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
 
@@ -84,6 +87,10 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em> Admin</div>
   </div>
+  <nav class="admin-nav">
+    <a href="paperlotto_admin_scrape_review.html" style="color:var(--gold-bright);">당첨번호 검수</a>
+    <a href="paperlotto_admin_bank_transfers.html">계좌이체 관리</a>
+  </nav>
   <div class="hdr-right">
     <span id="adminEmail"></span>
     <button id="logoutBtn">로그아웃</button>
