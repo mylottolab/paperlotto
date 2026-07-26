@@ -51,7 +51,8 @@ main{ max-width:920px; margin:0 auto; padding:40px 24px 90px; }
 .card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px; position:relative; }
 .card .flag{ font-size:20px; margin-right:6px; }
 .card .name{ font-size:15px; font-weight:700; margin-bottom:10px; }
-.card .range{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#8a5b1c; font-weight:600; margin-bottom:4px; }
+.card .range{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#8a5b1c; font-weight:600; margin-bottom:2px; }
+.card .date-range{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); margin-bottom:4px; }
 .card .count{ font-size:11.5px; color:var(--ink-dim); margin-bottom:14px; }
 .card .free-badge{ position:absolute; top:16px; right:16px; background:rgba(31,122,79,0.15); color:var(--ok); font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px; }
 
@@ -167,11 +168,13 @@ function renderCard(item){
   const isFree = item.freeRedownloadUntil && new Date(item.freeRedownloadUntil).getTime() > Date.now();
   const badge = isFree ? '<div class="free-badge">무료 재다운로드</div>' : '';
   const btnLabel = isFree ? '⬇ 무료로 다시 다운로드' : '⬇ 다운로드 (2,500P)';
+  const dateRangeText = (item.date_start && item.date_end) ? (item.date_start + ' ~ ' + item.date_end) : '';
   return (
     '<div class="card">' +
       badge +
       '<div class="name"><span class="flag">' + disp.flag + '</span>' + disp.name + '</div>' +
       '<div class="range">' + (item.range_start || '-') + ' ~ ' + (item.range_end || '-') + '</div>' +
+      (dateRangeText ? '<div class="date-range">' + dateRangeText + '</div>' : '') +
       '<div class="count">' + Number(item.count).toLocaleString() + '개 회차 데이터</div>' +
       '<button class="dl-btn" onclick="downloadFile(\'' + item.game_id + '\',' + isFree + ')">' + btnLabel + '</button>' +
     '</div>'
