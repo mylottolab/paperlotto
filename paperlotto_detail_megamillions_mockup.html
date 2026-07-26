@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>메가밀리언스 (Mega Millions) — PaperLotto</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -118,6 +119,17 @@ table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
 .final-cta .btn{ display:inline-flex; align-items:center; gap:8px; background:var(--ink); color:var(--paper); font-weight:600; font-size:15px; padding:14px 30px; border-radius:9px; text-decoration:none; }
 .final-cta .btn:hover{ background:#2a3145; }
 .final-disclaimer{ margin-top:16px; font-size:11.5px; opacity:0.65; }
+
+.dl-card{ margin-top:16px; background:var(--paper); color:var(--ink); border-radius:14px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+.dl-card .dl-info{ text-align:left; }
+.dl-card .dl-title{ font-size:14.5px; font-weight:700; margin-bottom:4px; }
+.dl-card .dl-range{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:#8a5b1c; font-weight:600; }
+.dl-card .dl-date-range{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-dim); margin-top:1px; }
+.dl-card .dl-count{ font-size:11px; color:var(--ink-dim); margin-top:3px; }
+.dl-card .dl-btn{ flex-shrink:0; padding:12px 22px; border:none; border-radius:9px; background:var(--ink); color:var(--paper); font-size:13.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.dl-card .dl-btn:hover{ background:#2a3145; }
+.dl-card .dl-btn:disabled{ opacity:0.6; cursor:not-allowed; }
+.dl-card.dl-loading .dl-info{ color:var(--ink-dim); font-size:13px; }
 
 footer{ border-top:1px solid var(--board-line); padding:36px 24px 44px; text-align:center; }
 footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560px; margin:0 auto; }
@@ -237,6 +249,11 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <p data-i18n="finalP">자동 배수 시스템까지 갖춘 미국 양대 복권을, PaperLotto에서 가상으로 직접 경험해보세요.</p>
     <div id="regCtaArea"><a href="paperlotto_register_mockup.html?game=us_megamillions" class="reg-cta-open" data-i18n="ctaOpen">내 전략 번호 가상 등록하기 →</a></div>
     <div class="final-disclaimer" data-i18n="finalDisclaimer">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
+  </div>
+
+  <div class="dl-card dl-loading" id="dlCard">
+    <div class="dl-info" id="dlInfo">불러오는 중…</div>
+    <button class="dl-btn" id="dlBtn" disabled>⬇ 다운로드</button>
   </div>
 
 </main>
@@ -443,6 +460,7 @@ function applyLang(lang){
     b.classList.toggle('active', b.dataset.lang === currentLang);
   });
   updateGate();
+  if (typeof renderDlCard === 'function') renderDlCard();
 }
 document.querySelectorAll('.lang-toggle button').forEach(btn => {
   btn.addEventListener('click', () => applyLang(btn.dataset.lang));
@@ -536,6 +554,98 @@ function updateGate(){
   }
 }
 applyLang(currentLang);
+
+// =====================================================
+// 역대 당첨번호 다운로드 카드 (이 게임 전용, 단건)
+// winning_files_mockup.html의 통합 다운로드 페이지와 동일한 Edge Function을 사용하되,
+// 이 게임(us_megamillions)의 항목만 필터링해서 카드 1개만 보여줍니다.
+// =====================================================
+const DL_GAME_ID = 'us_megamillions';
+const DL_SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const DL_SUPABASE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const DL_META_URL = DL_SUPABASE_URL + "/functions/v1/winning-files-meta";
+const DL_DOWNLOAD_URL = DL_SUPABASE_URL + "/functions/v1/winning-files-download";
+
+const dlSb = window.supabase.createClient(DL_SUPABASE_URL, DL_SUPABASE_KEY);
+let dlAccessToken = null;
+let dlItem = null; // 마지막으로 불러온 메타정보 (언어 전환 시 재사용)
+
+const DL_LABELS = {
+  ko: { title:'역대 당첨번호 CSV', count:(n)=>n.toLocaleString()+'개 회차 데이터', btnPaid:'⬇ 다운로드 (2,500P)', btnFree:'⬇ 무료로 다시 다운로드', loading:'불러오는 중…', error:'불러오지 못했습니다.', confirmPaid:(name)=> name+' 역대 당첨번호 파일을 2,500포인트로 다운로드하시겠습니까?', confirmFree:(name)=> name+' 파일을 24시간 이내 무료로 다시 다운로드합니다.', insufficient:'포인트가 부족합니다.', fail:'다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.' },
+  en: { title:'Historical Winning Numbers CSV', count:(n)=>n.toLocaleString()+' draws of data', btnPaid:'⬇ Download (2,500P)', btnFree:'⬇ Re-download for free', loading:'Loading…', error:'Failed to load.', confirmPaid:(name)=> 'Download the full winning-number history for '+name+' for 2,500 points?', confirmFree:(name)=> 'Re-download '+name+' for free (within 24 hours).', insufficient:'Not enough points.', fail:'Download failed. Please try again.' },
+  ja: { title:'歴代当選番号CSV', count:(n)=>n.toLocaleString()+'回分のデータ', btnPaid:'⬇ ダウンロード (2,500P)', btnFree:'⬇ 無料で再ダウンロード', loading:'読み込み中…', error:'読み込みに失敗しました。', confirmPaid:(name)=> name+'の歴代当選番号を2,500ポイントでダウンロードしますか?', confirmFree:(name)=> name+'のファイルを24時間以内は無料で再ダウンロードします。', insufficient:'ポイントが不足しています。', fail:'ダウンロードに失敗しました。もう一度お試しください。' },
+};
+
+async function dlRefreshToken(){
+  const { data: { session } } = await dlSb.auth.getSession();
+  dlAccessToken = session ? session.access_token : null;
+}
+
+async function dlLoadMeta(){
+  await dlRefreshToken();
+  const info = document.getElementById('dlInfo');
+  const btn = document.getElementById('dlBtn');
+  try {
+    const headers = dlAccessToken ? { 'Authorization': 'Bearer ' + dlAccessToken } : {};
+    const resp = await fetch(DL_META_URL, { headers });
+    const data = await resp.json();
+    if (!resp.ok || !data.items) { info.textContent = DL_LABELS[currentLang].error; return; }
+    dlItem = data.items.find(i => i.game_id === DL_GAME_ID) || null;
+    document.getElementById('dlCard').classList.remove('dl-loading');
+    renderDlCard();
+  } catch (e) {
+    info.textContent = DL_LABELS[currentLang].error;
+  }
+}
+
+function renderDlCard(){
+  if (!dlItem) return;
+  const t = DL_LABELS[currentLang] || DL_LABELS.en;
+  const info = document.getElementById('dlInfo');
+  const btn = document.getElementById('dlBtn');
+  const isFree = dlItem.freeRedownloadUntil && new Date(dlItem.freeRedownloadUntil).getTime() > Date.now();
+  const dateRange = (dlItem.date_start && dlItem.date_end) ? (dlItem.date_start + ' ~ ' + dlItem.date_end) : '';
+  info.innerHTML =
+    '<div class="dl-title">📄 ' + t.title + '</div>' +
+    '<div class="dl-range">' + (dlItem.range_start || '-') + ' ~ ' + (dlItem.range_end || '-') + '</div>' +
+    (dateRange ? '<div class="dl-date-range">' + dateRange + '</div>' : '') +
+    '<div class="dl-count">' + t.count(Number(dlItem.count)) + '</div>';
+  btn.textContent = isFree ? t.btnFree : t.btnPaid;
+  btn.disabled = false;
+  btn.onclick = () => dlDownload(isFree);
+}
+
+async function dlDownload(isFree){
+  const t = DL_LABELS[currentLang] || DL_LABELS.en;
+  if (!dlAccessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
+  const name = i18n[currentLang].breadcrumbGame || DL_GAME_ID;
+  const msg = isFree ? t.confirmFree(name) : t.confirmPaid(name);
+  if (!confirm(msg)) return;
+
+  try {
+    const resp = await fetch(DL_DOWNLOAD_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + dlAccessToken },
+      body: JSON.stringify({ gameId: DL_GAME_ID }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      alert(err.error === 'INSUFFICIENT_POINTS' ? t.insufficient : t.fail);
+      return;
+    }
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = DL_GAME_ID + '_winning_numbers.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    await dlLoadMeta();
+  } catch (e) {
+    alert(t.fail);
+  }
+}
+
+dlLoadMeta();
 setInterval(updateGate, 1000);
 </script>
 
