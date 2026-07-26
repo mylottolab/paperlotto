@@ -6,6 +6,7 @@
 <title>번호 등록 — PaperLotto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
@@ -136,6 +137,54 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
   color:var(--ink-dim); font-size:13.5px; font-weight:600; cursor:pointer;
 }
 
+/* ── 음성입력 패널 ── */
+.voice-lang-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.voice-lang-row label{ font-size:13px; font-weight:600; color:var(--ink-dim); }
+.voice-lang-row select{
+  padding:8px 10px; border:1.5px solid rgba(28,33,48,0.15); border-radius:8px; font-size:13px;
+  font-family:'Inter',sans-serif; background:#fff; color:var(--ink);
+}
+.voice-mic-btn{
+  display:flex; align-items:center; gap:8px; padding:14px 22px; border:none; border-radius:9px;
+  background:var(--ink); color:var(--paper); font-size:14px; font-weight:600; cursor:pointer; margin-bottom:14px;
+}
+.voice-mic-btn.listening{ background:var(--kr); animation:voicePulse 1.2s infinite; }
+@keyframes voicePulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.65; } }
+.voice-mic-btn:disabled{ opacity:0.35; cursor:not-allowed; }
+.voice-transcript{
+  min-height:20px; padding:12px 14px; border-radius:8px; background:rgba(28,33,48,0.05);
+  font-size:13px; color:var(--ink-dim); margin-bottom:12px; line-height:1.6;
+}
+.voice-parsed{ margin-bottom:14px; }
+.voice-parsed .vp-status{ font-size:12.5px; margin-bottom:8px; font-weight:600; }
+.voice-parsed .vp-status.ok{ color:#1f7a4f; }
+.voice-parsed .vp-status.warn{ color:#a13a1c; }
+.voice-not-supported{
+  padding:14px; border-radius:8px; background:rgba(198,90,46,0.1); color:#a13a1c; font-size:12.5px; line-height:1.6;
+}
+
+/* ── 엑셀업로드 패널 ── */
+.excel-format-hint{
+  padding:14px 16px; border-radius:8px; background:rgba(184,134,46,0.08); font-size:12px; color:var(--ink-dim);
+  line-height:1.8; margin-bottom:16px;
+}
+.excel-format-hint b{ color:#8a5b1c; }
+input[type="file"]{
+  width:100%; padding:10px; border:1.5px dashed rgba(28,33,48,0.25); border-radius:8px;
+  font-size:13px; font-family:'Inter',sans-serif; background:#fff; margin-bottom:14px;
+}
+.excel-summary{ font-size:13px; font-weight:600; margin-bottom:10px; }
+.excel-summary .ok-count{ color:#1f7a4f; }
+.excel-summary .err-count{ color:#a13a1c; }
+.excel-preview{ max-height:260px; overflow-y:auto; margin-bottom:14px; }
+.excel-row{
+  display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px; font-size:12px;
+  font-family:'IBM Plex Mono',monospace; margin-bottom:4px;
+}
+.excel-row.valid{ background:rgba(31,122,79,0.08); }
+.excel-row.invalid{ background:rgba(198,90,46,0.08); color:#a13a1c; }
+.excel-row .er-idx{ flex-shrink:0; width:26px; color:var(--ink-dim); }
+
 /* ── 등록 예정 목록 ── */
 .pending-wrap{ margin-top:28px; }
 .pending-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
@@ -187,6 +236,9 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
   .num-grid{ grid-template-columns:repeat(6,1fr); }
   .work-panel{ padding:18px; }
   .checkout-bar{ padding:12px 16px; }
+  .mode-tabs{ flex-wrap:wrap; }
+  .mode-tab{ flex:1 1 calc(33.333% - 6px); font-size:12px; padding:10px 4px; }
+  .voice-lang-row{ flex-wrap:wrap; }
 }
 </style>
 </head>
@@ -198,7 +250,6 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
     <div class="brand-name">Paper<em>Lotto</em></div>
   </a>
   <div style="display:flex; align-items:center; gap:12px;">
-    <div id="authWidget"></div>
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
@@ -224,6 +275,8 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
     <div class="mode-tab active" data-mode="manual"><span data-i18n="modeManual">수동</span><span class="mt-en">MANUAL</span></div>
     <div class="mode-tab" data-mode="semi"><span data-i18n="modeSemi">반자동</span><span class="mt-en">SEMI-AUTO</span></div>
     <div class="mode-tab" data-mode="auto"><span data-i18n="modeAuto">자동</span><span class="mt-en">AUTO</span></div>
+    <div class="mode-tab" data-mode="voice"><span data-i18n="modeVoice">음성입력</span><span class="mt-en">VOICE</span></div>
+    <div class="mode-tab" data-mode="excel"><span data-i18n="modeExcel">엑셀업로드</span><span class="mt-en">EXCEL</span></div>
   </div>
 
   <!-- 수동/반자동 패널 -->
@@ -264,6 +317,54 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
 
     <div class="btn-row">
       <button class="btn-primary" id="autoAddBtn" data-i18n="genComboBtn">조합 생성하기 →</button>
+    </div>
+  </div>
+
+  <!-- 음성입력 패널 -->
+  <div class="work-panel" id="voicePanel" style="display:none;">
+    <div class="panel-title" data-i18n="voiceTitle">번호를 말씀해주세요</div>
+    <div class="panel-desc" data-i18n="voiceDesc">마이크 버튼을 누르고 메인 번호 → 보너스 번호 순서로 또박또박 말씀해주세요.</div>
+
+    <div class="voice-lang-row">
+      <label data-i18n="voiceLangLabel">인식 언어</label>
+      <select id="voiceLangSelect">
+        <option value="ko-KR">한국어</option>
+        <option value="en-US">English (US)</option>
+        <option value="en-GB">English (UK)</option>
+        <option value="en-AU">English (AU)</option>
+        <option value="en-CA">English (CA)</option>
+        <option value="ja-JP">日本語</option>
+      </select>
+      <span style="font-size:11px; color:var(--ink-dim);" data-i18n="voiceLangAuto">(게임에 따라 자동 설정, 직접 변경 가능)</span>
+    </div>
+
+    <div id="voiceUnsupported" class="voice-not-supported" style="display:none;" data-i18n="voiceUnsupported">이 브라우저는 음성인식을 지원하지 않습니다. Chrome 브라우저에서 이용해주세요.</div>
+
+    <button class="voice-mic-btn" id="voiceStartBtn" type="button">🎙️ <span id="voiceBtnLabel" data-i18n="voiceStartBtn">말하기 시작</span></button>
+    <div class="voice-transcript" id="voiceTranscript" data-i18n="voiceTranscriptEmpty">인식된 음성이 여기에 표시됩니다…</div>
+    <div class="voice-parsed" id="voiceParsed"></div>
+
+    <input type="text" class="memo-input" id="voiceMemo" data-i18n-placeholder="memoPlaceholder" placeholder="메모 (선택, 예: 홀짝균형전략)">
+
+    <div class="btn-row">
+      <button class="btn-primary" id="voiceAddBtn" disabled data-i18n="addComboBtn">이 조합 추가 →</button>
+      <button class="btn-ghost" id="voiceResetBtn" data-i18n="resetBtn">초기화</button>
+    </div>
+  </div>
+
+  <!-- 엑셀업로드 패널 -->
+  <div class="work-panel" id="excelPanel" style="display:none;">
+    <div class="panel-title" data-i18n="excelTitle">엑셀 파일로 대량 등록</div>
+    <div class="panel-desc" data-i18n="excelDesc">한 행(row)이 하나의 조합입니다. 아래 형식에 맞춰 파일을 올려주세요.</div>
+
+    <div class="excel-format-hint" id="excelFormatHint"></div>
+
+    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
+    <div class="excel-summary" id="excelSummary"></div>
+    <div class="excel-preview" id="excelPreview"></div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="excelAddBtn" disabled data-i18n="excelAddBtn">유효한 조합 전체 추가 →</button>
     </div>
   </div>
 
@@ -329,7 +430,19 @@ const i18n = {
     mNumSelect:"개 선택", mBonusAdd:"+ 보너스", mNextDraw:"다음 추첨",
     mBonusLabel:"보너스 번호", mSamePool:"메인과 같은 풀",
     mSemiMax:"최대", mSemiPartial:"(일부만)",
-    mMethodManual:"수동", mMethodSemi:"반자동", mMethodAuto:"자동",
+    mMethodManual:"수동", mMethodSemi:"반자동", mMethodAuto:"자동", mMethodVoice:"음성", mMethodExcel:"엑셀",
+    modeVoice:"음성입력", modeExcel:"엑셀업로드",
+    voiceTitle:"번호를 말씀해주세요", voiceDesc:"마이크 버튼을 누르고 메인 번호 → 보너스 번호 순서로 또박또박 말씀해주세요.",
+    voiceLangLabel:"인식 언어", voiceLangAuto:"(게임에 따라 자동 설정, 직접 변경 가능)",
+    voiceStartBtn:"말하기 시작", voiceListening:"듣는 중… 다시 누르면 종료", voiceTranscriptEmpty:"인식된 음성이 여기에 표시됩니다…",
+    voiceUnsupported:"이 브라우저는 음성인식을 지원하지 않습니다. Chrome 브라우저에서 이용해주세요.",
+    voiceParsedOk:(main,bonus)=>`인식 완료 — 메인 ${main.join(', ')}${bonus.length?' / 보너스 '+bonus.join(', '):''}`,
+    voiceParsedShort:(need)=>`숫자를 ${need}개 더 말씀해주세요 (또는 다시 시도해주세요).`,
+    excelTitle:"엑셀 파일로 대량 등록", excelDesc:"한 행(row)이 하나의 조합입니다. 아래 형식에 맞춰 파일을 올려주세요.",
+    excelAddBtn:"유효한 조합 전체 추가 →",
+    excelFormatHint:(main,bonus)=>`형식: 앞 ${main}칸 = 메인 번호${bonus?`, 다음 ${bonus}칸 = 보너스 번호`:''}, 마지막 칸(선택) = 메모. 헤더(제목) 줄 없이 숫자만 입력해주세요.`,
+    excelSummary:(total,valid,invalid)=>`총 ${total}행 중 ${valid}개 유효, ${invalid}개 오류`,
+    excelInvalidReason:(reason)=>`오류: ${reason}`,
     coSummary:(count,cost,price)=>`총 ${count}개 조합 · ${cost}P (1조합당 ${price}P)`,
     registerBtnWithCost:(cost)=>`번호 등록하기 (${cost}P 사용)`,
     submitAlert:(count,cost)=>`${count}개 조합이 등록되었습니다. (${cost}P 사용)\n\n※ 데모 화면입니다 — 실제 저장은 아직 연결되지 않았습니다.`,
@@ -354,7 +467,19 @@ const i18n = {
     mNumSelect:" picks", mBonusAdd:"+ bonus", mNextDraw:"Next draw",
     mBonusLabel:"Bonus number(s)", mSamePool:"same pool as main",
     mSemiMax:"Up to", mSemiPartial:"(partial)",
-    mMethodManual:"Manual", mMethodSemi:"Semi", mMethodAuto:"Auto",
+    mMethodManual:"Manual", mMethodSemi:"Semi", mMethodAuto:"Auto", mMethodVoice:"Voice", mMethodExcel:"Excel",
+    modeVoice:"Voice Input", modeExcel:"Excel Upload",
+    voiceTitle:"Say your numbers", voiceDesc:"Press the mic button and clearly say the main numbers, then the bonus number(s).",
+    voiceLangLabel:"Recognition language", voiceLangAuto:"(auto-set by game, but you can change it)",
+    voiceStartBtn:"Start speaking", voiceListening:"Listening… press again to stop", voiceTranscriptEmpty:"Recognized speech will appear here…",
+    voiceUnsupported:"This browser doesn't support voice recognition. Please use Chrome.",
+    voiceParsedOk:(main,bonus)=>`Recognized — main ${main.join(', ')}${bonus.length?' / bonus '+bonus.join(', '):''}`,
+    voiceParsedShort:(need)=>`Please say ${need} more number(s) (or try again).`,
+    excelTitle:"Bulk register via Excel", excelDesc:"Each row is one combination. Please format your file as shown below.",
+    excelAddBtn:"Add all valid combinations →",
+    excelFormatHint:(main,bonus)=>`Format: first ${main} columns = main numbers${bonus?`, next ${bonus} columns = bonus number(s)`:''}, last column (optional) = memo. No header row — numbers only.`,
+    excelSummary:(total,valid,invalid)=>`${valid} of ${total} rows valid, ${invalid} error(s)`,
+    excelInvalidReason:(reason)=>`Error: ${reason}`,
     coSummary:(count,cost,price)=>`Total ${count} combos · ${cost}P (${price}P per combo)`,
     registerBtnWithCost:(cost)=>`Register Numbers (${cost}P)`,
     submitAlert:(count,cost)=>`${count} combination(s) registered. (${cost}P used)\n\n※ This is a demo screen — saving isn't connected yet.`,
@@ -379,7 +504,19 @@ const i18n = {
     mNumSelect:"個選択", mBonusAdd:"+ ボーナス", mNextDraw:"次回抽選",
     mBonusLabel:"ボーナス番号", mSamePool:"メインと同じプール",
     mSemiMax:"最大", mSemiPartial:"（一部のみ）",
-    mMethodManual:"手動", mMethodSemi:"半自動", mMethodAuto:"自動",
+    mMethodManual:"手動", mMethodSemi:"半自動", mMethodAuto:"自動", mMethodVoice:"音声", mMethodExcel:"エクセル",
+    modeVoice:"音声入力", modeExcel:"エクセルアップロード",
+    voiceTitle:"番号を話してください", voiceDesc:"マイクボタンを押して、メイン番号→ボーナス番号の順にはっきりと話してください。",
+    voiceLangLabel:"認識言語", voiceLangAuto:"（ゲームに応じて自動設定、変更可能）",
+    voiceStartBtn:"話し始める", voiceListening:"聞き取り中…もう一度押すと終了", voiceTranscriptEmpty:"認識された音声がここに表示されます…",
+    voiceUnsupported:"このブラウザは音声認識に対応していません。Chromeブラウザをご利用ください。",
+    voiceParsedOk:(main,bonus)=>`認識完了 — メイン ${main.join(', ')}${bonus.length?' / ボーナス '+bonus.join(', '):''}`,
+    voiceParsedShort:(need)=>`あと${need}個の数字を話してください（またはもう一度お試しください）。`,
+    excelTitle:"エクセルファイルで一括登録", excelDesc:"1行が1組み合わせです。以下の形式に合わせてファイルをアップロードしてください。",
+    excelAddBtn:"有効な組み合わせをすべて追加 →",
+    excelFormatHint:(main,bonus)=>`形式：先頭${main}列＝メイン番号${bonus?`、次の${bonus}列＝ボーナス番号`:''}、最後の列（任意）＝メモ。見出し行なしで数字のみ入力してください。`,
+    excelSummary:(total,valid,invalid)=>`全${total}行中 ${valid}件有効、${invalid}件エラー`,
+    excelInvalidReason:(reason)=>`エラー: ${reason}`,
     coSummary:(count,cost,price)=>`合計 ${count}組 · ${cost}P（1組${price}P）`,
     registerBtnWithCost:(cost)=>`番号を登録する（${cost}P使用）`,
     submitAlert:(count,cost)=>`${count}組の組み合わせが登録されました。（${cost}P使用）\n\n※デモ画面です — 実際の保存はまだ接続されていません。`,
@@ -427,7 +564,10 @@ async function loadPricing(){
   updateAutoCost(); updateCheckout();
 }
 let balance = 340; // 데모용 — 실제로는 profiles.points_balance에서 fetch
-let selectedGame = GAMES[0];
+// 상세페이지의 "내 전략 번호 가상 등록하기" 버튼에서 ?game=game_id 로 넘어온 경우,
+// 그 게임을 기본 선택 상태로 시작한다 (2026-07-26 추가 — 이전엔 항상 GAMES[0]로 고정이었음).
+const urlGameId = new URLSearchParams(location.search).get('game');
+let selectedGame = GAMES.find(g => g.id === urlGameId) || GAMES[0];
 let mode = 'manual';
 let pickedMain = [];
 let pickedBonus = [];
@@ -447,6 +587,8 @@ function renderGameStrip(){
       selectedGame = GAMES.find(g => g.id === el.dataset.id);
       pickedMain = []; pickedBonus = [];
       renderAll();
+      if (mode === 'voice') updateVoiceLangDefault();
+      if (mode === 'excel') updateExcelFormatHint();
     });
   });
 }
@@ -544,8 +686,10 @@ function setMode(m){
   mode = m;
   pickedMain = []; pickedBonus = [];
   document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
-  document.getElementById('pickPanel').style.display = (m === 'auto') ? 'none' : 'block';
+  document.getElementById('pickPanel').style.display = (m === 'manual' || m === 'semi') ? 'block' : 'none';
   document.getElementById('autoPanel').style.display = (m === 'auto') ? 'block' : 'none';
+  document.getElementById('voicePanel').style.display = (m === 'voice') ? 'block' : 'none';
+  document.getElementById('excelPanel').style.display = (m === 'excel') ? 'block' : 'none';
   document.getElementById('semiQtyWrap').style.display = (m === 'semi') ? 'inline' : 'none';
 
   const title = document.getElementById('pickTitle');
@@ -554,10 +698,12 @@ function setMode(m){
   if (m === 'manual') {
     title.textContent = t.pickTitleManual;
     desc.textContent = t.pickDescManual;
-  } else {
+  } else if (m === 'semi') {
     title.textContent = t.pickTitleSemi;
     desc.textContent = t.pickDescSemi;
   }
+  if (m === 'voice') updateVoiceLangDefault();
+  if (m === 'excel') updateExcelFormatHint();
   renderGrids(); updateStatus();
 }
 
@@ -612,6 +758,209 @@ function updateAutoCost(){
   document.getElementById('autoCost').textContent = `= ${qty*PRICE_PER_COMBO}P`;
 }
 
+// ─── 음성입력 ──────────────────────────────────────────────────────────
+// 게임의 국가 코드(sub)에 따른 기본 인식 언어. 사용자가 직접 select에서
+// 바꾸면 그 뒤로는 게임을 바꿔도 자동으로 덮어쓰지 않는다.
+const REGION_VOICE_LANG = { KR:'ko-KR', US:'en-US', JP:'ja-JP', CA:'en-CA', AU:'en-AU', EU:'en-US' };
+let voiceLangUserSet = false;
+document.getElementById('voiceLangSelect').addEventListener('change', () => { voiceLangUserSet = true; });
+
+function updateVoiceLangDefault(){
+  if (voiceLangUserSet) return;
+  const lang = REGION_VOICE_LANG[selectedGame.sub] || 'en-US';
+  document.getElementById('voiceLangSelect').value = lang;
+}
+
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let voiceRecognition = null;
+let voiceListening = false;
+let voiceParsedMain = [];
+let voiceParsedBonus = [];
+
+if (!SpeechRecognitionCtor) {
+  document.getElementById('voiceUnsupported').style.display = 'block';
+  document.getElementById('voiceStartBtn').disabled = true;
+}
+
+function parseVoiceTranscript(transcript){
+  // 트랜스크립트에서 숫자만 추출 (음성인식은 대부분 숫자를 아라비아 숫자로 돌려줌)
+  const nums = (transcript.match(/\d+/g) || []).map(Number);
+  const sharedPool = !selectedGame.bonusRange;
+  const bonusRange = selectedGame.bonusRange || selectedGame.range;
+
+  const main = [];
+  for (const n of nums) {
+    if (main.length >= selectedGame.main) break;
+    if (n >= 1 && n <= selectedGame.range && !main.includes(n)) main.push(n);
+  }
+  const bonus = [];
+  if (selectedGame.bonus) {
+    for (const n of nums) {
+      if (bonus.length >= selectedGame.bonus) break;
+      if (main.includes(n) && bonus.length < main.length) continue; // 이미 메인에 쓴 숫자는 건너뜀(대략적 처리)
+      if (n >= 1 && n <= bonusRange && !bonus.includes(n) && !(sharedPool && main.includes(n))) bonus.push(n);
+    }
+  }
+  return { main, bonus };
+}
+
+function renderVoiceParsed(){
+  const t = i18n[currentLang];
+  const box = document.getElementById('voiceParsed');
+  const addBtn = document.getElementById('voiceAddBtn');
+  const needMain = selectedGame.main, needBonus = selectedGame.bonus || 0;
+  const ok = voiceParsedMain.length === needMain && voiceParsedBonus.length === needBonus;
+
+  if (voiceParsedMain.length === 0 && voiceParsedBonus.length === 0) {
+    box.innerHTML = '';
+    addBtn.disabled = true;
+    return;
+  }
+  const pips = voiceParsedMain.map(n => `<span class="pr-pip">${n}</span>`).join('') +
+    voiceParsedBonus.map(n => `<span class="pr-pip bonus">${n}</span>`).join('');
+  const statusText = ok
+    ? t.voiceParsedOk(voiceParsedMain, voiceParsedBonus)
+    : t.voiceParsedShort((needMain + needBonus) - (voiceParsedMain.length + voiceParsedBonus.length));
+  box.innerHTML = `<div class="vp-status ${ok?'ok':'warn'}">${statusText}</div><div class="pr-pips">${pips}</div>`;
+  addBtn.disabled = !ok;
+}
+
+document.getElementById('voiceStartBtn').addEventListener('click', () => {
+  const t = i18n[currentLang];
+  const btn = document.getElementById('voiceStartBtn');
+  const label = document.getElementById('voiceBtnLabel');
+
+  if (voiceListening && voiceRecognition) { voiceRecognition.stop(); return; }
+
+  voiceRecognition = new SpeechRecognitionCtor();
+  voiceRecognition.lang = document.getElementById('voiceLangSelect').value;
+  voiceRecognition.interimResults = true;
+  voiceRecognition.continuous = true;
+  voiceRecognition.maxAlternatives = 1;
+
+  let finalTranscript = '';
+  voiceRecognition.onstart = () => {
+    voiceListening = true;
+    btn.classList.add('listening');
+    label.textContent = t.voiceListening;
+  };
+  voiceRecognition.onresult = (event) => {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const chunk = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalTranscript += chunk + ' ';
+      else interim += chunk;
+    }
+    document.getElementById('voiceTranscript').textContent = (finalTranscript + interim).trim() || t.voiceTranscriptEmpty;
+    const parsed = parseVoiceTranscript(finalTranscript + interim);
+    voiceParsedMain = parsed.main; voiceParsedBonus = parsed.bonus;
+    renderVoiceParsed();
+  };
+  voiceRecognition.onerror = () => {
+    voiceListening = false;
+    btn.classList.remove('listening');
+    label.textContent = t.voiceStartBtn;
+  };
+  voiceRecognition.onend = () => {
+    voiceListening = false;
+    btn.classList.remove('listening');
+    label.textContent = t.voiceStartBtn;
+  };
+  voiceRecognition.start();
+});
+
+document.getElementById('voiceAddBtn').addEventListener('click', () => {
+  const memo = document.getElementById('voiceMemo').value.trim();
+  pending.push({ gameId:selectedGame.id, main:[...voiceParsedMain].sort((a,b)=>a-b), bonus:[...voiceParsedBonus].sort((a,b)=>a-b), method:'voice', memo });
+  voiceParsedMain = []; voiceParsedBonus = [];
+  document.getElementById('voiceTranscript').textContent = i18n[currentLang].voiceTranscriptEmpty;
+  document.getElementById('voiceMemo').value = '';
+  renderVoiceParsed();
+  renderPending();
+});
+document.getElementById('voiceResetBtn').addEventListener('click', () => {
+  voiceParsedMain = []; voiceParsedBonus = [];
+  document.getElementById('voiceTranscript').textContent = i18n[currentLang].voiceTranscriptEmpty;
+  renderVoiceParsed();
+});
+
+// ─── 엑셀 업로드 ────────────────────────────────────────────────────────
+function updateExcelFormatHint(){
+  const t = i18n[currentLang];
+  document.getElementById('excelFormatHint').textContent = t.excelFormatHint(selectedGame.main, selectedGame.bonus || 0);
+}
+
+let excelValidRows = [];
+
+document.getElementById('excelFile').addEventListener('change', async (ev) => {
+  const t = i18n[currentLang];
+  const file = ev.target.files[0];
+  const summaryEl = document.getElementById('excelSummary');
+  const previewEl = document.getElementById('excelPreview');
+  const addBtn = document.getElementById('excelAddBtn');
+  excelValidRows = [];
+  addBtn.disabled = true;
+  if (!file) { summaryEl.textContent = ''; previewEl.innerHTML = ''; return; }
+
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+    const needMain = selectedGame.main, needBonus = selectedGame.bonus || 0;
+    const bonusRange = selectedGame.bonusRange || selectedGame.range;
+    const sharedPool = !selectedGame.bonusRange;
+
+    let validCount = 0, invalidCount = 0;
+    const previewRows = [];
+
+    rows.forEach((row, idx) => {
+      const cells = row.map(c => String(c).trim()).filter(c => c !== '');
+      if (cells.length === 0) return; // 빈 행 무시
+
+      const mainCells = cells.slice(0, needMain).map(Number);
+      const bonusCells = cells.slice(needMain, needMain + needBonus).map(Number);
+      const memo = cells[needMain + needBonus] || '';
+
+      let reason = null;
+      if (cells.length < needMain + needBonus) reason = `expected ${needMain + needBonus} numbers, got ${mainCells.length + bonusCells.length}`;
+      else if (mainCells.some(n => isNaN(n) || n < 1 || n > selectedGame.range)) reason = `main numbers must be 1–${selectedGame.range}`;
+      else if (new Set(mainCells).size !== mainCells.length) reason = 'duplicate main numbers';
+      else if (bonusCells.some(n => isNaN(n) || n < 1 || n > bonusRange)) reason = `bonus numbers must be 1–${bonusRange}`;
+      else if (new Set(bonusCells).size !== bonusCells.length) reason = 'duplicate bonus numbers';
+      else if (sharedPool && bonusCells.some(n => mainCells.includes(n))) reason = 'bonus overlaps with main';
+
+      if (reason) {
+        invalidCount++;
+        if (previewRows.length < 30) previewRows.push({ idx: idx + 1, valid: false, text: t.excelInvalidReason(reason) });
+      } else {
+        validCount++;
+        excelValidRows.push({ gameId: selectedGame.id, main: mainCells.sort((a,b)=>a-b), bonus: bonusCells.sort((a,b)=>a-b), method: 'excel', memo });
+        if (previewRows.length < 30) previewRows.push({ idx: idx + 1, valid: true, text: mainCells.join(' ') + (bonusCells.length ? ' + ' + bonusCells.join(' ') : '') });
+      }
+    });
+
+    summaryEl.innerHTML = `<span class="ok-count">${t.excelSummary(validCount+invalidCount, validCount, invalidCount)}</span>`;
+    previewEl.innerHTML = previewRows.map(r =>
+      `<div class="excel-row ${r.valid?'valid':'invalid'}"><span class="er-idx">#${r.idx}</span><span>${r.text}</span></div>`
+    ).join('') + (validCount + invalidCount > 30 ? `<div style="font-size:11px;color:var(--ink-dim);padding:4px 10px;">…</div>` : '');
+    addBtn.disabled = validCount === 0;
+  } catch (err) {
+    summaryEl.innerHTML = `<span class="err-count">${err.message}</span>`;
+  }
+});
+
+document.getElementById('excelAddBtn').addEventListener('click', () => {
+  pending.push(...excelValidRows);
+  excelValidRows = [];
+  document.getElementById('excelFile').value = '';
+  document.getElementById('excelSummary').textContent = '';
+  document.getElementById('excelPreview').innerHTML = '';
+  document.getElementById('excelAddBtn').disabled = true;
+  renderPending();
+});
+
 // ─── 등록 예정 목록 렌더 ─────────────────────────────────────────────
 function renderPending(){
   const t = i18n[currentLang];
@@ -624,7 +973,7 @@ function renderPending(){
       const g = GAMES.find(x => x.id === e.gameId);
       const pips = e.main.map(n => `<span class="pr-pip">${n}</span>`).join('') +
         e.bonus.map(n => `<span class="pr-pip bonus">${n}</span>`).join('');
-      const mLabel = {manual:t.mMethodManual, semi:t.mMethodSemi, auto:t.mMethodAuto}[e.method];
+      const mLabel = {manual:t.mMethodManual, semi:t.mMethodSemi, auto:t.mMethodAuto, voice:t.mMethodVoice, excel:t.mMethodExcel}[e.method];
       return `<div class="pending-row">
         <span class="pr-method ${e.method}">${mLabel}</span>
         <span style="font-size:11px;color:var(--ink-dim);width:64px;flex-shrink:0;">${g.sub}</span>
@@ -683,6 +1032,5 @@ applyLang(currentLang);
 loadPricing();
 </script>
 
-<script src="auth-widget.js"></script>
 </body>
 </html>
