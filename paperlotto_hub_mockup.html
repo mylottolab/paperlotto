@@ -157,6 +157,24 @@ nav a:hover{ color:var(--text-hi); }
 /* ══════════════ SECTIONS / GRID ══════════════ */
 main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10px 32px 100px; scroll-margin-top:110px; }
 
+.wf-hub-banner{
+  display:flex; align-items:center; gap:22px; background:var(--paper); color:var(--ink);
+  border-radius:18px; padding:28px 34px; margin-top:44px; flex-wrap:wrap;
+}
+.wf-hub-icon{ font-size:34px; flex-shrink:0; }
+.wf-hub-text{ flex:1; min-width:220px; }
+.wf-hub-text h3{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 6px; }
+.wf-hub-text p{ font-size:12.5px; color:var(--ink-dim); line-height:1.6; margin:0; }
+.wf-hub-btn{
+  flex-shrink:0; background:var(--gold); color:var(--ink); text-decoration:none; font-weight:700;
+  font-size:13.5px; padding:13px 24px; border-radius:9px; white-space:nowrap;
+}
+.wf-hub-btn:hover{ background:var(--gold-bright); }
+@media (max-width:640px){
+  .wf-hub-banner{ padding:22px; text-align:center; justify-content:center; }
+  .wf-hub-btn{ width:100%; text-align:center; }
+}
+
 .region{ margin-top:54px; }
 .region-head{
   display:flex; align-items:baseline; gap:14px; margin-bottom:18px;
@@ -323,6 +341,15 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="card-grid"></div>
   </div>
 
+  <div class="wf-hub-banner">
+    <div class="wf-hub-icon">📄</div>
+    <div class="wf-hub-text">
+      <h3 data-i18n="wfBannerTitle">역대 당첨번호, 데이터로 받아보세요</h3>
+      <p data-i18n="wfBannerDesc">12개국 복권 전체 회차의 당첨번호를 CSV 파일로 다운로드할 수 있습니다. (다운로드당 2,500P, 24시간 이내 재다운로드 무료)</p>
+    </div>
+    <a href="paperlotto_winning_files_mockup.html" class="wf-hub-btn" data-i18n="wfBannerBtn">다운로드 목록 보기 →</a>
+  </div>
+
 </main>
 
 <footer>
@@ -362,6 +389,9 @@ const i18n = {
     heroSub:"한국·미국·일본·캐나다·호주·유럽 — 당신의 전략 번호를 가상으로 등록하고, 실제 추첨 결과와 비교하며 데이터로 검증합니다.",
     heroBtnBoard:"게임 보드 보기 ↓", heroBtnGuide:"전략 가이드 읽기",
     heroNote:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
+    wfBannerTitle:"역대 당첨번호, 데이터로 받아보세요",
+    wfBannerDesc:"12개국 복권 전체 회차의 당첨번호를 CSV 파일로 다운로드할 수 있습니다. (다운로드당 2,500P, 24시간 이내 재다운로드 무료)",
+    wfBannerBtn:"다운로드 목록 보기 →",
     regionUS:"미국", regionEU:"유로밀리언스", regionJP:"일본", regionCA:"캐나다", regionAU:"호주", regionKR:"대한민국",
     footerNote:'본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>복권을 판매하거나 구매를 대행하지 않으며, 상금을 지급하지 않습니다.',
     footerTerms:"이용약관", footerPrivacy:"개인정보처리방침",
@@ -377,6 +407,9 @@ const i18n = {
     heroSub:"Korea · US · Japan · Canada · Australia · Europe — register your strategic numbers virtually and validate them against real draw results with data.",
     heroBtnBoard:"View Game Board ↓", heroBtnGuide:"Read Strategy Guide",
     heroNote:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
+    wfBannerTitle:"Get historical winning numbers, as data",
+    wfBannerDesc:"Download the full winning-number history for all 12 lotteries as a CSV file. (2,500P per download, free re-download within 24h)",
+    wfBannerBtn:"View download list →",
     regionUS:"United States", regionEU:"EuroMillions", regionJP:"Japan", regionCA:"Canada", regionAU:"Australia", regionKR:"Korea",
     footerNote:'This site stores and manages numbers chosen by users, and compares them against real draw results as a simulation service.<br>It does not sell tickets, act as a purchase agent, or pay out prizes.',
     footerTerms:"Terms of Service", footerPrivacy:"Privacy Policy",
@@ -392,6 +425,9 @@ const i18n = {
     heroSub:"韓国・アメリカ・日本・カナダ・オーストラリア・ヨーロッパ — 戦略番号を仮想登録し、実際の抽選結果と比較してデータで検証します。",
     heroBtnBoard:"ゲームボードを見る ↓", heroBtnGuide:"攻略ガイドを読む",
     heroNote:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
+    wfBannerTitle:"歴代当選番号を、データで受け取る",
+    wfBannerDesc:"12カ国の宝くじ全回の当選番号をCSVファイルでダウンロードできます。（1回2,500P、24時間以内の再ダウンロードは無料）",
+    wfBannerBtn:"ダウンロード一覧を見る →",
     regionUS:"アメリカ", regionEU:"ユーロミリオンズ", regionJP:"日本", regionCA:"カナダ", regionAU:"オーストラリア", regionKR:"韓国",
     footerNote:'当サイトはユーザーが選んだ番号を保存・管理し、実際の抽選結果と比較するシミュレーションサービスです。<br>宝くじの販売や購入代行は行わず、賞金の支払いもありません。',
     footerTerms:"利用規約", footerPrivacy:"プライバシーポリシー",
