@@ -634,9 +634,12 @@ async function dlLoadMeta(){
   await dlRefreshToken();
   const info = document.getElementById('dlInfo');
   const btn = document.getElementById('dlBtn');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 넘게 응답 없으면 타임아웃 처리
   try {
     const headers = dlAccessToken ? { 'Authorization': 'Bearer ' + dlAccessToken } : {};
-    const resp = await fetch(DL_META_URL, { headers });
+    // ?gameId= 를 붙여서 이 게임 데이터만 가볍게 조회 (12개 게임 전체를 긁는 통합 목록 페이지용 호출보다 훨씬 빠름)
+    const resp = await fetch(DL_META_URL + '?gameId=' + encodeURIComponent(DL_GAME_ID), { headers, signal: controller.signal });
     const data = await resp.json();
     if (!resp.ok || !data.items) { info.textContent = DL_LABELS[currentLang].error; return; }
     dlItem = data.items.find(i => i.game_id === DL_GAME_ID) || null;
@@ -644,6 +647,8 @@ async function dlLoadMeta(){
     renderDlCard();
   } catch (e) {
     info.textContent = DL_LABELS[currentLang].error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
