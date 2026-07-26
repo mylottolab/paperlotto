@@ -123,7 +123,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('enterBtn').addEventListener('click', () => {
-  const key = document.getElementById('adminKey').value;
+  const key = document.getElementById('adminKey').value.trim();
   if (!key) { showMsg('관리자 키를 입력해주세요.', false); return; }
   sessionStorage.setItem('pl_admin_key', key);
   window.location.href = 'paperlotto_admin_scrape_review.html';
