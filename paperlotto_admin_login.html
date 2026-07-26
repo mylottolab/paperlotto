@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 로그인 — PaperLotto</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi); min-height:100vh;
+  font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center;
+  background-image:linear-gradient(var(--board-line) 1px, transparent 1px), linear-gradient(90deg, var(--board-line) 1px, transparent 1px);
+  background-size:64px 64px;
+}
+h1{ font-family:'Fraunces',serif; margin:0; }
+.panel{ width:100%; max-width:380px; background:var(--paper); color:var(--ink); border-radius:16px; padding:34px 30px; margin:20px; }
+.brand{ display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+.brand-mark{ width:30px; height:30px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; color:var(--ink); }
+.brand-name em{ font-style:normal; color:var(--gold); }
+h2{ font-size:19px; margin:0 0 4px; }
+.sub{ font-size:12.5px; color:var(--ink-dim); margin-bottom:22px; }
+label{ display:block; font-size:12px; font-weight:600; color:var(--ink-dim); margin-bottom:5px; }
+input{ width:100%; padding:11px 13px; border:1px solid #d9d1ba; border-radius:8px; font-size:14px; margin-bottom:16px; background:#fff; color:var(--ink); font-family:'Inter',sans-serif; }
+input:focus{ outline:2px solid var(--gold); }
+.step-divider{ font-size:11px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.04em; margin:20px 0 14px; padding-top:16px; border-top:1px solid #e4dcc5; }
+button{ width:100%; padding:13px; border:none; border-radius:9px; background:var(--ink); color:var(--paper); font-size:14.5px; font-weight:700; cursor:pointer; }
+button:hover{ background:#2a3145; }
+button:disabled{ opacity:0.55; cursor:not-allowed; }
+.msg{ font-size:12.5px; margin-top:14px; padding:10px 12px; border-radius:8px; display:none; }
+.msg.err{ display:block; background:rgba(198,90,46,0.12); color:var(--err); }
+.msg.ok{ display:block; background:rgba(31,122,79,0.12); color:#1f7a4f; }
+.hint{ font-size:11px; color:var(--ink-dim); margin-top:-10px; margin-bottom:16px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em> Admin</div>
+  </div>
+
+  <div id="stepLogin">
+    <h2>관리자 로그인</h2>
+    <div class="sub">일반 계정과 동일한 이메일/비밀번호로 로그인합니다.</div>
+    <label for="email">이메일</label>
+    <input type="email" id="email" autocomplete="username">
+    <label for="password">비밀번호</label>
+    <input type="password" id="password" autocomplete="current-password">
+    <button id="loginBtn">로그인</button>
+  </div>
+
+  <div id="stepKey" style="display:none;">
+    <div class="step-divider">2단계</div>
+    <h2>관리자 키 입력</h2>
+    <div class="sub">저장/승인 등 쓰기 작업에 필요합니다. (Supabase의 ADMIN_API_KEY와 동일한 값)</div>
+    <label for="adminKey">관리자 키</label>
+    <input type="password" id="adminKey" autocomplete="off">
+    <div class="hint">이 값은 브라우저 세션에만 저장되고, 탭을 닫으면 사라집니다.</div>
+    <button id="enterBtn">검수 화면으로 이동</button>
+  </div>
+
+  <div id="msg" class="msg"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const VERIFY_URL = SUPABASE_URL + "/functions/v1/admin-verify";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+function showMsg(text, ok) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+}
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('loginBtn');
+  if (!email || !password) { showMsg('이메일과 비밀번호를 입력해주세요.', false); return; }
+
+  btn.disabled = true; btn.textContent = '확인 중…';
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error || !data.session) {
+      showMsg('로그인에 실패했습니다: ' + (error?.message || ''), false);
+      return;
+    }
+    const accessToken = data.session.access_token;
+
+    const verifyResp = await fetch(VERIFY_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const verifyData = await verifyResp.json();
+    if (!verifyResp.ok || !verifyData.isAdmin) {
+      showMsg('관리자 권한이 없는 계정입니다.', false);
+      await sb.auth.signOut();
+      return;
+    }
+
+    sessionStorage.setItem('pl_admin_token', accessToken);
+    sessionStorage.setItem('pl_admin_email', verifyData.email || email);
+    showMsg('로그인 확인됨. 관리자 키를 입력해주세요.', true);
+    document.getElementById('stepLogin').style.display = 'none';
+    document.getElementById('stepKey').style.display = 'block';
+  } catch (e) {
+    showMsg('오류가 발생했습니다: ' + e.message, false);
+  } finally {
+    btn.disabled = false; btn.textContent = '로그인';
+  }
+});
+
+document.getElementById('enterBtn').addEventListener('click', () => {
+  const key = document.getElementById('adminKey').value;
+  if (!key) { showMsg('관리자 키를 입력해주세요.', false); return; }
+  sessionStorage.setItem('pl_admin_key', key);
+  window.location.href = 'paperlotto_admin_scrape_review.html';
+});
+</script>
+</body>
+</html>
