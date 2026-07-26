@@ -541,8 +541,6 @@ function updateGate(){
   }
 }
 
-applyLang(currentLang);
-
 // =====================================================
 // 역대 당첨번호 다운로드 카드 (이 게임 전용, 단건)
 // winning_files_mockup.html의 통합 다운로드 페이지와 동일한 Edge Function을 사용하되,
@@ -638,6 +636,7 @@ async function dlDownload(isFree){
   }
 }
 
+applyLang(currentLang);
 dlLoadMeta();
 setInterval(updateGate, 1000);
 </script>
