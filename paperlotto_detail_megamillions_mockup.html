@@ -586,7 +586,7 @@ async function dlLoadMeta(){
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 넘게 응답 없으면 타임아웃 처리
   try {
-    const headers = dlAccessToken ? { 'Authorization': 'Bearer ' + dlAccessToken } : {};
+    const headers = { 'Authorization': 'Bearer ' + (dlAccessToken || DL_SUPABASE_KEY) }; // 로그인 안 했어도 게이트웨이 인증 통과하도록 anon key로 대체
     // ?gameId= 를 붙여서 이 게임 데이터만 가볍게 조회 (12개 게임 전체를 긁는 통합 목록 페이지용 호출보다 훨씬 빠름)
     const resp = await fetch(DL_META_URL + '?gameId=' + encodeURIComponent(DL_GAME_ID), { headers, signal: controller.signal });
     const data = await resp.json();

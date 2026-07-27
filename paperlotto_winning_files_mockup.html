@@ -150,7 +150,7 @@ async function refreshBalance(){
 async function loadGrid(){
   const grid = document.getElementById('grid');
   try {
-    const headers = accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {};
+    const headers = { 'Authorization': 'Bearer ' + (accessToken || SUPABASE_PUBLISHABLE_KEY) }; // 로그인 안 했어도 게이트웨이 인증 통과하도록 anon key로 대체
     const resp = await fetch(META_URL, { headers });
     const data = await resp.json();
     if (!resp.ok || !data.items || data.items.length === 0) {
