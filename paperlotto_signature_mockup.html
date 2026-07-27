@@ -34,7 +34,7 @@ header{
   padding:18px 32px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
   background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
 }
-.brand{ display:flex; align-items:center; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
 .brand-mark{ width:30px; height:30px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
 .brand-name{ font-size:17px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
@@ -119,6 +119,24 @@ select, input[type="text"], input[type="number"]{
 .coll-new-row button:hover{ background:var(--gold-bright); }
 .icon-btn.edit{ background:rgba(44,79,163,0.10); color:#2c4fa3; }
 
+.confirm-overlay{
+  position:fixed; inset:0; background:rgba(12,16,32,0.78); z-index:60;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.confirm-panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:26px; max-width:380px; width:100%; }
+.confirm-panel h3{ font-size:16px; margin-bottom:16px; }
+.confirm-row{ display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(28,33,48,0.10); font-size:13px; }
+.confirm-row:last-of-type{ border-bottom:none; }
+.confirm-row strong{ font-family:'IBM Plex Mono',monospace; font-size:14px; }
+.confirm-row strong.cost{ color:#8a5b1c; }
+.confirm-note{ font-size:11px; color:var(--ink-dim); margin-top:12px; line-height:1.6; background:rgba(198,90,46,0.08); padding:9px 11px; border-radius:8px; }
+.confirm-btn-row{ display:flex; gap:8px; margin-top:18px; }
+.confirm-btn-row button{ flex:1; padding:12px; border-radius:9px; font-size:13px; font-weight:700; cursor:pointer; border:none; }
+#confirmCancelBtn{ background:transparent; border:1.5px solid rgba(28,33,48,0.15); color:var(--ink-dim); }
+#confirmProceedBtn{ background:var(--gold); color:var(--ink); }
+#confirmProceedBtn:hover{ background:var(--gold-bright); }
+#confirmProceedBtn:disabled{ opacity:0.55; cursor:not-allowed; }
+
 @media (max-width:640px){
   header{ padding:14px 16px; }
   .header-right{ width:100%; align-items:flex-end; }
@@ -138,17 +156,20 @@ select, input[type="text"], input[type="number"]{
 <body>
 
 <header>
-  <div class="brand">
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
-  </div>
+  </a>
   <div class="header-right">
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
       <button data-lang="ja" type="button">JA</button>
     </div>
-    <nav><a href="paperlotto_my_entries_updated.html" data-i18n="navEntries">← 내 등록내역</a></nav>
+    <nav>
+      <a href="paperlotto_my_entries_updated.html" data-i18n="navEntries">← 내 등록내역</a>
+      <div id="authWidget"></div>
+    </nav>
   </div>
 </header>
 
@@ -193,6 +214,33 @@ select, input[type="text"], input[type="number"]{
   </div>
 </main>
 
+<div class="confirm-overlay" id="createConfirmModal" style="display:none;">
+  <div class="confirm-panel">
+    <h3 data-i18n="createConfirmTitle">마이 시그니처를 생성할까요?</h3>
+    <div class="confirm-row">
+      <span data-i18n="confirmNameLabel">이름</span>
+      <strong id="confirmCollName"></strong>
+    </div>
+    <div class="confirm-row">
+      <span data-i18n="confirmCostLabel">생성 비용</span>
+      <strong class="cost">500P</strong>
+    </div>
+    <div class="confirm-row">
+      <span data-i18n="confirmBalanceBeforeLabel">현재 보유 포인트</span>
+      <strong id="confirmBalanceBefore"></strong>
+    </div>
+    <div class="confirm-row">
+      <span data-i18n="confirmBalanceAfterLabel">생성 후 남는 포인트</span>
+      <strong id="confirmBalanceAfter"></strong>
+    </div>
+    <div class="confirm-note" data-i18n="confirmNote">생성 즉시 500포인트가 차감되며, 취소·환불되지 않습니다.</div>
+    <div class="confirm-btn-row">
+      <button type="button" id="confirmCancelBtn" data-i18n="confirmCancel">취소</button>
+      <button type="button" id="confirmProceedBtn" data-i18n="confirmProceed">생성하기 (500P 차감)</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const i18n = {
   ko: {
@@ -203,7 +251,10 @@ const i18n = {
     renamePrompt:"새 이름을 입력하세요:",
     deleteCollConfirm:function(name, count){ return '"' + name + '" 컬렉션을 삭제할까요? (안의 번호 ' + count + '개도 함께 삭제되며, 되돌릴 수 없습니다)'; },
     collCreateSuccess:function(name){ return '✅ "' + name + '" 마이 시그니처가 생성되었습니다!'; },
-    createConfirm:"본 마이 시그니처 생성 시 500포인트가 차감됩니다. 만들기를 원하시면 '확인'을 눌러주세요.",
+    createConfirmTitle:"마이 시그니처를 생성할까요?", confirmNameLabel:"이름", confirmCostLabel:"생성 비용",
+    confirmBalanceBeforeLabel:"현재 보유 포인트", confirmBalanceAfterLabel:"생성 후 남는 포인트",
+    confirmNote:"생성 즉시 500포인트가 차감되며, 취소·환불되지 않습니다.",
+    confirmCancel:"취소", confirmProceed:"생성하기 (500P 차감)", confirmCreating:"생성 중…",
     collNone:"아직 만든 마이 시그니처가 없습니다. 위에서 새로 만들어주세요.",
     addTitle:"+ 새 번호 직접 추가", gameLabel:"게임", roundLabel:"회차 (선택)", memoLabel:"메모 (선택)",
     mainLabel:"메인 번호 (쉼표로 구분)", bonusLabel:"보너스 번호 (쉼표로 구분, 선택)", addBtn:"추가하기",
@@ -226,7 +277,10 @@ const i18n = {
     renamePrompt:"Enter a new name:",
     deleteCollConfirm:function(name, count){ return 'Delete "' + name + '"? (Its ' + count + ' number(s) will also be deleted — this cannot be undone)'; },
     collCreateSuccess:function(name){ return '✅ "' + name + '" My Signature created!'; },
-    createConfirm:"Creating this My Signature will charge 500 points. Press OK to continue.",
+    createConfirmTitle:"Create this My Signature?", confirmNameLabel:"Name", confirmCostLabel:"Creation cost",
+    confirmBalanceBeforeLabel:"Current balance", confirmBalanceAfterLabel:"Balance after",
+    confirmNote:"500 points will be charged immediately upon creation. This cannot be canceled or refunded.",
+    confirmCancel:"Cancel", confirmProceed:"Create (charge 500P)", confirmCreating:"Creating…",
     collNone:"You haven't created a My Signature yet. Create one above.",
     addTitle:"+ Add a new number set", gameLabel:"Game", roundLabel:"Round (optional)", memoLabel:"Memo (optional)",
     mainLabel:"Main numbers (comma-separated)", bonusLabel:"Bonus numbers (comma-separated, optional)", addBtn:"Add",
@@ -249,7 +303,10 @@ const i18n = {
     renamePrompt:"新しい名前を入力してください:",
     deleteCollConfirm:function(name, count){ return '"' + name + '"を削除しますか？（中の番号' + count + '件も一緒に削除され、元に戻せません）'; },
     collCreateSuccess:function(name){ return '✅ "' + name + '" マイシグニチャーが作成されました！'; },
-    createConfirm:"このマイシグニチャーを作成すると500ポイントが消費されます。作成する場合は「OK」を押してください。",
+    createConfirmTitle:"マイシグニチャーを作成しますか？", confirmNameLabel:"名前", confirmCostLabel:"作成費用",
+    confirmBalanceBeforeLabel:"現在の保有ポイント", confirmBalanceAfterLabel:"作成後の残りポイント",
+    confirmNote:"作成すると即座に500ポイントが消費され、キャンセル・返金はできません。",
+    confirmCancel:"キャンセル", confirmProceed:"作成する (500P消費)", confirmCreating:"作成中…",
     collNone:"まだマイシグニチャーがありません。上で新しく作成してください。",
     addTitle:"+ 新しい番号を直接追加", gameLabel:"ゲーム", roundLabel:"回（任意）", memoLabel:"メモ（任意）",
     mainLabel:"メイン番号（カンマ区切り）", bonusLabel:"ボーナス番号（カンマ区切り、任意）", addBtn:"追加",
@@ -286,6 +343,7 @@ const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const SIGNATURE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/signature";
 const EXPORT_CHARGE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/export-charge";
+const POINTS_BALANCE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/points-balance";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const GAMES = [
@@ -426,29 +484,65 @@ document.getElementById('collCreateBtn').addEventListener('click', async functio
   const nameInput = document.getElementById('collNewName');
   const name = nameInput.value.trim();
   if (!name) { alert(t.collNameNeeded); return; }
-  if (!confirm(t.createConfirm)) return;
-  const btn = this;
-  btn.disabled = true;
-  try {
-    const data = await callSignature({ action: 'create_collection', name: name });
-    nameInput.value = '';
-    currentCollectionId = data.collection.id;
-    newlyCreatedId = data.collection.id;
-    await loadCollections();
-    alert(t.collCreateSuccess(name));
-    setTimeout(function(){ newlyCreatedId = null; renderCollections(); }, 6000);
-  } catch (e) {
-    if (e.code === 'INSUFFICIENT_POINTS' || e.shortfall) {
-      if (confirm(t.insufficientPointsMsg(e.balance, e.shortfall))) {
-        window.location.href = e.chargeUrl || 'paperlotto_recharge_mockup.html';
-      }
-    } else {
-      alert(e.message);
-    }
-  } finally {
-    btn.disabled = false;
-  }
+  await openCreateConfirmModal(name);
 });
+
+async function openCreateConfirmModal(name){
+  const t = i18n[currentLang];
+  document.getElementById('confirmCollName').textContent = name;
+  document.getElementById('confirmBalanceBefore').textContent = '…';
+  document.getElementById('confirmBalanceAfter').textContent = '…';
+  document.getElementById('createConfirmModal').style.display = 'flex';
+
+  let balance = null;
+  try {
+    const resp = await fetch(POINTS_BALANCE_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    if (resp.ok) balance = data.total;
+  } catch (e) { /* 잔액 조회 실패해도 생성 자체는 서버가 다시 검증하므로 계속 진행 가능 */ }
+
+  document.getElementById('confirmBalanceBefore').textContent = (balance !== null ? balance.toLocaleString() : '-') + 'P';
+  document.getElementById('confirmBalanceAfter').textContent = (balance !== null ? (balance - 500).toLocaleString() : '-') + 'P';
+
+  const proceedBtn = document.getElementById('confirmProceedBtn');
+  proceedBtn.disabled = (balance !== null && balance < 500);
+
+  function closeModal(){
+    document.getElementById('createConfirmModal').style.display = 'none';
+    cancelBtn.removeEventListener('click', onCancel);
+    proceedBtn.removeEventListener('click', onProceed);
+  }
+  function onCancel(){ closeModal(); }
+  async function onProceed(){
+    proceedBtn.disabled = true;
+    proceedBtn.textContent = t.confirmCreating;
+    try {
+      const data = await callSignature({ action: 'create_collection', name: name });
+      document.getElementById('collNewName').value = '';
+      currentCollectionId = data.collection.id;
+      newlyCreatedId = data.collection.id;
+      closeModal();
+      await loadCollections();
+      alert(t.collCreateSuccess(name));
+      setTimeout(function(){ newlyCreatedId = null; renderCollections(); }, 6000);
+    } catch (e) {
+      closeModal();
+      if (e.code === 'INSUFFICIENT_POINTS' || e.shortfall) {
+        if (confirm(t.insufficientPointsMsg(e.balance, e.shortfall))) {
+          window.location.href = e.chargeUrl || 'paperlotto_recharge_mockup.html';
+        }
+      } else {
+        alert(e.message);
+      }
+    } finally {
+      proceedBtn.disabled = false;
+      proceedBtn.textContent = t.confirmProceed;
+    }
+  }
+  const cancelBtn = document.getElementById('confirmCancelBtn');
+  cancelBtn.addEventListener('click', onCancel);
+  proceedBtn.addEventListener('click', onProceed);
+}
 
 async function loadEntries(){
   const listWrap = document.getElementById('listWrap');
@@ -671,5 +765,6 @@ applyLang(currentLang);
 loadCollections();
 </script>
 
+<script src="auth-widget.js"></script>
 </body>
 </html>
