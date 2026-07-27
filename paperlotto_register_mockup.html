@@ -467,6 +467,7 @@ const i18n = {
     loginRequiredAlert:"번호를 등록하려면 먼저 로그인해주세요.",
     submitting:"등록 중…",
     submitFailAlert:(msg)=>`등록에 실패했습니다: ${msg}`,
+    insufficientConfirm:(shortfall)=>`포인트가 ${shortfall}P 부족합니다. 충전 페이지로 이동할까요?`,
     pastResultAlert:(count)=>`${count}개 조합 등록 완료! 채점 결과:`,
     gradeTier:(n)=>`${n}등 당첨!`,
     gradeNone:"낙첨",
@@ -514,6 +515,7 @@ const i18n = {
     loginRequiredAlert:"Please log in first to register numbers.",
     submitting:"Registering…",
     submitFailAlert:(msg)=>`Registration failed: ${msg}`,
+    insufficientConfirm:(shortfall)=>`You're short ${shortfall}P. Go to the charge page?`,
     pastResultAlert:(count)=>`${count} combination(s) registered! Results:`,
     gradeTier:(n)=>`Tier ${n} winner!`,
     gradeNone:"No match",
@@ -561,6 +563,7 @@ const i18n = {
     loginRequiredAlert:"番号を登録するには先にログインしてください。",
     submitting:"登録中…",
     submitFailAlert:(msg)=>`登録に失敗しました: ${msg}`,
+    insufficientConfirm:(shortfall)=>`ポイントが${shortfall}P不足しています。チャージ画面に移動しますか？`,
     pastResultAlert:(count)=>`${count}組の登録が完了しました！結果:`,
     gradeTier:(n)=>`${n}等当選！`,
     gradeNone:"落選",
@@ -1104,7 +1107,13 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     const data = await resp.json();
 
     if (!resp.ok) {
-      alert(t.submitFailAlert((data.error || '')));
+      if (data.shortfall) {
+        if (confirm(t.insufficientConfirm(data.shortfall))) {
+          window.location.href = data.chargeUrl || 'paperlotto_recharge_mockup.html';
+        }
+      } else {
+        alert(t.submitFailAlert((data.error || '')));
+      }
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
       return;
