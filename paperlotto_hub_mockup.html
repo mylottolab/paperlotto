@@ -175,6 +175,24 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
   .wf-hub-btn{ width:100%; text-align:center; }
 }
 
+.pr-hub-banner{
+  display:flex; align-items:center; gap:22px; background:var(--board-2); color:var(--text-hi);
+  border:1.5px solid var(--board-line); border-radius:18px; padding:28px 34px; margin-top:16px; flex-wrap:wrap;
+}
+.pr-hub-icon{ font-size:34px; flex-shrink:0; }
+.pr-hub-text{ flex:1; min-width:220px; }
+.pr-hub-text h3{ font-family:'Fraunces',serif; font-size:19px; margin:0 0 6px; color:var(--text-hi); }
+.pr-hub-text p{ font-size:12.5px; color:var(--text-mid); line-height:1.6; margin:0; }
+.pr-hub-btn{
+  flex-shrink:0; background:transparent; color:var(--gold-bright); text-decoration:none; font-weight:700;
+  font-size:13.5px; padding:13px 24px; border-radius:9px; white-space:nowrap; border:1.5px solid var(--gold);
+}
+.pr-hub-btn:hover{ background:var(--gold); color:var(--ink); }
+@media (max-width:640px){
+  .pr-hub-banner{ padding:22px; text-align:center; justify-content:center; }
+  .pr-hub-btn{ width:100%; text-align:center; }
+}
+
 .region{ margin-top:54px; }
 .region-head{
   display:flex; align-items:baseline; gap:14px; margin-bottom:18px;
@@ -341,6 +359,15 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="card-grid"></div>
   </div>
 
+  <div class="pr-hub-banner">
+    <div class="pr-hub-icon">🎯</div>
+    <div class="pr-hub-text">
+      <h3 data-i18n="prBannerTitle">이미 추첨 끝난 회차, 내 번호였다면?</h3>
+      <p data-i18n="prBannerDesc">과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.</p>
+    </div>
+    <a href="paperlotto_past_round_select_mockup.html" class="pr-hub-btn" data-i18n="prBannerBtn">과거 회차 도전하기 →</a>
+  </div>
+
   <div class="wf-hub-banner">
     <div class="wf-hub-icon">📄</div>
     <div class="wf-hub-text">
@@ -392,6 +419,9 @@ const i18n = {
     wfBannerTitle:"역대 당첨번호, 데이터로 받아보세요",
     wfBannerDesc:"12개국 복권 전체 회차의 당첨번호를 CSV 파일로 다운로드할 수 있습니다. (다운로드당 2,500P, 24시간 이내 재다운로드 무료)",
     wfBannerBtn:"다운로드 목록 보기 →",
+    prBannerTitle:"이미 추첨 끝난 회차, 내 번호였다면?",
+    prBannerDesc:"과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.",
+    prBannerBtn:"과거 회차 도전하기 →",
     regionUS:"미국", regionEU:"유로밀리언스", regionJP:"일본", regionCA:"캐나다", regionAU:"호주", regionKR:"대한민국",
     footerNote:'본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>복권을 판매하거나 구매를 대행하지 않으며, 상금을 지급하지 않습니다.',
     footerTerms:"이용약관", footerPrivacy:"개인정보처리방침",
@@ -410,6 +440,9 @@ const i18n = {
     wfBannerTitle:"Get historical winning numbers, as data",
     wfBannerDesc:"Download the full winning-number history for all 12 lotteries as a CSV file. (2,500P per download, free re-download within 24h)",
     wfBannerBtn:"View download list →",
+    prBannerTitle:"Wonder if your numbers would've won a past draw?",
+    prBannerDesc:"Pick a past round and register your numbers — get graded instantly.",
+    prBannerBtn:"Try a past round →",
     regionUS:"United States", regionEU:"EuroMillions", regionJP:"Japan", regionCA:"Canada", regionAU:"Australia", regionKR:"Korea",
     footerNote:'This site stores and manages numbers chosen by users, and compares them against real draw results as a simulation service.<br>It does not sell tickets, act as a purchase agent, or pay out prizes.',
     footerTerms:"Terms of Service", footerPrivacy:"Privacy Policy",
@@ -428,6 +461,9 @@ const i18n = {
     wfBannerTitle:"歴代当選番号を、データで受け取る",
     wfBannerDesc:"12カ国の宝くじ全回の当選番号をCSVファイルでダウンロードできます。（1回2,500P、24時間以内の再ダウンロードは無料）",
     wfBannerBtn:"ダウンロード一覧を見る →",
+    prBannerTitle:"すでに抽選が終わった回、自分の番号だったら？",
+    prBannerDesc:"過去の回を選んで番号を登録すると、登録後すぐに結果を確認できます。",
+    prBannerBtn:"過去回にチャレンジ →",
     regionUS:"アメリカ", regionEU:"ユーロミリオンズ", regionJP:"日本", regionCA:"カナダ", regionAU:"オーストラリア", regionKR:"韓国",
     footerNote:'当サイトはユーザーが選んだ番号を保存・管理し、実際の抽選結果と比較するシミュレーションサービスです。<br>宝くじの販売や購入代行は行わず、賞金の支払いもありません。',
     footerTerms:"利用規約", footerPrivacy:"プライバシーポリシー",
