@@ -67,6 +67,21 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
 .tb-btn:disabled{ opacity:0.4; cursor:not-allowed; }
 
 .list-wrap{ background:var(--paper); color:var(--ink); border-radius:14px; overflow:hidden; }
+.list-header{
+  display:flex; align-items:center; gap:12px; padding:10px 18px; background:var(--board-2);
+  border-radius:10px 10px 0 0; font-size:10.5px; font-weight:700; color:var(--text-dim); letter-spacing:0.03em;
+}
+.list-header .lh-check{ width:16px; flex-shrink:0; }
+.list-header .lh-col{ cursor:pointer; user-select:none; display:flex; align-items:center; gap:3px; }
+.list-header .lh-col:hover{ color:var(--text-hi); }
+.list-header .lh-game{ width:64px; flex-shrink:0; }
+.list-header .lh-round{ width:76px; flex-shrink:0; }
+.list-header .lh-numbers{ flex:1; }
+.list-header .lh-grade{ flex-shrink:0; width:60px; }
+.list-header .lh-arrow{ font-size:9px; opacity:0.7; }
+@media (max-width:640px){
+  .list-header{ display:none; } /* 모바일에서는 행 자체가 wrap되어 헤더 정렬 UI가 어색해서 숨김 (정렬 기능 자체는 그대로 동작) */
+}
 .entry-row{
   display:flex; align-items:center; gap:12px; padding:14px 18px;
   border-bottom:1px solid rgba(28,33,48,0.08);
@@ -111,6 +126,27 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
 .grade-btn:disabled{ opacity:0.5; cursor:default; }
 
 .empty-note, .loading-note{ text-align:center; padding:40px 0; font-size:13px; color:var(--ink-dim); }
+
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(12,16,32,0.75); z-index:50;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.modal-panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:24px; max-width:420px; width:100%; }
+.modal-panel h3{ font-size:16px; margin-bottom:4px; }
+.modal-sub{ font-size:12px; color:var(--ink-dim); margin-bottom:14px; }
+.coll-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; max-height:240px; overflow-y:auto; }
+.coll-item{
+  display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-radius:8px;
+  border:1.5px solid rgba(28,33,48,0.14); background:#fff; cursor:pointer; font-size:13px; font-weight:600;
+}
+.coll-item:hover{ border-color:var(--gold); }
+.coll-item .coll-count{ font-size:11px; color:var(--ink-dim); font-weight:400; }
+.coll-empty{ font-size:12.5px; color:var(--ink-dim); text-align:center; padding:10px 0; }
+.coll-new-row{ display:flex; gap:8px; margin-bottom:14px; }
+.coll-new-row input{ flex:1; padding:10px 12px; border:1.5px solid rgba(28,33,48,0.15); border-radius:8px; font-size:13px; }
+.coll-new-row button{ padding:10px 14px; border:none; border-radius:8px; background:var(--gold); color:var(--ink); font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.coll-new-row button:hover{ background:var(--gold-bright); }
+.modal-close{ width:100%; padding:10px; border:1.5px solid rgba(28,33,48,0.15); border-radius:8px; background:transparent; color:var(--ink-dim); font-size:12.5px; font-weight:600; cursor:pointer; }
 
 @media (max-width:640px){
   header{ padding:14px 16px; }
@@ -174,16 +210,30 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
     <select id="filterYear"><option value="" data-i18n="filterAllYears">전체 연도</option></select>
     <div class="spacer"></div>
     <button class="tb-btn" id="bulkGradeBtn" data-i18n="bulkGrade">전체 채점하기</button>
-    <button class="tb-btn" id="exportExcelBtn" data-i18n="exportExcel">엑셀 다운로드 (50P)</button>
-    <button class="tb-btn" id="exportPdfBtn" data-i18n="exportPdf">PDF 생성 (50P)</button>
-    <button class="tb-btn primary" id="toWatchlistBtn" data-i18n="toWatchlist">관심번호로 이동</button>
-    <a class="tb-btn" href="paperlotto_watchlist_mockup.html" style="text-decoration:none; display:inline-block;" data-i18n="goWatchlist">관심번호 보기 →</a>
+    <button class="tb-btn" id="exportExcelBtn" data-i18n="exportExcel">엑셀 다운로드 (100P)</button>
+    <button class="tb-btn" id="exportPdfBtn" data-i18n="exportPdf">PDF 생성 (100P)</button>
+    <button class="tb-btn primary" id="toWatchlistBtn" data-i18n="toWatchlist">마이 시그니처로 이동</button>
+    <a class="tb-btn" href="paperlotto_signature_mockup.html" style="text-decoration:none; display:inline-block;" data-i18n="goWatchlist">마이 시그니처 보기 →</a>
   </div>
 
+  <div class="list-header" id="listHeader"></div>
   <div class="list-wrap" id="listWrap">
     <div class="loading-note" data-i18n="loading">불러오는 중…</div>
   </div>
 </main>
+
+<div class="modal-overlay" id="collModal" style="display:none;">
+  <div class="modal-panel">
+    <h3 data-i18n="collModalTitle">마이 시그니처로 이동</h3>
+    <p class="modal-sub" data-i18n="collModalSub">이동할 마이 시그니처를 고르거나 새로 만드세요.</p>
+    <div id="collList" class="coll-list"></div>
+    <div class="coll-new-row">
+      <input type="text" id="collNewName" placeholder="예: 미국 게임용">
+      <button id="collCreateBtn" data-i18n="collCreateBtn">+ 새로 만들기 (500P)</button>
+    </div>
+    <button class="modal-close" id="collModalClose" data-i18n="modalClose">닫기</button>
+  </div>
+</div>
 
 <script>
 const i18n = {
@@ -191,52 +241,64 @@ const i18n = {
     navBack:"← 전체 게임", pageTitle:"내 등록내역",
     badgeTotal:"전체 등록", badgeGraded:"채점 완료", badgePending:"채점 대기", badgeWin:"당첨(1~5등)",
     filterAllGames:"전체 게임", filterAllYears:"전체 연도",
-    bulkGrade:"전체 채점하기", exportExcel:"엑셀 다운로드 (50P)", exportPdf:"PDF 생성 (50P)",
-    toWatchlist:"관심번호로 이동", goWatchlist:"관심번호 보기 →",
+    bulkGrade:"전체 채점하기", exportExcel:"엑셀 다운로드 (100P)", exportPdf:"PDF 생성 (100P)",
+    toWatchlist:"마이 시그니처로 이동", goWatchlist:"마이 시그니처 보기 →",
+    colGame:"게임", colRound:"회차", colDate:"등록일", colGrade:"등수",
     loading:"불러오는 중…", empty:"아직 등록한 조합이 없습니다.", loginNeeded:"로그인이 필요합니다.",
     gradeWait:"채점 대기", gradeLose:"낙첨", gradeBtn:"확인", gradeBtnLoading:"확인 중…",
     gradeTier:function(n){ return n + "등"; },
     goldBallLabel:"골드볼", goldBallTooltip:"원래의 복권에서는 골드볼 추첨 대상이 되는 고유번호이나, 이 시뮬레이션에서는 표시만 됩니다.",
     selectAtLeastOne:"먼저 항목을 선택해주세요.",
-    exportSuccess:function(n){ return n + "건 내보내기 완료 (50P 차감)"; },
-    watchlistSuccess:function(n){ return n + "건 관심번호로 이동했습니다."; },
-    insufficientPointsMsg:function(balance, required){
-      return "포인트가 부족합니다. (보유 " + balance + "P / 필요 " + required + "P)\n\n지금 포인트 충전 페이지로 이동할까요?";
+    exportSuccess:function(n){ return n + "건 내보내기 완료 (100P 차감)"; },
+    watchlistSuccess:function(n){ return n + "건 마이 시그니처로 이동했습니다."; },
+    insufficientPointsMsg:function(balance, shortfall){
+      return "포인트가 " + shortfall + "P 부족합니다. (보유 " + balance + "P)\n\n지금 포인트 충전 페이지로 이동할까요?";
     },
+    collModalTitle:"마이 시그니처로 이동", collModalSub:"이동할 마이 시그니처를 고르거나 새로 만드세요.",
+    collNone:"아직 만든 마이 시그니처가 없습니다. 아래에서 새로 만들어주세요.",
+    collCreateBtn:"+ 새로 만들기 (500P)", modalClose:"닫기", collNameNeeded:"컬렉션 이름을 입력해주세요.",
   },
   en: {
     navBack:"← All Games", pageTitle:"My Entries",
     badgeTotal:"Total Entries", badgeGraded:"Graded", badgePending:"Pending", badgeWin:"Winners (Tier 1–5)",
     filterAllGames:"All Games", filterAllYears:"All Years",
-    bulkGrade:"Grade All", exportExcel:"Download Excel (50P)", exportPdf:"Generate PDF (50P)",
-    toWatchlist:"Move to Watchlist", goWatchlist:"View Watchlist →",
+    bulkGrade:"Grade All", exportExcel:"Download Excel (100P)", exportPdf:"Generate PDF (100P)",
+    toWatchlist:"Move to My Signature", goWatchlist:"View My Signature →",
+    colGame:"Game", colRound:"Round", colDate:"Registered", colGrade:"Grade",
     loading:"Loading…", empty:"No entries registered yet.", loginNeeded:"Please log in.",
     gradeWait:"Pending", gradeLose:"No win", gradeBtn:"Check", gradeBtnLoading:"Checking…",
     gradeTier:function(n){ return "Tier " + n; },
     goldBallLabel:"Gold Ball", goldBallTooltip:"In the real lottery, this number is eligible for the Gold Ball Draw. In this simulation it is shown for reference only and is not graded.",
     selectAtLeastOne:"Please select at least one item first.",
-    exportSuccess:function(n){ return n + " item(s) exported (50P charged)"; },
-    watchlistSuccess:function(n){ return n + " item(s) moved to watchlist."; },
-    insufficientPointsMsg:function(balance, required){
-      return "You don't have enough points. (Balance: " + balance + "P / Needed: " + required + "P)\n\nGo to the points recharge page now?";
+    exportSuccess:function(n){ return n + " item(s) exported (100P charged)"; },
+    watchlistSuccess:function(n){ return n + " item(s) moved to My Signature."; },
+    insufficientPointsMsg:function(balance, shortfall){
+      return "You're short " + shortfall + "P. (Balance: " + balance + "P)\n\nGo to the points recharge page now?";
     },
+    collModalTitle:"Move to My Signature", collModalSub:"Pick a My Signature collection to move into, or create a new one.",
+    collNone:"You haven't created a My Signature yet. Create one below.",
+    collCreateBtn:"+ Create new (500P)", modalClose:"Close", collNameNeeded:"Please enter a collection name.",
   },
   ja: {
     navBack:"← すべてのゲーム", pageTitle:"登録した番号",
     badgeTotal:"登録合計", badgeGraded:"採点済み", badgePending:"採点待ち", badgeWin:"当選(1〜5等)",
     filterAllGames:"すべてのゲーム", filterAllYears:"すべての年",
-    bulkGrade:"一括採点", exportExcel:"エクセルダウンロード (50P)", exportPdf:"PDF生成 (50P)",
-    toWatchlist:"関心番号へ移動", goWatchlist:"関心番号を見る →",
+    bulkGrade:"一括採点", exportExcel:"エクセルダウンロード (100P)", exportPdf:"PDF生成 (100P)",
+    toWatchlist:"マイシグニチャーへ移動", goWatchlist:"マイシグニチャーを見る →",
+    colGame:"ゲーム", colRound:"回", colDate:"登録日", colGrade:"等級",
     loading:"読み込み中…", empty:"まだ登録した組み合わせがありません。", loginNeeded:"ログインが必要です。",
     gradeWait:"採点待ち", gradeLose:"落選", gradeBtn:"確認", gradeBtnLoading:"確認中…",
     gradeTier:function(n){ return n + "等"; },
     goldBallLabel:"ゴールドボール", goldBallTooltip:"本来の宝くじではゴールドボール抽選の対象となる番号ですが、本シミュレーションでは表示のみで、当選判定には使用されません。",
     selectAtLeastOne:"まず項目を選択してください。",
-    exportSuccess:function(n){ return n + "件エクスポート完了 (50P消費)"; },
-    watchlistSuccess:function(n){ return n + "件を関心番号へ移動しました。"; },
-    insufficientPointsMsg:function(balance, required){
-      return "ポイントが不足しています。（保有 " + balance + "P / 必要 " + required + "P）\n\n今すぐポイント充電ページへ移動しますか？";
+    exportSuccess:function(n){ return n + "件エクスポート完了 (100P消費)"; },
+    watchlistSuccess:function(n){ return n + "件をマイシグニチャーへ移動しました。"; },
+    insufficientPointsMsg:function(balance, shortfall){
+      return "ポイントが" + shortfall + "P不足しています。（保有 " + balance + "P）\n\n今すぐポイント充電ページへ移動しますか？";
     },
+    collModalTitle:"マイシグニチャーへ移動", collModalSub:"移動先のマイシグニチャーを選ぶか、新しく作成してください。",
+    collNone:"まだマイシグニチャーがありません。下から新しく作成してください。",
+    collCreateBtn:"+ 新規作成 (500P)", modalClose:"閉じる", collNameNeeded:"コレクション名を入力してください。",
   },
 };
 let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
@@ -250,6 +312,7 @@ function applyLang(lang){
     if (typeof t[key] === 'string') el.innerHTML = t[key];
   });
   document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
+  renderListHeader();
   renderList();
 }
 document.querySelectorAll('.lang-toggle button').forEach(function(btn){ btn.addEventListener('click', function(){ applyLang(btn.dataset.lang); }); });
@@ -257,7 +320,7 @@ document.querySelectorAll('.lang-toggle button').forEach(function(btn){ btn.addE
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const SELF_GRADE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/self-grade";
-const WATCHLIST_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/watchlist";
+const SIGNATURE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/signature";
 const EXPORT_CHARGE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/export-charge";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
@@ -274,6 +337,42 @@ const GAME_FULL = {
 
 let allEntries = [];
 let accessToken = null;
+let sortKey = 'created_at';
+let sortDir = 'desc';
+
+function renderListHeader(){
+  const t = i18n[currentLang];
+  const header = document.getElementById('listHeader');
+  const arrow = (key) => sortKey === key ? '<span class="lh-arrow">' + (sortDir === 'asc' ? '▲' : '▼') + '</span>' : '';
+  header.innerHTML =
+    '<span class="lh-check"></span>' +
+    '<span class="lh-col lh-game" data-sort="game_id">' + t.colGame + arrow('game_id') + '</span>' +
+    '<span class="lh-col lh-round" data-sort="round_no">' + t.colRound + arrow('round_no') + '</span>' +
+    '<span class="lh-col lh-numbers" data-sort="created_at">' + t.colDate + arrow('created_at') + '</span>' +
+    '<span class="lh-col lh-grade" data-sort="grade">' + t.colGrade + arrow('grade') + '</span>';
+  header.querySelectorAll('[data-sort]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.sort;
+      if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = key === 'created_at' ? 'desc' : 'asc'; }
+      renderListHeader();
+      renderList();
+    });
+  });
+}
+
+function sortRows(rows){
+  const dir = sortDir === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (sortKey === 'grade') { av = (av === null || av === undefined) ? -1 : av; bv = (bv === null || bv === undefined) ? -1 : bv; }
+    if (av === undefined || av === null) av = '';
+    if (bv === undefined || bv === null) bv = '';
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
 
 async function loadEntries(){
   const listWrap = document.getElementById('listWrap');
@@ -296,6 +395,7 @@ async function loadEntries(){
   allEntries = (!error && data) ? data : [];
   populateFilters();
   renderBadges();
+  renderListHeader();
   renderList();
 }
 
@@ -334,6 +434,7 @@ function renderList(){
   let rows = allEntries;
   if (gameFilter) rows = rows.filter(e => e.game_id === gameFilter);
   if (yearFilter) rows = rows.filter(e => e.created_at.slice(0,4) === yearFilter);
+  rows = sortRows(rows);
 
   if (rows.length === 0) {
     listWrap.innerHTML = '<div class="empty-note">' + t.empty + '</div>';
@@ -446,7 +547,7 @@ async function chargeAndFetch(ids){
   if (!resp.ok) {
     const err = new Error(data.error || 'Failed');
     err.code = data.code;
-    err.required = data.required;
+    err.shortfall = data.shortfall;
     err.balance = data.balance;
     throw err;
   }
@@ -456,7 +557,7 @@ async function chargeAndFetch(ids){
 function showExportError(e){
   const t = i18n[currentLang];
   if (e.code === 'INSUFFICIENT_POINTS') {
-    if (confirm(t.insufficientPointsMsg(e.balance, e.required))) {
+    if (confirm(t.insufficientPointsMsg(e.balance, e.shortfall))) {
       window.location.href = 'paperlotto_recharge_mockup.html';
     }
   } else {
@@ -540,27 +641,97 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
   }
 });
 
+let pendingMoveIds = [];
+
 document.getElementById('toWatchlistBtn').addEventListener('click', async function(){
   const t = i18n[currentLang];
   const ids = getSelectedIds();
   if (ids.length === 0) { alert(t.selectAtLeastOne); return; }
+  pendingMoveIds = ids;
+  await openCollectionModal();
+});
+
+async function openCollectionModal(){
+  const t = i18n[currentLang];
+  document.getElementById('collModal').style.display = 'flex';
+  document.getElementById('collNewName').value = '';
+  const listEl = document.getElementById('collList');
+  listEl.innerHTML = '<div class="coll-empty">…</div>';
+  try {
+    const resp = await fetch(SIGNATURE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ action: 'list_collections' }),
+    });
+    const data = await resp.json();
+    const collections = (data && data.collections) ? data.collections : [];
+    if (collections.length === 0) {
+      listEl.innerHTML = '<div class="coll-empty">' + t.collNone + '</div>';
+    } else {
+      listEl.innerHTML = collections.map(function(c){
+        return '<div class="coll-item" data-id="' + c.id + '"><span>' + c.name + '</span><span class="coll-count">' + c.entry_count + '</span></div>';
+      }).join('');
+      listEl.querySelectorAll('.coll-item').forEach(function(el){
+        el.addEventListener('click', function(){ moveToCollection(Number(el.dataset.id)); });
+      });
+    }
+  } catch (e) {
+    listEl.innerHTML = '<div class="coll-empty">Error</div>';
+  }
+}
+
+document.getElementById('collModalClose').addEventListener('click', function(){
+  document.getElementById('collModal').style.display = 'none';
+});
+
+document.getElementById('collCreateBtn').addEventListener('click', async function(){
+  const t = i18n[currentLang];
+  const name = document.getElementById('collNewName').value.trim();
+  if (!name) { alert(t.collNameNeeded); return; }
   const btn = this;
   btn.disabled = true;
   try {
-    const resp = await fetch(WATCHLIST_URL, {
+    const resp = await fetch(SIGNATURE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
-      body: JSON.stringify({ action: 'add_from_entries', entry_ids: ids }),
+      body: JSON.stringify({ action: 'create_collection', name: name }),
     });
     const data = await resp.json();
-    if (!resp.ok) throw new Error(data.error || 'Failed');
-    alert(t.watchlistSuccess(data.added));
+    if (!resp.ok) {
+      if (data.code === 'INSUFFICIENT_POINTS' || data.shortfall) {
+        if (confirm(t.insufficientPointsMsg(data.balance, data.shortfall))) {
+          window.location.href = data.chargeUrl || 'paperlotto_recharge_mockup.html';
+        }
+      } else {
+        alert(data.error || 'Failed');
+      }
+      return;
+    }
+    await moveToCollection(data.collection.id);
   } catch (e) {
     alert(e.message);
   } finally {
     btn.disabled = false;
   }
 });
+
+async function moveToCollection(collectionId){
+  const t = i18n[currentLang];
+  try {
+    const resp = await fetch(SIGNATURE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ action: 'add_from_entries', collection_id: collectionId, entry_ids: pendingMoveIds }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Failed');
+    document.getElementById('collModal').style.display = 'none';
+    alert(t.watchlistSuccess(data.added));
+    pendingMoveIds = [];
+  } catch (e) {
+    alert(e.message);
+  }
+}
 
 applyLang(currentLang);
 loadEntries();
