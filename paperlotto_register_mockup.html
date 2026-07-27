@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>번호 등록 — PaperLotto</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -67,6 +68,8 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
   background:var(--board-2); border:1.5px solid var(--board-line); cursor:pointer; min-width:118px;
 }
 .game-chip.active{ border-color:var(--accent); background:rgba(255,255,255,0.03); }
+.game-chip.locked{ cursor:default; }
+.game-chip.locked:not(.active){ opacity:0.35; }
 .game-chip .gc-name{ font-size:13px; font-weight:600; color:var(--text-hi); }
 .game-chip .gc-sub{ font-size:10.5px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; }
 
@@ -438,6 +441,7 @@ const i18n = {
     rechargeLink:"충전하러 가기 →",
     registerBtn:"번호 등록하기", insufficientBtn:"포인트 부족",
     mNumSelect:"개 선택", mBonusAdd:"+ 보너스", mNextDraw:"다음 추첨",
+    mPastRoundLabel:"과거 회차 도전", mRoundNoLabel:(n)=>`제${n}회`,
     mBonusLabel:"보너스 번호", mSamePool:"메인과 같은 풀",
     mSemiMax:"최대", mSemiPartial:"(일부만)",
     mMethodManual:"수동", mMethodSemi:"반자동", mMethodAuto:"자동", mMethodVoice:"음성", mMethodExcel:"엑셀",
@@ -456,7 +460,14 @@ const i18n = {
     notifyPrefLabel:"1~3등 당첨 시 이메일로 알려주세요",
     coSummary:(count,cost,price)=>`총 ${count}개 조합 · ${cost}P (1조합당 ${price}P)`,
     registerBtnWithCost:(cost)=>`번호 등록하기 (${cost}P 사용)`,
-    submitAlert:(count,cost)=>`${count}개 조합이 등록되었습니다. (${cost}P 사용)\n\n※ 데모 화면입니다 — 실제 저장은 아직 연결되지 않았습니다.`,
+    submitAlert:(count,cost)=>`${count}개 조합이 등록되었습니다. (${cost}P 사용)`,
+    loginRequiredAlert:"번호를 등록하려면 먼저 로그인해주세요.",
+    submitting:"등록 중…",
+    submitFailAlert:(msg)=>`등록에 실패했습니다: ${msg}`,
+    pastResultAlert:(count)=>`${count}개 조합 등록 완료! 채점 결과:`,
+    gradeTier:(n)=>`${n}등 당첨!`,
+    gradeNone:"낙첨",
+    gradeUnknown:"채점 결과를 확인할 수 없습니다.",
     unit:"개", monthDay:(m,d)=>`${m}월 ${d}일`,
     nameKey:"nameKo",
   },
@@ -476,6 +487,7 @@ const i18n = {
     rechargeLink:"Go recharge →",
     registerBtn:"Register Numbers", insufficientBtn:"Insufficient points",
     mNumSelect:" picks", mBonusAdd:"+ bonus", mNextDraw:"Next draw",
+    mPastRoundLabel:"Past Round Challenge", mRoundNoLabel:(n)=>`Round ${n}`,
     mBonusLabel:"Bonus number(s)", mSamePool:"same pool as main",
     mSemiMax:"Up to", mSemiPartial:"(partial)",
     mMethodManual:"Manual", mMethodSemi:"Semi", mMethodAuto:"Auto", mMethodVoice:"Voice", mMethodExcel:"Excel",
@@ -494,7 +506,14 @@ const i18n = {
     notifyPrefLabel:"Email me if I win Tier 1–3",
     coSummary:(count,cost,price)=>`Total ${count} combos · ${cost}P (${price}P per combo)`,
     registerBtnWithCost:(cost)=>`Register Numbers (${cost}P)`,
-    submitAlert:(count,cost)=>`${count} combination(s) registered. (${cost}P used)\n\n※ This is a demo screen — saving isn't connected yet.`,
+    submitAlert:(count,cost)=>`${count} combination(s) registered. (${cost}P used)`,
+    loginRequiredAlert:"Please log in first to register numbers.",
+    submitting:"Registering…",
+    submitFailAlert:(msg)=>`Registration failed: ${msg}`,
+    pastResultAlert:(count)=>`${count} combination(s) registered! Results:`,
+    gradeTier:(n)=>`Tier ${n} winner!`,
+    gradeNone:"No match",
+    gradeUnknown:"Could not check the result.",
     unit:"", monthDay:(m,d)=>{const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return `${months[m-1]} ${d}`;},
     nameKey:"nameEn",
   },
@@ -514,6 +533,7 @@ const i18n = {
     rechargeLink:"チャージしに行く →",
     registerBtn:"番号を登録する", insufficientBtn:"ポイント不足",
     mNumSelect:"個選択", mBonusAdd:"+ ボーナス", mNextDraw:"次回抽選",
+    mPastRoundLabel:"過去回チャレンジ", mRoundNoLabel:(n)=>`第${n}回`,
     mBonusLabel:"ボーナス番号", mSamePool:"メインと同じプール",
     mSemiMax:"最大", mSemiPartial:"（一部のみ）",
     mMethodManual:"手動", mMethodSemi:"半自動", mMethodAuto:"自動", mMethodVoice:"音声", mMethodExcel:"エクセル",
@@ -532,7 +552,14 @@ const i18n = {
     notifyPrefLabel:"1〜3等当選時にメールでお知らせします",
     coSummary:(count,cost,price)=>`合計 ${count}組 · ${cost}P（1組${price}P）`,
     registerBtnWithCost:(cost)=>`番号を登録する（${cost}P使用）`,
-    submitAlert:(count,cost)=>`${count}組の組み合わせが登録されました。（${cost}P使用）\n\n※デモ画面です — 実際の保存はまだ接続されていません。`,
+    submitAlert:(count,cost)=>`${count}組の組み合わせが登録されました。（${cost}P使用）`,
+    loginRequiredAlert:"番号を登録するには先にログインしてください。",
+    submitting:"登録中…",
+    submitFailAlert:(msg)=>`登録に失敗しました: ${msg}`,
+    pastResultAlert:(count)=>`${count}組の登録が完了しました！結果:`,
+    gradeTier:(n)=>`${n}等当選！`,
+    gradeNone:"落選",
+    gradeUnknown:"結果を確認できませんでした。",
     unit:"", monthDay:(m,d)=>`${m}月${d}日`,
     nameKey:"nameJa",
   },
@@ -564,22 +591,22 @@ document.querySelectorAll('.lang-toggle button').forEach(btn => {
   btn.addEventListener('click', () => applyLang(btn.dataset.lang));
 });
 
-const PRICING_FUNCTION_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/pricing';
-let PRICE_PER_COMBO = 5; // 기본값 — loadPricing()이 성공하면 실제 값으로 교체됨
-async function loadPricing(){
-  try {
-    const resp = await fetch(PRICING_FUNCTION_URL);
-    const data = await resp.json();
-    if (data.pricePerCombo != null) PRICE_PER_COMBO = data.pricePerCombo;
-  } catch (e) {
-    console.warn('[PaperLotto] 가격 조회 실패, 기본값(5P) 사용:', e);
-  }
+let PRICE_PER_COMBO = 5; // 기본값 — updatePricingForMode()가 모드에 맞는 실제 값으로 교체함
+// 실제 차감 금액은 서버(submit-entries → points-spend)가 point_costs 테이블 기준으로
+// 최종 검증/차감하므로, 여기 값은 어디까지나 화면 표시용 추정치입니다.
+function updatePricingForMode(){
+  PRICE_PER_COMBO = pastMode ? 5 : 10; // entry_past=5P, entry_future=10P (point_costs 기준)
   updateAutoCost(); updateCheckout();
 }
-let balance = 340; // 데모용 — 실제로는 profiles.points_balance에서 fetch
+let balance = 0; // 로그인 후 실제 포인트 잔액으로 갱신됨 (refreshSessionAndBalance)
 // 상세페이지의 "내 전략 번호 가상 등록하기" 버튼에서 ?game=game_id 로 넘어온 경우,
 // 그 게임을 기본 선택 상태로 시작한다 (2026-07-26 추가 — 이전엔 항상 GAMES[0]로 고정이었음).
-const urlGameId = new URLSearchParams(location.search).get('game');
+const urlParams = new URLSearchParams(location.search);
+const urlGameId = urlParams.get('game');
+// 과거 회차 도전 화면(paperlotto_past_round_select_mockup.html)에서 게임+회차를 골라 넘어온 경우
+// (2026-07-27 추가) — 이 경우 게임/회차를 그 값으로 고정하고, 등록 즉시 채점까지 진행합니다.
+const urlRoundNo = urlParams.get('round') ? Number(urlParams.get('round')) : null;
+const pastMode = urlParams.get('mode') === 'past' && !!urlGameId && !!urlRoundNo;
 let selectedGame = GAMES.find(g => g.id === urlGameId) || GAMES[0];
 let mode = 'manual';
 let pickedMain = [];
@@ -591,10 +618,11 @@ function renderGameStrip(){
   const strip = document.getElementById('gameStrip');
   const t = i18n[currentLang];
   strip.innerHTML = GAMES.map(g => `
-    <div class="game-chip ${g.id===selectedGame.id?'active':''}" style="--accent:var(--${g.accent})" data-id="${g.id}">
+    <div class="game-chip ${g.id===selectedGame.id?'active':''} ${pastMode?'locked':''}" style="--accent:var(--${g.accent})" data-id="${g.id}">
       <span class="gc-name">${g[t.nameKey]}</span>
       <span class="gc-sub">${g.sub} · ${g.main}/${g.range}${g.bonus? '+'+g.bonus:''}</span>
     </div>`).join('');
+  if (pastMode) return; // 과거회차 모드에서는 게임을 바꿀 수 없음 (선택화면에서 이미 고정하고 넘어옴)
   strip.querySelectorAll('.game-chip').forEach(el => {
     el.addEventListener('click', () => {
       selectedGame = GAMES.find(g => g.id === el.dataset.id);
@@ -623,6 +651,21 @@ function renderGameInfo(){
   const el = document.getElementById('gameInfo');
   const t = i18n[currentLang];
   el.style.setProperty('--accent', `var(--${selectedGame.accent})`);
+
+  if (pastMode) {
+    // 과거회차 모드: "다음 추첨일" 대신 선택한 회차 정보를 보여준다
+    el.innerHTML = `
+      <div>
+        <div class="game-info-name">${selectedGame[t.nameKey]}</div>
+        <div class="game-info-sub">${selectedGame.main}${t.mNumSelect} (1~${selectedGame.range})${selectedGame.bonus?` ${t.mBonusAdd} ${selectedGame.bonus}`:''}</div>
+      </div>
+      <div class="game-info-gate">
+        <div class="gate-label">${t.mPastRoundLabel}</div>
+        <div class="gate-cd">${t.mRoundNoLabel(urlRoundNo)}</div>
+      </div>`;
+    return;
+  }
+
   const next = nextDrawText(selectedGame.days);
   const dstr = t.monthDay(next.getMonth()+1, next.getDate());
   el.innerHTML = `
@@ -1020,13 +1063,67 @@ function updateCheckout(){
   submitBtn.textContent = insufficient ? t.insufficientBtn : t.registerBtnWithCost(cost);
 }
 
-document.getElementById('submitBtn').addEventListener('click', () => {
+document.getElementById('submitBtn').addEventListener('click', async () => {
   const t = i18n[currentLang];
-  const cost = pending.length * PRICE_PER_COMBO;
-  balance -= cost;
-  alert(t.submitAlert(pending.length, cost));
-  pending = [];
-  renderPending();
+
+  if (!accessToken) {
+    alert(t.loginRequiredAlert);
+    window.location.href = 'paperlotto_login_mockup.html';
+    return;
+  }
+  if (pending.length === 0) return;
+
+  const combos = pending.map(e => ({
+    gameId: e.gameId,
+    roundNo: pastMode ? urlRoundNo : undefined,
+    main: e.main,
+    bonus: e.bonus,
+    method: e.method,
+    memo: e.memo || null,
+  }));
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = t.submitting;
+
+  try {
+    const resp = await fetch(SUBMIT_ENTRIES_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ mode: pastMode ? 'past' : 'future', combos }),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      alert(t.submitFailAlert((data.error || '')));
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      return;
+    }
+
+    if (pastMode) {
+      // 과거회차: 등록 즉시 채점 결과가 함께 옴 — 등수별로 정리해서 보여준다
+      const gradeLabel = (g) => g === 1 ? t.gradeTier(1) : g === 2 ? t.gradeTier(2) : g === 3 ? t.gradeTier(3) : g === 4 ? t.gradeTier(4) : g === 5 ? t.gradeTier(5) : g === 0 ? t.gradeNone : t.gradeUnknown;
+      const lines = (data.results || []).map((r, i) => {
+        if (r.grade === null || r.grade === undefined) return `#${i+1}: ${r.gradeMessage || t.gradeUnknown}`;
+        return `#${i+1}: ${gradeLabel(r.grade)}`;
+      });
+      alert(t.pastResultAlert(data.insertedCount) + '\n\n' + lines.join('\n'));
+    } else {
+      alert(t.submitAlert(data.insertedCount, pending.length * PRICE_PER_COMBO));
+    }
+
+    pending = [];
+    renderPending();
+    await refreshSessionAndBalance();
+  } catch (e) {
+    alert(t.submitFailAlert(e.message));
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+    updateCheckout();
+  }
 });
 
 // ─── 1~3등 이메일 알림 수신 여부 (프로필 전역 설정) ──────────────────────────────
@@ -1087,8 +1184,38 @@ function renderAll(){
   updateStatus();
   updateAutoCost();
 }
+
+// ─── 로그인 세션 / 실제 포인트 잔액 / 등록 제출 ──────────────────────────────
+// (2026-07-27 추가) 이전엔 balance가 데모용 고정값(340)이었고 "번호 등록하기"도
+// alert()만 띄우는 목업이었음. 실제 로그인 세션과 points-balance, submit-entries에 연결.
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const SUBMIT_ENTRIES_URL = SUPABASE_URL + "/functions/v1/submit-entries";
+const POINTS_BALANCE_URL = SUPABASE_URL + "/functions/v1/points-balance";
+const sbMain = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let accessToken = null;
+
+async function refreshSessionAndBalance(){
+  const { data: { session } } = await sbMain.auth.getSession();
+  accessToken = session ? session.access_token : null;
+  if (!accessToken) {
+    balance = 0;
+    updateCheckout();
+    return;
+  }
+  try {
+    const resp = await fetch(POINTS_BALANCE_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    balance = resp.ok ? (data.total ?? 0) : 0;
+  } catch (e) {
+    balance = 0;
+  }
+  updateCheckout();
+}
+
 applyLang(currentLang);
-loadPricing();
+updatePricingForMode();
+refreshSessionAndBalance();
 </script>
 
 </body>
