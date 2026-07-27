@@ -135,6 +135,13 @@ table.tax-table tr:last-child td{ border-bottom:none; }
 .dl-card .dl-btn:disabled{ opacity:0.6; cursor:not-allowed; }
 .dl-card.dl-loading .dl-info{ color:var(--ink-dim); font-size:13px; }
 
+.pr-detail-card{ margin-top:14px; background:var(--paper); color:var(--ink); border-radius:14px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+.pr-detail-card .pr-info{ text-align:left; }
+.pr-detail-card .pr-title{ font-size:14.5px; font-weight:700; margin-bottom:4px; }
+.pr-detail-card .pr-desc{ font-size:11.5px; color:var(--ink-dim); max-width:380px; line-height:1.6; }
+.pr-detail-card .pr-btn{ flex-shrink:0; padding:12px 22px; border:1.5px solid var(--ink); border-radius:9px; background:transparent; color:var(--ink); font-size:13.5px; font-weight:700; text-decoration:none; white-space:nowrap; }
+.pr-detail-card .pr-btn:hover{ background:var(--ink); color:var(--paper); }
+
 footer{ border-top:1px solid var(--board-line); padding:36px 24px 44px; text-align:center; }
 footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560px; margin:0 auto; }
 footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--text-mid); margin-bottom:10px; }
@@ -260,6 +267,14 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <button class="dl-btn" id="dlBtn" disabled>⬇ 다운로드</button>
   </div>
 
+  <div class="pr-detail-card">
+    <div class="pr-info">
+      <div class="pr-title" data-i18n="prCardTitle">이미 추첨 끝난 회차, 내 번호였다면?</div>
+      <div class="pr-desc" data-i18n="prCardDesc">과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.</div>
+    </div>
+    <a class="pr-btn" href="paperlotto_past_round_select_mockup.html?game=eu_euromillions" data-i18n="prCardBtn">과거 회차 선택하기 →</a>
+  </div>
+
 </main>
 
 <footer>
@@ -282,6 +297,9 @@ const i18n = {
     closedTitle:"⏰ 이번 회차 등록이 마감되었습니다",
     closedBody:(d)=>`다음 회차 등록은 <strong>${d}</strong>부터 재개됩니다.`,
     ctaOpen:"내 전략 번호 가상 등록하기 →",
+    prCardTitle:"이미 추첨 끝난 회차, 내 번호였다면?",
+    prCardDesc:"과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.",
+    prCardBtn:"과거 회차 선택하기 →",
     s1h:"등수별 당첨 조건 (총 13개 등수)",
     s1body:`<table class="prize-table">
         <thead><tr><th>등수</th><th>조건</th><th>확률</th></tr></thead>
@@ -348,6 +366,9 @@ const i18n = {
     closedTitle:"⏰ Entries are closed for this round",
     closedBody:(d)=>`Entries for the next round reopen on <strong>${d}</strong>.`,
     ctaOpen:"Register my strategy numbers virtually →",
+    prCardTitle:"Wonder if your numbers would've won a past draw?",
+    prCardDesc:"Pick a past round and register your numbers — get graded instantly.",
+    prCardBtn:"Try a past round →",
     s1h:"Prize Tiers (13 tiers total)",
     s1body:`<table class="prize-table">
         <thead><tr><th>Tier</th><th>Match</th><th>Odds</th></tr></thead>
@@ -414,6 +435,9 @@ const i18n = {
     closedTitle:"⏰ 今回の登録は締め切られました",
     closedBody:(d)=>`次回の登録は<strong>${d}</strong>から再開されます。`,
     ctaOpen:"戦略番号を仮想登録する →",
+    prCardTitle:"すでに抽選が終わった回、自分の番号だったら？",
+    prCardDesc:"過去の回を選んで番号を登録すると、登録後すぐに結果を確認できます。",
+    prCardBtn:"過去回にチャレンジ →",
     s1h:"等級別当選条件（全13等級）",
     s1body:`<table class="prize-table">
         <thead><tr><th>等級</th><th>条件</th><th>確率</th></tr></thead>

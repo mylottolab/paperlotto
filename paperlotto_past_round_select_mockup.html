@@ -242,6 +242,13 @@ function renderGameGrid(){
 }
 renderGameGrid();
 
+// 게임 상세페이지의 "이 게임 과거회차 도전하기" 링크로 ?game=game_id 를 받아서
+// 넘어온 경우, 그 게임을 자동으로 선택된 상태로 시작한다 (2026-07-27 추가).
+const urlGameId = new URLSearchParams(location.search).get('game');
+if (urlGameId && GAMES.some(function(g){ return g.id === urlGameId; })) {
+  selectGame(urlGameId);
+}
+
 async function selectGame(gameId){
   selectedGame = gameId;
   selectedYear = null; selectedMonth = null;
