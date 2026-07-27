@@ -39,7 +39,8 @@ header{
 .brand-name{ font-size:17px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
 nav{ display:flex; align-items:center; gap:18px; font-size:13.5px; color:var(--text-mid); }
-.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.header-right{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; flex-shrink:0; }
 .lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 12px; cursor:pointer; font-family:'Inter',sans-serif; }
 .lang-toggle button.active{ background:var(--gold); color:var(--ink); }
 
@@ -110,6 +111,7 @@ select, input[type="text"], input[type="number"]{
 
 @media (max-width:640px){
   header{ padding:14px 16px; }
+  .header-right{ width:100%; align-items:flex-end; }
   main{ padding:20px 14px 70px; }
   .page-title{ font-size:20px; }
   .panel{ padding:16px; }
@@ -130,14 +132,14 @@ select, input[type="text"], input[type="number"]{
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
   </div>
-  <nav>
-    <a href="paperlotto_my_entries_updated.html" data-i18n="navEntries">← 내 등록내역</a>
+  <div class="header-right">
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
       <button data-lang="ja" type="button">JA</button>
     </div>
-  </nav>
+    <nav><a href="paperlotto_my_entries_updated.html" data-i18n="navEntries">← 내 등록내역</a></nav>
+  </div>
 </header>
 
 <main>
