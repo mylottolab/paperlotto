@@ -203,6 +203,7 @@ const i18n = {
     renamePrompt:"새 이름을 입력하세요:",
     deleteCollConfirm:function(name, count){ return '"' + name + '" 컬렉션을 삭제할까요? (안의 번호 ' + count + '개도 함께 삭제되며, 되돌릴 수 없습니다)'; },
     collCreateSuccess:function(name){ return '✅ "' + name + '" 마이 시그니처가 생성되었습니다!'; },
+    createConfirm:"본 마이 시그니처 생성 시 500포인트가 차감됩니다. 만들기를 원하시면 '확인'을 눌러주세요.",
     collNone:"아직 만든 마이 시그니처가 없습니다. 위에서 새로 만들어주세요.",
     addTitle:"+ 새 번호 직접 추가", gameLabel:"게임", roundLabel:"회차 (선택)", memoLabel:"메모 (선택)",
     mainLabel:"메인 번호 (쉼표로 구분)", bonusLabel:"보너스 번호 (쉼표로 구분, 선택)", addBtn:"추가하기",
@@ -225,6 +226,7 @@ const i18n = {
     renamePrompt:"Enter a new name:",
     deleteCollConfirm:function(name, count){ return 'Delete "' + name + '"? (Its ' + count + ' number(s) will also be deleted — this cannot be undone)'; },
     collCreateSuccess:function(name){ return '✅ "' + name + '" My Signature created!'; },
+    createConfirm:"Creating this My Signature will charge 500 points. Press OK to continue.",
     collNone:"You haven't created a My Signature yet. Create one above.",
     addTitle:"+ Add a new number set", gameLabel:"Game", roundLabel:"Round (optional)", memoLabel:"Memo (optional)",
     mainLabel:"Main numbers (comma-separated)", bonusLabel:"Bonus numbers (comma-separated, optional)", addBtn:"Add",
@@ -247,6 +249,7 @@ const i18n = {
     renamePrompt:"新しい名前を入力してください:",
     deleteCollConfirm:function(name, count){ return '"' + name + '"を削除しますか？（中の番号' + count + '件も一緒に削除され、元に戻せません）'; },
     collCreateSuccess:function(name){ return '✅ "' + name + '" マイシグニチャーが作成されました！'; },
+    createConfirm:"このマイシグニチャーを作成すると500ポイントが消費されます。作成する場合は「OK」を押してください。",
     collNone:"まだマイシグニチャーがありません。上で新しく作成してください。",
     addTitle:"+ 新しい番号を直接追加", gameLabel:"ゲーム", roundLabel:"回（任意）", memoLabel:"メモ（任意）",
     mainLabel:"メイン番号（カンマ区切り）", bonusLabel:"ボーナス番号（カンマ区切り、任意）", addBtn:"追加",
@@ -423,6 +426,7 @@ document.getElementById('collCreateBtn').addEventListener('click', async functio
   const nameInput = document.getElementById('collNewName');
   const name = nameInput.value.trim();
   if (!name) { alert(t.collNameNeeded); return; }
+  if (!confirm(t.createConfirm)) return;
   const btn = this;
   btn.disabled = true;
   try {
