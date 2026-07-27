@@ -116,6 +116,7 @@ table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
 .final-cta h3{ font-size:24px; font-weight:600; margin-bottom:10px; }
 .final-cta p{ font-size:14px; opacity:0.85; max-width:440px; margin:0 auto 22px; line-height:1.7; }
 .final-disclaimer{ margin-top:16px; font-size:11.5px; opacity:0.65; }
+.final-cta-note{ font-size:12.5px; font-weight:600; opacity:0.85; margin-bottom:14px; }
 
 .dl-card{ margin-top:16px; background:var(--paper); color:var(--ink); border-radius:14px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
 .dl-card .dl-info{ text-align:left; }
@@ -128,7 +129,7 @@ table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
 .dl-card .dl-btn:disabled{ opacity:0.6; cursor:not-allowed; }
 .dl-card.dl-loading .dl-info{ color:var(--ink-dim); font-size:13px; }
 
-.pr-detail-card{ margin-top:14px; background:var(--paper); color:var(--ink); border-radius:14px; padding:22px 26px; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+.pr-detail-card{ margin-top:14px; background:#d9bd85; color:var(--ink); border-radius:14px; padding:40px 26px; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
 .pr-detail-card .pr-info{ text-align:left; }
 .pr-detail-card .pr-title{ font-size:14.5px; font-weight:700; margin-bottom:4px; }
 .pr-detail-card .pr-desc{ font-size:11.5px; color:var(--ink-dim); max-width:380px; line-height:1.6; }
@@ -251,6 +252,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   <div class="final-cta">
     <h3 data-i18n="finalH">실제 돈 없이, 판단은 진짜로</h3>
     <p data-i18n="finalP">7개 번호와 파워볼, 상한 없는 잭팟까지 — 호주 최대 복권을 PaperLotto에서 가상으로 경험해보세요.</p>
+    <div class="final-cta-note" data-i18n="finalCtaNote">현재 판매중인 추첨예정분에 대해 도전합니다.</div>
     <div id="regCtaArea">
       <a href="paperlotto_register_mockup.html?game=au_powerball" class="reg-cta-open" data-i18n="ctaOpen">내 전략 번호 가상 등록하기 →</a>
     </div>
@@ -330,6 +332,7 @@ const i18n = {
     finalH:"실제 돈 없이, 판단은 진짜로",
     finalP:"7개 번호와 파워볼, 상한 없는 잭팟까지 — 호주 최대 복권을 PaperLotto에서 가상으로 경험해보세요.",
     finalDisclaimer:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
+    finalCtaNote:"현재 판매중인 추첨예정분에 대해 도전합니다.",
     footerNote:'본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다.<br>실제 구매·청구 절차는 반드시 각국 공식 운영기관을 통해 확인하세요.',
   },
   en: {
@@ -383,6 +386,7 @@ const i18n = {
     finalH:"No real money, real decisions",
     finalP:"7 numbers, a Powerball, and an uncapped jackpot — try Australia's biggest lottery virtually on PaperLotto.",
     finalDisclaimer:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
+    finalCtaNote:"You're challenging the round currently on sale.",
     footerNote:'This content is provided for informational and statistical simulation purposes only.<br>Always verify actual purchase and claim procedures through the official operator in your country.',
   },
   ja: {
@@ -436,6 +440,7 @@ const i18n = {
     finalH:"実際のお金なしで、判断は本物",
     finalP:"7個の番号とパワーボール、上限なしのジャックポットまで — オーストラリア最大の宝くじをPaperLottoで仮想体験しましょう。",
     finalDisclaimer:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
+    finalCtaNote:"現在販売中の抽選予定分に挑戦します。",
     footerNote:'本コンテンツは情報提供および統計的シミュレーションを目的として提供されています。<br>実際の購入・請求手続きは必ず各国の公式運営機関を通じてご確認ください。',
   },
 };
