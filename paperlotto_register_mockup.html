@@ -85,6 +85,7 @@ main{ max-width:900px; margin:0 auto; padding:16px 24px 0; }
 .gate-label{ font-size:10.5px; color:var(--ink-dim); }
 .gate-cd{ font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:700; color:#8a5b1c; }
 .gate-cd.closed{ color:#a13a1c; }
+.grading-notice{ margin-top:10px; font-size:11.5px; color:var(--text-dim); background:var(--board-2); border:1px solid var(--board-line); border-radius:8px; padding:10px 14px; line-height:1.6; }
 
 /* ── 모드 탭 ── */
 .mode-tabs{ display:flex; gap:8px; margin-top:24px; }
@@ -277,6 +278,7 @@ input[type="file"]{
   </div>
 
   <div class="game-info" id="gameInfo"></div>
+  <div class="grading-notice" id="gradingNotice" style="display:none;"></div>
 
   <div class="section-label" style="margin-top:26px;"><span data-i18n="step2">STEP 2 · 입력 방식</span></div>
   <div class="mode-tabs">
@@ -442,6 +444,7 @@ const i18n = {
     registerBtn:"번호 등록하기", insufficientBtn:"포인트 부족",
     mNumSelect:"개 선택", mBonusAdd:"+ 보너스", mNextDraw:"다음 추첨",
     mPastRoundLabel:"과거 회차 도전", mRoundNoLabel:(n)=>`제${n}회`,
+    gradingNotice:"본 채점은 당시 회차시 발표된 당첨번호를 활용하여 현재의 채점기준으로 채점하여 공표합니다.",
     mBonusLabel:"보너스 번호", mSamePool:"메인과 같은 풀",
     mSemiMax:"최대", mSemiPartial:"(일부만)",
     mMethodManual:"수동", mMethodSemi:"반자동", mMethodAuto:"자동", mMethodVoice:"음성", mMethodExcel:"엑셀",
@@ -488,6 +491,7 @@ const i18n = {
     registerBtn:"Register Numbers", insufficientBtn:"Insufficient points",
     mNumSelect:" picks", mBonusAdd:"+ bonus", mNextDraw:"Next draw",
     mPastRoundLabel:"Past Round Challenge", mRoundNoLabel:(n)=>`Round ${n}`,
+    gradingNotice:"Grading uses the winning numbers actually announced for that round, evaluated under the current grading rules.",
     mBonusLabel:"Bonus number(s)", mSamePool:"same pool as main",
     mSemiMax:"Up to", mSemiPartial:"(partial)",
     mMethodManual:"Manual", mMethodSemi:"Semi", mMethodAuto:"Auto", mMethodVoice:"Voice", mMethodExcel:"Excel",
@@ -534,6 +538,7 @@ const i18n = {
     registerBtn:"番号を登録する", insufficientBtn:"ポイント不足",
     mNumSelect:"個選択", mBonusAdd:"+ ボーナス", mNextDraw:"次回抽選",
     mPastRoundLabel:"過去回チャレンジ", mRoundNoLabel:(n)=>`第${n}回`,
+    gradingNotice:"本採点は、当時の回で発表された当選番号を使用し、現在の採点基準で採点・公表します。",
     mBonusLabel:"ボーナス番号", mSamePool:"メインと同じプール",
     mSemiMax:"最大", mSemiPartial:"（一部のみ）",
     mMethodManual:"手動", mMethodSemi:"半自動", mMethodAuto:"自動", mMethodVoice:"音声", mMethodExcel:"エクセル",
@@ -663,6 +668,9 @@ function renderGameInfo(){
         <div class="gate-label">${t.mPastRoundLabel}</div>
         <div class="gate-cd">${t.mRoundNoLabel(urlRoundNo)}</div>
       </div>`;
+    const noticeEl = document.getElementById('gradingNotice');
+    noticeEl.style.display = 'block';
+    noticeEl.textContent = t.gradingNotice;
     return;
   }
 
@@ -1109,7 +1117,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
         if (r.grade === null || r.grade === undefined) return `#${i+1}: ${r.gradeMessage || t.gradeUnknown}`;
         return `#${i+1}: ${gradeLabel(r.grade)}`;
       });
-      alert(t.pastResultAlert(data.insertedCount) + '\n\n' + lines.join('\n'));
+      alert(t.pastResultAlert(data.insertedCount) + '\n\n' + lines.join('\n') + '\n\n※ ' + t.gradingNotice);
     } else {
       alert(t.submitAlert(data.insertedCount, pending.length * PRICE_PER_COMBO));
     }

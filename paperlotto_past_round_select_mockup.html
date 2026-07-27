@@ -42,7 +42,8 @@ nav{ display:flex; align-items:center; gap:18px; font-size:13.5px; color:var(--t
 main{ max-width:720px; margin:0 auto; padding:28px 24px 90px; }
 
 .page-title{ font-size:24px; font-weight:600; margin-bottom:6px; }
-.page-sub{ font-size:13.5px; color:var(--text-mid); margin-bottom:26px; line-height:1.6; }
+.page-sub{ font-size:13.5px; color:var(--text-mid); margin-bottom:14px; line-height:1.6; }
+.grading-notice{ font-size:11.5px; color:var(--text-dim); background:var(--board-2); border:1px solid var(--board-line); border-radius:8px; padding:10px 14px; margin-bottom:26px; line-height:1.6; }
 
 .panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:26px; margin-bottom:18px; }
 .panel h3{ font-size:14.5px; margin-bottom:14px; color:var(--ink); }
@@ -134,6 +135,7 @@ main{ max-width:720px; margin:0 auto; padding:28px 24px 90px; }
 <main>
   <div class="page-title" data-i18n="pageTitle">과거 회차 도전하기</div>
   <div class="page-sub" data-i18n="pageSub">이미 결과가 발표된 과거 회차를 골라, 그때로 돌아가 내 전략 번호를 등록하고 즉석에서 채점해볼 수 있어요.</div>
+  <div class="grading-notice" data-i18n="gradingNotice">본 채점은 당시 회차시 발표된 당첨번호를 활용하여 현재의 채점기준으로 채점하여 공표합니다.</div>
 
   <div class="panel">
     <h3 data-i18n="step1">STEP 1 · 게임 선택</h3>
@@ -162,6 +164,7 @@ const i18n = {
     navBack:"← 전체 게임",
     pageTitle:"과거 회차 도전하기",
     pageSub:"이미 결과가 발표된 과거 회차를 골라, 그때로 돌아가 내 전략 번호를 등록하고 즉석에서 채점해볼 수 있어요.",
+    gradingNotice:"본 채점은 당시 회차시 발표된 당첨번호를 활용하여 현재의 채점기준으로 채점하여 공표합니다.",
     step1:"STEP 1 · 게임 선택", step2:"STEP 2 · 연도 선택", step3:"STEP 3 · 월 선택", step4:"STEP 4 · 회차 선택",
     loading:"불러오는 중…", noData:"이 게임은 아직 과거 데이터가 없습니다.",
     challengeBtn:"이 회차 도전하기 →",
@@ -172,6 +175,7 @@ const i18n = {
     navBack:"← All Games",
     pageTitle:"Challenge a Past Round",
     pageSub:"Pick a past round whose results are already known, go back to that moment, register your strategy numbers, and get graded instantly.",
+    gradingNotice:"Grading uses the winning numbers actually announced for that round, evaluated under the current grading rules.",
     step1:"STEP 1 · Choose Game", step2:"STEP 2 · Choose Year", step3:"STEP 3 · Choose Month", step4:"STEP 4 · Choose Round",
     loading:"Loading…", noData:"No historical data for this game yet.",
     challengeBtn:"Challenge this round →",
@@ -182,6 +186,7 @@ const i18n = {
     navBack:"← すべてのゲーム",
     pageTitle:"過去の回に挑戦する",
     pageSub:"すでに結果が発表された過去の回を選んで、その時点に戻って戦略番号を登録し、その場で採点してみましょう。",
+    gradingNotice:"本採点は、当時の回で発表された当選番号を使用し、現在の採点基準で採点・公表します。",
     step1:"STEP 1 · ゲーム選択", step2:"STEP 2 · 年選択", step3:"STEP 3 · 月選択", step4:"STEP 4 · 回選択",
     loading:"読み込み中…", noData:"このゲームの過去データはまだありません。",
     challengeBtn:"この回に挑戦する →",
