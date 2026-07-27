@@ -98,8 +98,18 @@ select, input[type="text"], input[type="number"]{
 .coll-strip{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
 .coll-chip{
   padding:10px 16px; border-radius:20px; border:1.5px solid rgba(28,33,48,0.15); background:#fff;
-  font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;
+  font-size:12.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; position:relative;
 }
+.coll-chip-name{ max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.coll-chip-icon{
+  border:none; background:transparent; color:var(--ink-dim); font-size:11px; cursor:pointer; padding:2px 3px;
+  border-radius:5px; line-height:1;
+}
+.coll-chip-icon:hover{ background:rgba(28,33,48,0.08); color:var(--ink); }
+.coll-chip-icon.danger:hover{ background:rgba(198,90,46,0.12); color:#c65a2e; }
+.coll-chip.just-created{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(184,134,46,0.25); animation:collPulse 1.6s ease-in-out 2; }
+@keyframes collPulse{ 0%,100%{ box-shadow:0 0 0 3px rgba(184,134,46,0.25); } 50%{ box-shadow:0 0 0 6px rgba(184,134,46,0.08); } }
+.new-badge{ position:absolute; top:-9px; left:10px; background:var(--gold); color:var(--ink); font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; letter-spacing:0.02em; }
 .coll-chip .cnt{ font-size:10.5px; color:var(--ink-dim); font-weight:400; }
 .coll-chip.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
 .coll-chip.active .cnt{ color:var(--text-mid); }
@@ -189,6 +199,10 @@ const i18n = {
     navEntries:"← 내 등록내역", pageTitle:"마이 시그니처",
     pageSub:"등록내역에서 옮겨온 번호와 직접 추가한 번호를 자유롭게 수정·삭제하며 관리합니다. 메모도 남길 수 있습니다.",
     collTitle:"마이 시그니처", collCreateBtn:"+ 새로 만들기 (500P)", collNameNeeded:"컬렉션 이름을 입력해주세요.",
+    newBadge:"방금 생성됨", renameTitle:"이름 변경", deleteCollTitle:"삭제",
+    renamePrompt:"새 이름을 입력하세요:",
+    deleteCollConfirm:function(name, count){ return '"' + name + '" 컬렉션을 삭제할까요? (안의 번호 ' + count + '개도 함께 삭제되며, 되돌릴 수 없습니다)'; },
+    collCreateSuccess:function(name){ return '✅ "' + name + '" 마이 시그니처가 생성되었습니다!'; },
     collNone:"아직 만든 마이 시그니처가 없습니다. 위에서 새로 만들어주세요.",
     addTitle:"+ 새 번호 직접 추가", gameLabel:"게임", roundLabel:"회차 (선택)", memoLabel:"메모 (선택)",
     mainLabel:"메인 번호 (쉼표로 구분)", bonusLabel:"보너스 번호 (쉼표로 구분, 선택)", addBtn:"추가하기",
@@ -207,6 +221,10 @@ const i18n = {
     navEntries:"← My Entries", pageTitle:"My Signature",
     pageSub:"Freely edit, delete, and add memos to numbers moved from your entries or added directly.",
     collTitle:"My Signature collections", collCreateBtn:"+ Create new (500P)", collNameNeeded:"Please enter a collection name.",
+    newBadge:"Just created", renameTitle:"Rename", deleteCollTitle:"Delete",
+    renamePrompt:"Enter a new name:",
+    deleteCollConfirm:function(name, count){ return 'Delete "' + name + '"? (Its ' + count + ' number(s) will also be deleted — this cannot be undone)'; },
+    collCreateSuccess:function(name){ return '✅ "' + name + '" My Signature created!'; },
     collNone:"You haven't created a My Signature yet. Create one above.",
     addTitle:"+ Add a new number set", gameLabel:"Game", roundLabel:"Round (optional)", memoLabel:"Memo (optional)",
     mainLabel:"Main numbers (comma-separated)", bonusLabel:"Bonus numbers (comma-separated, optional)", addBtn:"Add",
@@ -225,6 +243,10 @@ const i18n = {
     navEntries:"← 登録した番号", pageTitle:"マイシグニチャー",
     pageSub:"登録内容から移動した番号と自分で追加した番号を自由に編集・削除できます。メモも残せます。",
     collTitle:"マイシグニチャー一覧", collCreateBtn:"+ 新規作成 (500P)", collNameNeeded:"コレクション名を入力してください。",
+    newBadge:"作成しました", renameTitle:"名前変更", deleteCollTitle:"削除",
+    renamePrompt:"新しい名前を入力してください:",
+    deleteCollConfirm:function(name, count){ return '"' + name + '"を削除しますか？（中の番号' + count + '件も一緒に削除され、元に戻せません）'; },
+    collCreateSuccess:function(name){ return '✅ "' + name + '" マイシグニチャーが作成されました！'; },
     collNone:"まだマイシグニチャーがありません。上で新しく作成してください。",
     addTitle:"+ 新しい番号を直接追加", gameLabel:"ゲーム", roundLabel:"回（任意）", memoLabel:"メモ（任意）",
     mainLabel:"メイン番号（カンマ区切り）", bonusLabel:"ボーナス番号（カンマ区切り、任意）", addBtn:"追加",
@@ -331,6 +353,8 @@ async function loadCollections(){
   }
 }
 
+let newlyCreatedId = null;
+
 function renderCollections(){
   const strip = document.getElementById('collStrip');
   const t = i18n[currentLang];
@@ -339,17 +363,59 @@ function renderCollections(){
     return;
   }
   strip.innerHTML = allCollections.map(function(c){
-    return '<div class="coll-chip ' + (c.id === currentCollectionId ? 'active' : '') + '" data-id="' + c.id + '">' +
-      '<span>' + c.name + '</span><span class="cnt">' + c.entry_count + '</span></div>';
+    const isNew = c.id === newlyCreatedId;
+    return '<div class="coll-chip ' + (c.id === currentCollectionId ? 'active' : '') + (isNew ? ' just-created' : '') + '" data-id="' + c.id + '">' +
+      (isNew ? '<span class="new-badge">' + t.newBadge + '</span>' : '') +
+      '<span class="coll-chip-name">' + c.name + '</span><span class="cnt">' + c.entry_count + '</span>' +
+      '<button type="button" class="coll-chip-icon" data-rename="' + c.id + '" title="' + t.renameTitle + '">✎</button>' +
+      '<button type="button" class="coll-chip-icon danger" data-delcoll="' + c.id + '" title="' + t.deleteCollTitle + '">✕</button>' +
+      '</div>';
   }).join('');
   strip.querySelectorAll('.coll-chip').forEach(function(el){
-    el.addEventListener('click', async function(){
+    el.addEventListener('click', async function(e){
+      if (e.target.closest('[data-rename]') || e.target.closest('[data-delcoll]')) return;
       currentCollectionId = Number(el.dataset.id);
       renderCollections();
       document.getElementById('workArea').style.display = 'block';
       await loadEntries();
     });
   });
+  strip.querySelectorAll('[data-rename]').forEach(function(btn){
+    btn.addEventListener('click', function(e){ e.stopPropagation(); renameCollection(Number(btn.dataset.rename)); });
+  });
+  strip.querySelectorAll('[data-delcoll]').forEach(function(btn){
+    btn.addEventListener('click', function(e){ e.stopPropagation(); deleteCollection(Number(btn.dataset.delcoll)); });
+  });
+}
+
+async function renameCollection(collectionId){
+  const t = i18n[currentLang];
+  const coll = allCollections.find(function(c){ return c.id === collectionId; });
+  if (!coll) return;
+  const newName = prompt(t.renamePrompt, coll.name);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) { alert(t.collNameNeeded); return; }
+  try {
+    await callSignature({ action: 'rename_collection', collection_id: collectionId, name: trimmed });
+    await loadCollections();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function deleteCollection(collectionId){
+  const t = i18n[currentLang];
+  const coll = allCollections.find(function(c){ return c.id === collectionId; });
+  if (!coll) return;
+  if (!confirm(t.deleteCollConfirm(coll.name, coll.entry_count))) return;
+  try {
+    await callSignature({ action: 'delete_collection', collection_id: collectionId });
+    if (currentCollectionId === collectionId) currentCollectionId = null;
+    await loadCollections();
+  } catch (e) {
+    alert(e.message);
+  }
 }
 
 document.getElementById('collCreateBtn').addEventListener('click', async function(){
@@ -363,7 +429,10 @@ document.getElementById('collCreateBtn').addEventListener('click', async functio
     const data = await callSignature({ action: 'create_collection', name: name });
     nameInput.value = '';
     currentCollectionId = data.collection.id;
+    newlyCreatedId = data.collection.id;
     await loadCollections();
+    alert(t.collCreateSuccess(name));
+    setTimeout(function(){ newlyCreatedId = null; renderCollections(); }, 6000);
   } catch (e) {
     if (e.code === 'INSUFFICIENT_POINTS' || e.shortfall) {
       if (confirm(t.insufficientPointsMsg(e.balance, e.shortfall))) {
