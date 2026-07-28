@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포인트 설정 — PaperLotto Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; }
+nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
+nav.admin-nav a:hover{ color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-mid); }
+.hdr-right button{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:6px 12px; border-radius:7px; font-size:12px; cursor:pointer; }
+.hdr-right button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+main{ max-width:900px; margin:0 auto; padding:28px 20px 90px; }
+.section-title{ font-size:18px; margin-bottom:4px; }
+.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 22px; line-height:1.6; }
+
+.cost-card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px 22px; margin-bottom:12px; display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+.cost-info{ flex:1; min-width:220px; }
+.cost-key{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-dim); margin-bottom:2px; }
+.cost-label{ font-size:14.5px; font-weight:700; }
+.cost-label-sub{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; }
+.cost-fields{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.cost-price-field{ display:flex; align-items:center; gap:6px; }
+.cost-price-field input{ width:90px; padding:9px 10px; border:1.5px solid #d9d1ba; border-radius:7px; font-size:14px; font-family:'IBM Plex Mono',monospace; text-align:right; }
+.cost-price-field span{ font-size:12.5px; color:var(--ink-dim); font-weight:600; }
+.cost-active-field{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-dim); }
+.cost-save-btn{ padding:10px 16px; border:none; border-radius:8px; background:var(--ink); color:var(--paper); font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.cost-save-btn:hover{ background:#2a3145; }
+.cost-save-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+.cost-status{ font-size:11px; margin-top:6px; width:100%; }
+.cost-status.ok{ color:var(--ok); }
+.cost-status.err{ color:var(--err); }
+.cost-updated{ font-size:10.5px; color:var(--ink-dim); width:100%; margin-top:2px; }
+
+.empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:50px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em> Admin</div>
+  </div>
+  <nav class="admin-nav">
+    <a href="paperlotto_admin_scrape_review.html">당첨번호 검수</a>
+    <a href="paperlotto_admin_bank_transfers.html">계좌이체 관리</a>
+    <a href="paperlotto_admin_point_costs.html" style="color:var(--gold-bright);">포인트 설정</a>
+  </nav>
+  <div class="hdr-right">
+    <span id="adminEmail"></span>
+    <button id="logoutBtn">로그아웃</button>
+  </div>
+</header>
+
+<main>
+  <h1 class="section-title">포인트 설정관리</h1>
+  <p class="section-desc">
+    항목별로 부과되는 포인트를 설정합니다. 저장하면 <b>즉시</b> 실제 사이트에 반영됩니다(별도 배포 필요 없음) —
+    번호등록, 다운로드, 마이 시그니처 생성 등 모든 기능이 이 값을 그때그때 직접 조회하기 때문입니다.
+    "사용" 체크를 끄면 그 기능은 이용자가 접근할 때 "알 수 없는 기능입니다" 오류가 뜨니 신중하게 꺼주세요.
+  </p>
+
+  <div id="list">
+    <div class="empty-state">불러오는 중…</div>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const POINT_COSTS_URL = SUPABASE_URL + "/functions/v1/admin-point-costs";
+
+const accessToken = sessionStorage.getItem('pl_admin_token');
+const adminKey = sessionStorage.getItem('pl_admin_key');
+const adminEmail = sessionStorage.getItem('pl_admin_email');
+
+if (!accessToken || !adminKey) {
+  window.location.href = 'paperlotto_admin_login.html';
+}
+
+document.getElementById('adminEmail').textContent = adminEmail || '';
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('pl_admin_token');
+  sessionStorage.removeItem('pl_admin_key');
+  sessionStorage.removeItem('pl_admin_email');
+  window.location.href = 'paperlotto_admin_login.html';
+});
+
+async function loadCosts() {
+  const list = document.getElementById('list');
+  list.innerHTML = '<div class="empty-state">불러오는 중…</div>';
+  try {
+    const resp = await fetch(POINT_COSTS_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok) {
+      list.innerHTML = '<div class="empty-state">불러오지 못했습니다: ' + (data.error || '') + '</div>';
+      return;
+    }
+    renderList(data.items || []);
+  } catch (e) {
+    list.innerHTML = '<div class="empty-state">오류가 발생했습니다.</div>';
+  }
+}
+
+function renderList(items) {
+  const list = document.getElementById('list');
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty-state">등록된 항목이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  items.forEach(item => list.appendChild(renderCard(item)));
+}
+
+function renderCard(item) {
+  const div = document.createElement('div');
+  div.className = 'cost-card';
+  const idPrefix = 'cost_' + item.action_key;
+
+  div.innerHTML =
+    '<div class="cost-info">' +
+      '<div class="cost-key">' + item.action_key + '</div>' +
+      '<div class="cost-label">' + item.label_kr + '</div>' +
+      '<div class="cost-label-sub">' + (item.label_en || '') + ' · ' + (item.label_ja || '') + '</div>' +
+    '</div>' +
+    '<div class="cost-fields">' +
+      '<div class="cost-price-field"><input type="number" min="0" id="' + idPrefix + '_price" value="' + item.cost_points + '"><span>P</span></div>' +
+      '<label class="cost-active-field"><input type="checkbox" id="' + idPrefix + '_active" ' + (item.active ? 'checked' : '') + '> 사용</label>' +
+      '<button class="cost-save-btn" id="' + idPrefix + '_save">저장</button>' +
+    '</div>' +
+    '<div class="cost-status" id="' + idPrefix + '_status"></div>' +
+    '<div class="cost-updated">최근 수정: ' + (item.updated_at ? new Date(item.updated_at).toLocaleString('ko-KR') : '-') + '</div>';
+
+  div.querySelector('#' + idPrefix + '_save').addEventListener('click', () => saveCost(item.action_key, idPrefix));
+  return div;
+}
+
+async function saveCost(actionKey, idPrefix) {
+  const priceInput = document.getElementById(idPrefix + '_price');
+  const activeInput = document.getElementById(idPrefix + '_active');
+  const statusEl = document.getElementById(idPrefix + '_status');
+  const btn = document.getElementById(idPrefix + '_save');
+
+  const costPoints = Number(priceInput.value);
+  if (!Number.isFinite(costPoints) || costPoints < 0) {
+    statusEl.textContent = '올바른 가격을 입력해주세요.';
+    statusEl.className = 'cost-status err';
+    return;
+  }
+
+  if (!confirm('"' + actionKey + '" 항목을 ' + costPoints + 'P로 저장할까요?\n저장 즉시 실제 사이트에 반영됩니다.')) return;
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = '저장 중…';
+  try {
+    const resp = await fetch(POINT_COSTS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken, 'x-admin-key': adminKey },
+      body: JSON.stringify({ action_key: actionKey, cost_points: costPoints, active: activeInput.checked }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      statusEl.textContent = '저장 실패: ' + (data.error || '알 수 없는 오류');
+      statusEl.className = 'cost-status err';
+      return;
+    }
+    statusEl.textContent = '✅ 저장되었습니다.';
+    statusEl.className = 'cost-status ok';
+  } catch (e) {
+    statusEl.textContent = '오류가 발생했습니다: ' + e.message;
+    statusEl.className = 'cost-status err';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+loadCosts();
+</script>
+</body>
+</html>
