@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>접속통계 — PaperLotto Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; flex-wrap:wrap; }
+nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
+nav.admin-nav a:hover{ color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-mid); }
+.hdr-right button{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:6px 12px; border-radius:7px; font-size:12px; cursor:pointer; }
+.hdr-right button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
+.section-title{ font-size:18px; margin-bottom:4px; }
+.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 20px; line-height:1.6; }
+
+.range-tabs{ display:flex; gap:6px; margin-bottom:20px; }
+.range-tab{ padding:8px 16px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--board-line); color:var(--text-mid); background:transparent; }
+.range-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+
+.card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px 22px; margin-bottom:16px; }
+.card h3{ font-size:14.5px; margin-bottom:14px; }
+.card .err-note{ font-size:12px; color:var(--err); background:rgba(198,90,46,0.08); padding:10px 12px; border-radius:8px; }
+
+.bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; }
+.bar-label{ width:80px; flex-shrink:0; font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); }
+.bar-track{ flex:1; background:rgba(28,33,48,0.08); border-radius:5px; height:16px; overflow:hidden; }
+.bar-fill{ background:var(--gold); height:100%; border-radius:5px; }
+.bar-value{ width:70px; text-align:right; flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-weight:600; }
+
+.country-row{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(28,33,48,0.08); font-size:12.5px; }
+.country-row:last-child{ border-bottom:none; }
+.country-name{ font-weight:600; }
+.country-req{ font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); }
+
+.cf-link{ font-size:11.5px; color:#8a5b1c; text-decoration:underline; }
+.empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:40px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em> Admin</div>
+  </div>
+  <nav class="admin-nav">
+    <a href="paperlotto_admin_scrape_review.html">당첨번호 검수</a>
+    <a href="paperlotto_admin_bank_transfers.html">계좌이체 관리</a>
+    <a href="paperlotto_admin_point_costs.html">포인트 설정</a>
+    <a href="paperlotto_admin_analytics.html" style="color:var(--gold-bright);">접속통계</a>
+  </nav>
+  <div class="hdr-right">
+    <span id="adminEmail"></span>
+    <button id="logoutBtn">로그아웃</button>
+  </div>
+</header>
+
+<main>
+  <h1 class="section-title">접속통계</h1>
+  <p class="section-desc">
+    Cloudflare Analytics 데이터를 요약해서 보여줍니다. 더 자세한 유입경로(referrer) 등은
+    <a class="cf-link" href="https://dash.cloudflare.com" target="_blank">Cloudflare 대시보드</a>에서 직접 확인해주세요.
+  </p>
+
+  <div class="range-tabs">
+    <button class="range-tab active" data-range="7d">최근 7일</button>
+    <button class="range-tab" data-range="30d">최근 30일</button>
+  </div>
+
+  <div class="card">
+    <h3>오늘 시간대별 방문</h3>
+    <div id="hourlyChart"><div class="empty-state">불러오는 중…</div></div>
+  </div>
+
+  <div class="card">
+    <h3 id="dailyTitle">일자별 방문 (최근 7일)</h3>
+    <div id="dailyChart"><div class="empty-state">불러오는 중…</div></div>
+  </div>
+
+  <div class="card">
+    <h3 id="countryTitle">국가별 방문 (최근 7일 합계)</h3>
+    <div id="countryList"><div class="empty-state">불러오는 중…</div></div>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const ANALYTICS_URL = SUPABASE_URL + "/functions/v1/admin-cloudflare-analytics";
+
+const accessToken = sessionStorage.getItem('pl_admin_token');
+const adminEmail = sessionStorage.getItem('pl_admin_email');
+
+if (!accessToken) {
+  window.location.href = 'paperlotto_admin_login.html';
+}
+
+document.getElementById('adminEmail').textContent = adminEmail || '';
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('pl_admin_token');
+  sessionStorage.removeItem('pl_admin_key');
+  sessionStorage.removeItem('pl_admin_email');
+  window.location.href = 'paperlotto_admin_login.html';
+});
+
+let currentRange = '7d';
+
+function fmtHour(iso) {
+  const d = new Date(iso);
+  return String(d.getHours()).padStart(2, '0') + '시';
+}
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}
+
+function renderBarChart(containerId, rows, labelFn, valueKey) {
+  const el = document.getElementById(containerId);
+  if (!rows || rows.length === 0) {
+    el.innerHTML = '<div class="empty-state">데이터가 없습니다.</div>';
+    return;
+  }
+  const max = Math.max(...rows.map(r => r.sum?.[valueKey] ?? 0), 1);
+  el.innerHTML = rows.map(r => {
+    const val = r.sum?.[valueKey] ?? 0;
+    const pct = Math.round((val / max) * 100);
+    const label = labelFn(r);
+    return '<div class="bar-row">' +
+      '<div class="bar-label">' + label + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;"></div></div>' +
+      '<div class="bar-value">' + val.toLocaleString() + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderCountries(rows) {
+  const el = document.getElementById('countryList');
+  if (!rows || rows.length === 0) {
+    el.innerHTML = '<div class="empty-state">데이터가 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(r =>
+    '<div class="country-row"><span class="country-name">' + (r.country || '알 수 없음') + '</span><span class="country-req">' + r.requests.toLocaleString() + '건</span></div>'
+  ).join('');
+}
+
+async function loadAnalytics() {
+  ['hourlyChart', 'dailyChart', 'countryList'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="empty-state">불러오는 중…</div>';
+  });
+  document.getElementById('dailyTitle').textContent = '일자별 방문 (최근 ' + (currentRange === '30d' ? '30일' : '7일') + ')';
+  document.getElementById('countryTitle').textContent = '국가별 방문 (최근 ' + (currentRange === '30d' ? '30일' : '7일') + ' 합계)';
+
+  try {
+    const resp = await fetch(ANALYTICS_URL + '?range=' + currentRange, {
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+    });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok) {
+      document.getElementById('hourlyChart').innerHTML = '<div class="err-note">불러오지 못했습니다: ' + (data.error || '') + '</div>';
+      return;
+    }
+
+    if (data.errors?.hourlyToday) {
+      document.getElementById('hourlyChart').innerHTML = '<div class="err-note">시간대별 통계 오류: ' + data.errors.hourlyToday + '</div>';
+    } else {
+      renderBarChart('hourlyChart', data.hourlyToday, r => fmtHour(r.dimensions.datetime), 'pageViews');
+    }
+
+    if (data.errors?.daily) {
+      document.getElementById('dailyChart').innerHTML = '<div class="err-note">일자별 통계 오류: ' + data.errors.daily + '</div>';
+    } else {
+      renderBarChart('dailyChart', data.daily, r => fmtDate(r.dimensions.date), 'pageViews');
+    }
+
+    if (data.errors?.countries) {
+      document.getElementById('countryList').innerHTML = '<div class="err-note">국가별 통계 오류: ' + data.errors.countries + '</div>';
+    } else {
+      renderCountries(data.countries);
+    }
+  } catch (e) {
+    document.getElementById('hourlyChart').innerHTML = '<div class="err-note">오류가 발생했습니다: ' + e.message + '</div>';
+  }
+}
+
+document.querySelectorAll('.range-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.range-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentRange = tab.dataset.range;
+    loadAnalytics();
+  });
+});
+
+loadAnalytics();
+</script>
+</body>
+</html>
