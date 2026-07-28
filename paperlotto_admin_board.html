@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>게시판 관리 — PaperLotto Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; flex-wrap:wrap; }
+nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
+nav.admin-nav a:hover{ color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-mid); }
+.hdr-right button{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:6px 12px; border-radius:7px; font-size:12px; cursor:pointer; }
+.hdr-right button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+main{ max-width:920px; margin:0 auto; padding:28px 20px 90px; }
+.section-title{ font-size:18px; margin-bottom:4px; }
+.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 20px; line-height:1.6; }
+
+.board-tabs{ display:flex; gap:6px; margin-bottom:18px; }
+.board-tab{ padding:8px 16px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--board-line); color:var(--text-mid); background:transparent; }
+.board-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+
+.new-post-btn{ background:var(--gold); color:var(--ink); border:none; border-radius:8px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; margin-bottom:18px; }
+.new-post-btn:hover{ background:var(--gold-bright); }
+
+.post-card{ background:var(--paper); color:var(--ink); border-radius:12px; padding:14px 18px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.post-info{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.post-title-row{ display:flex; align-items:center; gap:8px; }
+.pin-badge{ font-size:11px; background:var(--gold); color:var(--ink); padding:1px 7px; border-radius:10px; font-weight:700; flex-shrink:0; }
+.post-title{ font-size:14.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.post-date{ font-size:11px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; }
+.post-actions{ display:flex; gap:6px; flex-shrink:0; }
+.post-actions button{ border:1px solid rgba(28,33,48,0.2); background:transparent; color:var(--ink); font-size:12px; padding:6px 12px; border-radius:7px; cursor:pointer; }
+.post-actions button.danger{ color:var(--err); border-color:rgba(198,90,46,0.4); }
+.post-actions button:hover{ background:rgba(28,33,48,0.06); }
+
+.empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:40px 0; }
+
+/* 작성/수정 폼 */
+.form-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.55); display:none; align-items:flex-start; justify-content:center; z-index:20; padding:30px 16px; overflow-y:auto; }
+.form-overlay.open{ display:flex; }
+.form-panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:24px; max-width:640px; width:100%; }
+.form-panel h3{ font-size:16px; margin-bottom:16px; }
+.field-row{ margin-bottom:14px; }
+.field-row label{ display:block; font-size:12px; font-weight:600; color:var(--ink-dim); margin-bottom:5px; }
+.field-row input[type=text], .field-row textarea{
+  width:100%; border:1px solid rgba(28,33,48,0.2); border-radius:8px; padding:9px 11px;
+  font-size:13.5px; font-family:'Inter',sans-serif; background:#fff; color:var(--ink);
+}
+.field-row textarea{ min-height:110px; resize:vertical; line-height:1.6; }
+.lang-tabs{ display:flex; gap:6px; margin-bottom:14px; }
+.lang-tab{ padding:6px 14px; border-radius:16px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid rgba(28,33,48,0.2); color:var(--ink-dim); background:transparent; }
+.lang-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+.lang-pane{ display:none; }
+.lang-pane.active{ display:block; }
+.pin-check-row{ display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:13px; }
+.form-buttons{ display:flex; justify-content:flex-end; gap:8px; margin-top:6px; }
+.form-buttons button{ padding:9px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; }
+.btn-cancel{ background:transparent; border:1px solid rgba(28,33,48,0.25) !important; color:var(--ink); }
+.btn-save{ background:var(--gold); color:var(--ink); }
+.btn-save:hover{ background:var(--gold-bright); }
+.form-err{ font-size:12px; color:var(--err); margin-top:8px; display:none; }
+.translate-btn{ background:transparent; border:1px solid var(--gold); color:#8a5b1c; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:8px; cursor:pointer; margin-top:2px; }
+.translate-btn:hover{ background:rgba(184,134,46,0.1); }
+.translate-btn:disabled{ opacity:0.5; cursor:default; }
+.translate-status{ font-size:11.5px; color:var(--ink-dim); margin-top:6px; min-height:14px; }
+.translate-status.err{ color:var(--err); }
+.translate-status.ok{ color:var(--ok); }
+.draft-note{ font-size:11px; color:var(--ink-dim); margin:-8px 0 12px; font-style:italic; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em> Admin</div>
+  </div>
+  <nav class="admin-nav">
+    <a href="paperlotto_admin_scrape_review.html">당첨번호 검수</a>
+    <a href="paperlotto_admin_bank_transfers.html">계좌이체 관리</a>
+    <a href="paperlotto_admin_point_costs.html">포인트 설정</a>
+    <a href="paperlotto_admin_analytics.html">접속통계</a>
+    <a href="paperlotto_admin_board.html" style="color:var(--gold-bright);">게시판 관리</a>
+  </nav>
+  <div class="hdr-right">
+    <span id="adminEmail"></span>
+    <button id="logoutBtn">로그아웃</button>
+  </div>
+</header>
+
+<main>
+  <h1 class="section-title">게시판 관리</h1>
+  <p class="section-desc">공지사항과 사용설명 게시글을 작성/수정/삭제합니다. 여기서 저장한 글은 사이트 방문자에게 한/영/일 3개 언어로 노출됩니다.</p>
+
+  <div class="board-tabs">
+    <button class="board-tab active" data-board="notice">공지사항</button>
+    <button class="board-tab" data-board="guide">사용설명</button>
+  </div>
+
+  <button class="new-post-btn" id="newPostBtn">+ 새 글 작성</button>
+
+  <div id="postList"><div class="empty-state">불러오는 중…</div></div>
+</main>
+
+<!-- 작성/수정 폼 -->
+<div class="form-overlay" id="formOverlay">
+  <div class="form-panel">
+    <h3 id="formTitle">새 글 작성</h3>
+
+    <div class="pin-check-row">
+      <input type="checkbox" id="fPinned">
+      <label for="fPinned" style="margin:0; font-weight:normal; color:var(--ink);">상단 고정</label>
+    </div>
+
+    <div class="lang-tabs">
+      <button class="lang-tab active" data-lang="ko" type="button">한국어</button>
+      <button class="lang-tab" data-lang="en" type="button">English</button>
+      <button class="lang-tab" data-lang="ja" type="button">日本語</button>
+    </div>
+
+    <div class="lang-pane active" data-pane="ko">
+      <div class="field-row"><label>제목 (한국어)</label><input type="text" id="fTitleKo"></div>
+      <div class="field-row"><label>내용 (한국어)</label><textarea id="fContentKo"></textarea></div>
+      <button class="translate-btn" id="translateBtn" type="button">✨ AI 번역 초안 생성 (English / 日本語)</button>
+      <div class="translate-status" id="translateStatus"></div>
+    </div>
+    <div class="lang-pane" data-pane="en">
+      <div class="field-row"><label>Title (English)</label><input type="text" id="fTitleEn"></div>
+      <div class="field-row"><label>Content (English)</label><textarea id="fContentEn"></textarea></div>
+    </div>
+    <div class="lang-pane" data-pane="ja">
+      <div class="field-row"><label>タイトル（日本語）</label><input type="text" id="fTitleJa"></div>
+      <div class="field-row"><label>内容（日本語）</label><textarea id="fContentJa"></textarea></div>
+    </div>
+
+    <div class="form-err" id="formErr"></div>
+    <div class="form-buttons">
+      <button class="btn-cancel" id="formCancelBtn" type="button">취소</button>
+      <button class="btn-save" id="formSaveBtn" type="button">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const BOARD_FN_URL = SUPABASE_URL + "/functions/v1/admin-board-posts";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const accessToken = sessionStorage.getItem('pl_admin_token');
+const adminEmail = sessionStorage.getItem('pl_admin_email');
+
+if (!accessToken) {
+  window.location.href = 'paperlotto_admin_login.html';
+}
+
+document.getElementById('adminEmail').textContent = adminEmail || '';
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('pl_admin_token');
+  sessionStorage.removeItem('pl_admin_key');
+  sessionStorage.removeItem('pl_admin_email');
+  window.location.href = 'paperlotto_admin_login.html';
+});
+
+let currentBoard = 'notice';
+let editingId = null; // null = 새 글 작성, 값 있으면 수정 중
+
+document.querySelectorAll('.board-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentBoard = tab.dataset.board;
+    loadPosts();
+  });
+});
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+}
+
+async function loadPosts() {
+  const el = document.getElementById('postList');
+  el.innerHTML = '<div class="empty-state">불러오는 중…</div>';
+  const { data, error } = await sb
+    .from('board_posts')
+    .select('*')
+    .eq('board_type', currentBoard)
+    .order('is_pinned', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    el.innerHTML = '<div class="empty-state">불러오지 못했습니다: ' + error.message + '</div>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div class="empty-state">등록된 글이 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = data.map(p => `
+    <div class="post-card">
+      <div class="post-info">
+        <div class="post-title-row">
+          ${p.is_pinned ? '<span class="pin-badge">고정</span>' : ''}
+          <span class="post-title">${escapeHtml(p.title_ko)}</span>
+        </div>
+        <span class="post-date">${fmtDate(p.created_at)}</span>
+      </div>
+      <div class="post-actions">
+        <button data-edit="${p.id}">수정</button>
+        <button class="danger" data-delete="${p.id}">삭제</button>
+      </div>
+    </div>
+  `).join('');
+
+  el.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openForm(data.find(p => p.id === btn.dataset.edit)));
+  });
+  el.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', () => deletePost(btn.dataset.delete));
+  });
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── 작성/수정 폼 ──
+const overlay = document.getElementById('formOverlay');
+
+document.getElementById('newPostBtn').addEventListener('click', () => openForm(null));
+document.getElementById('formCancelBtn').addEventListener('click', closeForm);
+overlay.addEventListener('click', (e) => { if (e.target === overlay) closeForm(); });
+
+document.querySelectorAll('.lang-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.lang-pane').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector('.lang-pane[data-pane="' + tab.dataset.lang + '"]').classList.add('active');
+  });
+});
+
+function openForm(post) {
+  editingId = post ? post.id : null;
+  document.getElementById('formTitle').textContent = post ? '글 수정' : '새 글 작성 (' + (currentBoard === 'notice' ? '공지사항' : '사용설명') + ')';
+  document.getElementById('fPinned').checked = post ? !!post.is_pinned : false;
+  document.getElementById('fTitleKo').value = post ? post.title_ko : '';
+  document.getElementById('fTitleEn').value = post ? post.title_en : '';
+  document.getElementById('fTitleJa').value = post ? post.title_ja : '';
+  document.getElementById('fContentKo').value = post ? post.content_ko : '';
+  document.getElementById('fContentEn').value = post ? post.content_en : '';
+  document.getElementById('fContentJa').value = post ? post.content_ja : '';
+  document.getElementById('formErr').style.display = 'none';
+  const statusEl = document.getElementById('translateStatus');
+  statusEl.textContent = '';
+  statusEl.className = 'translate-status';
+  // 첫 탭(한국어)으로 초기화
+  document.querySelectorAll('.lang-tab').forEach(t => t.classList.toggle('active', t.dataset.lang === 'ko'));
+  document.querySelectorAll('.lang-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === 'ko'));
+  overlay.classList.add('open');
+}
+
+function closeForm() {
+  overlay.classList.remove('open');
+  editingId = null;
+}
+
+const TRANSLATE_FN_URL = SUPABASE_URL + "/functions/v1/translate-board-post";
+
+document.getElementById('translateBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('translateBtn');
+  const statusEl = document.getElementById('translateStatus');
+  const titleKo = document.getElementById('fTitleKo').value.trim();
+  const contentKo = document.getElementById('fContentKo').value.trim();
+
+  statusEl.className = 'translate-status';
+  if (!titleKo || !contentKo) {
+    statusEl.textContent = '먼저 한국어 제목과 내용을 입력해주세요.';
+    statusEl.classList.add('err');
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.textContent = '번역 초안을 생성하는 중… (몇 초 걸릴 수 있습니다)';
+
+  try {
+    const resp = await fetch(TRANSLATE_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ title_ko: titleKo, content_ko: contentKo }),
+    });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok || data.error) {
+      statusEl.textContent = '번역 실패: ' + (data.error || '알 수 없는 오류');
+      statusEl.classList.add('err');
+      return;
+    }
+    document.getElementById('fTitleEn').value = data.title_en;
+    document.getElementById('fContentEn').value = data.content_en;
+    document.getElementById('fTitleJa').value = data.title_ja;
+    document.getElementById('fContentJa').value = data.content_ja;
+    statusEl.textContent = '번역 초안이 생성되었습니다. English / 日本語 탭에서 확인 후 필요하면 수정해주세요.';
+    statusEl.classList.add('ok');
+  } catch (e) {
+    statusEl.textContent = '오류가 발생했습니다: ' + e.message;
+    statusEl.classList.add('err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('formSaveBtn').addEventListener('click', async () => {
+  const payload = {
+    action: editingId ? 'update' : 'create',
+    id: editingId || undefined,
+    board_type: currentBoard,
+    is_pinned: document.getElementById('fPinned').checked,
+    title_ko: document.getElementById('fTitleKo').value.trim(),
+    title_en: document.getElementById('fTitleEn').value.trim(),
+    title_ja: document.getElementById('fTitleJa').value.trim(),
+    content_ko: document.getElementById('fContentKo').value.trim(),
+    content_en: document.getElementById('fContentEn').value.trim(),
+    content_ja: document.getElementById('fContentJa').value.trim(),
+  };
+
+  const errEl = document.getElementById('formErr');
+  errEl.style.display = 'none';
+
+  if (!payload.title_ko || !payload.title_en || !payload.title_ja ||
+      !payload.content_ko || !payload.content_en || !payload.content_ja) {
+    errEl.textContent = '한/영/일 제목과 내용을 모두 입력해주세요.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const resp = await fetch(BOARD_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok || !data.success) {
+      errEl.textContent = '저장 실패: ' + (data.error || '알 수 없는 오류');
+      errEl.style.display = 'block';
+      return;
+    }
+    closeForm();
+    loadPosts();
+  } catch (e) {
+    errEl.textContent = '오류가 발생했습니다: ' + e.message;
+    errEl.style.display = 'block';
+  }
+});
+
+async function deletePost(id) {
+  if (!confirm('이 글을 삭제하시겠습니까? 삭제하면 되돌릴 수 없습니다.')) return;
+  try {
+    const resp = await fetch(BOARD_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok || !data.success) {
+      alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
+      return;
+    }
+    loadPosts();
+  } catch (e) {
+    alert('오류가 발생했습니다: ' + e.message);
+  }
+}
+
+loadPosts();
+</script>
+</body>
+</html>
