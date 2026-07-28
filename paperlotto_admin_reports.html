@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매출·회원 리포트 — PaperLotto Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; flex-wrap:wrap; }
+nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
+nav.admin-nav a:hover{ color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-mid); }
+.hdr-right button{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:6px 12px; border-radius:7px; font-size:12px; cursor:pointer; }
+.hdr-right button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+main{ max-width:1040px; margin:0 auto; padding:28px 20px 90px; }
+.section-title{ font-size:18px; margin-bottom:4px; }
+.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 20px; line-height:1.6; }
+
+.report-tabs{ display:flex; gap:6px; margin-bottom:16px; }
+.report-tab{ padding:8px 16px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--board-line); color:var(--text-mid); background:transparent; }
+.report-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+
+.filter-bar{ display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap; font-size:12.5px; }
+.filter-bar label{ color:var(--text-mid); }
+.filter-bar input[type=date]{ background:var(--board-2); border:1px solid var(--board-line); color:var(--text-hi); padding:7px 10px; border-radius:7px; font-family:'Inter',sans-serif; font-size:12.5px; }
+.filter-bar button{ background:var(--gold); color:var(--ink); border:none; border-radius:7px; padding:8px 16px; font-size:12.5px; font-weight:700; cursor:pointer; }
+.filter-bar button:hover{ background:var(--gold-bright); }
+
+.card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:18px 20px; margin-bottom:16px; overflow-x:auto; }
+table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+th{ text-align:left; padding:9px 10px; color:var(--ink-dim); font-weight:700; border-bottom:1.5px solid rgba(28,33,48,0.15); white-space:nowrap; }
+td{ padding:9px 10px; border-bottom:1px solid rgba(28,33,48,0.08); white-space:nowrap; }
+tr:last-child td{ border-bottom:none; }
+.badge{ display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:700; }
+.badge-card{ background:#e3ecff; color:#2451c4; }
+.badge-bank{ background:#e6f4ec; color:#1f7a4f; }
+.badge-status-completed, .badge-status-approved{ background:#e6f4ec; color:#1f7a4f; }
+.badge-status-created, .badge-status-pending{ background:#fff3e0; color:#a35b00; }
+.badge-status-failed, .badge-status-rejected{ background:#fbe4e0; color:#c65a2e; }
+
+.summary-row{ display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+.summary-box{ background:var(--paper); color:var(--ink); border-radius:12px; padding:16px 20px; flex:1; min-width:150px; }
+.summary-box .label{ font-size:11.5px; color:var(--ink-dim); margin-bottom:4px; }
+.summary-box .value{ font-size:20px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+
+.empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:40px 0; }
+.err-note{ font-size:12px; color:var(--err); background:rgba(198,90,46,0.08); padding:10px 12px; border-radius:8px; }
+
+@media (max-width:640px){
+  main{ padding:20px 14px 70px; }
+  .filter-bar{ gap:8px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em> Admin</div>
+  </div>
+  <nav class="admin-nav">
+    <a href="paperlotto_admin_scrape_review.html">당첨번호 검수</a>
+    <a href="paperlotto_admin_bank_transfers.html">계좌이체 관리</a>
+    <a href="paperlotto_admin_point_costs.html">포인트 설정</a>
+    <a href="paperlotto_admin_analytics.html">접속통계</a>
+    <a href="paperlotto_admin_board.html">게시판 관리</a>
+    <a href="paperlotto_admin_reports.html" style="color:var(--gold-bright);">매출·회원 리포트</a>
+  </nav>
+  <div class="hdr-right">
+    <span id="adminEmail"></span>
+    <button id="logoutBtn">로그아웃</button>
+  </div>
+</header>
+
+<main>
+  <h1 class="section-title">매출·회원 리포트</h1>
+  <p class="section-desc">입금현황(신용카드+계좌이체), 신규 가입 회원, 항목별 판매현황을 확인합니다. "항목별 판매현황"은 2026-07-29 이후 이용 건부터 집계됩니다 (그 이전 데이터는 로그가 없어 소급 반영되지 않습니다).</p>
+
+  <div class="report-tabs">
+    <button class="report-tab active" data-report="payments">입금현황</button>
+    <button class="report-tab" data-report="signups">신규 가입 회원</button>
+    <button class="report-tab" data-report="sales">항목별 판매현황</button>
+  </div>
+
+  <div class="filter-bar">
+    <label>기간</label>
+    <input type="date" id="fromDate">
+    <span style="color:var(--text-dim);">~</span>
+    <input type="date" id="toDate">
+    <button id="refreshBtn">조회</button>
+  </div>
+
+  <div id="reportBody"><div class="empty-state">불러오는 중…</div></div>
+</main>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const REPORTS_URL = SUPABASE_URL + "/functions/v1/admin-business-reports";
+
+const accessToken = sessionStorage.getItem('pl_admin_token');
+const adminEmail = sessionStorage.getItem('pl_admin_email');
+
+if (!accessToken) {
+  window.location.href = 'paperlotto_admin_login.html';
+}
+
+document.getElementById('adminEmail').textContent = adminEmail || '';
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('pl_admin_token');
+  sessionStorage.removeItem('pl_admin_key');
+  sessionStorage.removeItem('pl_admin_email');
+  window.location.href = 'paperlotto_admin_login.html';
+});
+
+let currentReport = 'payments';
+
+// 기본 기간: 최근 30일
+const today = new Date();
+const monthAgo = new Date(today.getTime() - 30 * 86400000);
+document.getElementById('toDate').value = today.toISOString().slice(0, 10);
+document.getElementById('fromDate').value = monthAgo.toISOString().slice(0, 10);
+
+document.querySelectorAll('.report-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentReport = tab.dataset.report;
+    loadReport();
+  });
+});
+document.getElementById('refreshBtn').addEventListener('click', loadReport);
+
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  return d.getFullYear() + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0') +
+    ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function fmtNum(n) { return Number(n || 0).toLocaleString(); }
+function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function loadReport() {
+  const body = document.getElementById('reportBody');
+  body.innerHTML = '<div class="empty-state">불러오는 중…</div>';
+
+  const from = document.getElementById('fromDate').value;
+  const to = document.getElementById('toDate').value;
+
+  try {
+    const resp = await fetch(REPORTS_URL + '?report=' + currentReport + '&from=' + from + '&to=' + to, {
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+    });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok) {
+      body.innerHTML = '<div class="err-note">불러오지 못했습니다: ' + (data.error || '') + '</div>';
+      return;
+    }
+
+    if (currentReport === 'payments') renderPayments(data);
+    if (currentReport === 'signups') renderSignups(data);
+    if (currentReport === 'sales') renderSales(data);
+  } catch (e) {
+    body.innerHTML = '<div class="err-note">오류가 발생했습니다: ' + e.message + '</div>';
+  }
+}
+
+function renderPayments(data) {
+  const body = document.getElementById('reportBody');
+  const items = data.items || [];
+  if (items.length === 0) {
+    body.innerHTML = '<div class="empty-state">해당 기간에 입금 내역이 없습니다.</div>';
+    return;
+  }
+  const totalAmount = items.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const cardCount = items.filter(r => r.method === 'card').length;
+  const bankCount = items.filter(r => r.method === 'bank').length;
+
+  let html = '<div class="summary-row">' +
+    '<div class="summary-box"><div class="label">총 건수</div><div class="value">' + items.length + '건</div></div>' +
+    '<div class="summary-box"><div class="label">총 입금액</div><div class="value">' + fmtNum(totalAmount) + '원</div></div>' +
+    '<div class="summary-box"><div class="label">신용카드</div><div class="value">' + cardCount + '건</div></div>' +
+    '<div class="summary-box"><div class="label">계좌이체</div><div class="value">' + bankCount + '건</div></div>' +
+  '</div>';
+
+  html += '<div class="card"><table><thead><tr>' +
+    '<th>일시</th><th>방법</th><th>입금자명</th><th>금액</th><th>포인트</th><th>상태</th>' +
+    '</tr></thead><tbody>';
+  items.forEach(r => {
+    const methodBadge = r.method === 'card'
+      ? '<span class="badge badge-card">' + escapeHtml(r.method_label || '신용카드') + '</span>'
+      : '<span class="badge badge-bank">계좌이체</span>';
+    html += '<tr>' +
+      '<td>' + fmtDateTime(r.date) + '</td>' +
+      '<td>' + methodBadge + '</td>' +
+      '<td>' + escapeHtml(r.payer_name) + '</td>' +
+      '<td>' + fmtNum(r.amount) + '원</td>' +
+      '<td>' + (r.points != null ? fmtNum(r.points) + 'P' : '-') + '</td>' +
+      '<td><span class="badge badge-status-' + escapeHtml(r.status) + '">' + escapeHtml(r.status) + '</span></td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+function renderSignups(data) {
+  const body = document.getElementById('reportBody');
+  const items = data.items || [];
+  if (items.length === 0) {
+    body.innerHTML = '<div class="empty-state">해당 기간에 신규 가입자가 없습니다.</div>';
+    return;
+  }
+
+  let html = '<div class="summary-row">' +
+    '<div class="summary-box"><div class="label">신규 가입</div><div class="value">' + items.length + '명</div></div>' +
+  '</div>';
+
+  html += '<div class="card"><table><thead><tr>' +
+    '<th>가입일시</th><th>닉네임</th><th>이메일</th><th>국가</th><th>언어</th>' +
+    '</tr></thead><tbody>';
+  items.forEach(r => {
+    html += '<tr>' +
+      '<td>' + fmtDateTime(r.date) + '</td>' +
+      '<td>' + escapeHtml(r.nickname) + '</td>' +
+      '<td>' + escapeHtml(r.email) + '</td>' +
+      '<td>' + escapeHtml(r.country_code || '-') + '</td>' +
+      '<td>' + escapeHtml(r.preferred_lang || '-') + '</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+function renderSales(data) {
+  const body = document.getElementById('reportBody');
+  const items = data.actionTotals || [];
+  if (items.length === 0) {
+    body.innerHTML = '<div class="empty-state">해당 기간에 판매 기록이 없습니다. (2026-07-29 이후 이용 건부터 집계됩니다)</div>';
+    return;
+  }
+
+  let html = '<div class="summary-row">' +
+    '<div class="summary-box"><div class="label">총 매출 (포인트)</div><div class="value">' + fmtNum(data.grandTotal) + 'P</div></div>' +
+  '</div>';
+
+  html += '<div class="card"><table><thead><tr>' +
+    '<th>항목</th><th>건수</th><th>수량</th><th>매출(P)</th>' +
+    '</tr></thead><tbody>';
+  items.forEach(r => {
+    html += '<tr>' +
+      '<td>' + escapeHtml(r.label_kr) + '</td>' +
+      '<td>' + fmtNum(r.count) + '건</td>' +
+      '<td>' + fmtNum(r.quantity) + '</td>' +
+      '<td>' + fmtNum(r.points_spent) + 'P</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+loadReport();
+</script>
+</body>
+</html>
