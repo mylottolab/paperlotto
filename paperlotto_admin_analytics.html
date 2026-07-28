@@ -48,16 +48,19 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
 .card .card-note{ font-size:11.5px; color:var(--ink-dim); margin-bottom:14px; }
 .card .err-note{ font-size:12px; color:var(--err); background:rgba(198,90,46,0.08); padding:10px 12px; border-radius:8px; }
 
+/* 시간대별/일자별 막대 */
 .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; }
 .bar-label{ width:64px; flex-shrink:0; font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); }
 .bar-track{ flex:1; min-width:24px; background:rgba(28,33,48,0.08); border-radius:5px; height:16px; overflow:hidden; }
 .bar-fill{ background:var(--gold); height:100%; border-radius:5px; min-width:2px; }
 .bar-value{ width:56px; text-align:right; flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-weight:600; }
 
-.country-row{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(28,33,48,0.08); font-size:12.5px; gap:10px; }
-.country-row:last-child{ border-bottom:none; }
-.country-name{ font-weight:600; }
-.country-req{ font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); flex-shrink:0; }
+/* 국가별 막대 (라벨이 길어서 별도 클래스) */
+.cbar-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; }
+.cbar-label{ width:96px; flex-shrink:0; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cbar-track{ flex:1; min-width:24px; background:rgba(28,33,48,0.08); border-radius:5px; height:16px; overflow:hidden; }
+.cbar-fill{ background:var(--gold); height:100%; border-radius:5px; min-width:2px; }
+.cbar-value{ width:60px; text-align:right; flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink-dim); }
 
 .cf-link{ font-size:11.5px; color:#8a5b1c; text-decoration:underline; }
 .empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:40px 0; }
@@ -65,6 +68,8 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
 @media (max-width: 420px){
   .bar-label{ width:50px; font-size:11px; }
   .bar-value{ width:44px; font-size:11px; }
+  .cbar-label{ width:76px; font-size:11px; }
+  .cbar-value{ width:48px; font-size:11px; }
 }
 </style>
 </head>
@@ -189,15 +194,22 @@ function renderBarChart(containerId, rows, labelFn, valueKey) {
   }).join('');
 }
 
-function renderCountries(containerId, rows) {
+function renderCountryBars(containerId, rows) {
   const el = document.getElementById(containerId);
   if (!rows || rows.length === 0) {
     el.innerHTML = '<div class="empty-state">데이터가 없습니다.</div>';
     return;
   }
-  el.innerHTML = rows.map(r =>
-    '<div class="country-row"><span class="country-name">' + countryLabel(r.country) + '</span><span class="country-req">' + r.requests.toLocaleString() + '건</span></div>'
-  ).join('');
+  const max = Math.max(...rows.map(r => r.requests ?? 0), 1);
+  el.innerHTML = rows.map(r => {
+    const val = r.requests ?? 0;
+    const pct = Math.max(Math.round((val / max) * 100), val > 0 ? 3 : 0);
+    return '<div class="cbar-row">' +
+      '<div class="cbar-label" title="' + countryLabel(r.country) + '">' + countryLabel(r.country) + '</div>' +
+      '<div class="cbar-track"><div class="cbar-fill" style="width:' + pct + '%;"></div></div>' +
+      '<div class="cbar-value">' + val.toLocaleString() + '건</div>' +
+    '</div>';
+  }).join('');
 }
 
 async function loadAnalytics() {
@@ -237,13 +249,13 @@ async function loadAnalytics() {
     if (data.errors?.countriesToday) {
       document.getElementById('countryTodayList').innerHTML = '<div class="err-note">오늘 국가별 통계 오류: ' + data.errors.countriesToday + '</div>';
     } else {
-      renderCountries('countryTodayList', data.countriesToday);
+      renderCountryBars('countryTodayList', data.countriesToday);
     }
 
     if (data.errors?.countriesWeek) {
       document.getElementById('countryWeekList').innerHTML = '<div class="err-note">국가별 통계 오류: ' + data.errors.countriesWeek + '</div>';
     } else {
-      renderCountries('countryWeekList', data.countriesWeek);
+      renderCountryBars('countryWeekList', data.countriesWeek);
     }
   } catch (e) {
     document.getElementById('hourlyChart').innerHTML = '<div class="err-note">오류가 발생했습니다: ' + e.message + '</div>';
