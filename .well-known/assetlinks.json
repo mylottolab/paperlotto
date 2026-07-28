@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.paperlotto.twa",
+        "sha256_cert_fingerprints": ["2C:C9:77:47:25:29:A3:DD:02:8F:EA:8C:72:68:37:D4:D4:32:68:1C:D2:69:7D:DD:1C:7C:BB:BA:71:1A:40:3B"]
+      }
+    }]
