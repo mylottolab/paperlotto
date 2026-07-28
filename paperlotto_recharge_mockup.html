@@ -95,6 +95,7 @@ input[type="text"], input[type="number"]{
 
 @media (max-width:480px){
   header{ padding:14px 16px; }
+  nav{ width:100%; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
   main{ padding:24px 14px 70px; }
   .panel{ padding:18px; }
   .quick-amounts{ grid-template-columns:repeat(2,1fr); }
@@ -110,7 +111,10 @@ input[type="text"], input[type="number"]{
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
   </a>
-  <nav><a href="paperlotto_hub_mockup.html">← 전체 게임</a></nav>
+  <nav style="display:flex; align-items:center; gap:16px;">
+    <a href="paperlotto_hub_mockup.html">← 전체 게임</a>
+    <div id="authWidget"></div>
+  </nav>
 </header>
 
 <main>
@@ -534,5 +538,6 @@ document.getElementById('bankSubmitBtn').addEventListener('click', async () => {
 })();
 </script>
 
+<script src="auth-widget.js"></script>
 </body>
 </html>
