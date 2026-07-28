@@ -37,29 +37,30 @@ nav.admin-nav a:hover{ color:var(--gold-bright); }
 
 main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
 .section-title{ font-size:18px; margin-bottom:4px; }
-.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 20px; line-height:1.6; }
-
-.range-tabs{ display:flex; gap:6px; margin-bottom:20px; }
-.range-tab{ padding:8px 16px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--board-line); color:var(--text-mid); background:transparent; }
-.range-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 24px; line-height:1.6; }
 
 .card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px 22px; margin-bottom:16px; }
 .card h3{ font-size:14.5px; margin-bottom:14px; }
 .card .err-note{ font-size:12px; color:var(--err); background:rgba(198,90,46,0.08); padding:10px 12px; border-radius:8px; }
 
 .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; }
-.bar-label{ width:80px; flex-shrink:0; font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); }
-.bar-track{ flex:1; background:rgba(28,33,48,0.08); border-radius:5px; height:16px; overflow:hidden; }
-.bar-fill{ background:var(--gold); height:100%; border-radius:5px; }
-.bar-value{ width:70px; text-align:right; flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.bar-label{ width:64px; flex-shrink:0; font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); }
+.bar-track{ flex:1; min-width:24px; background:rgba(28,33,48,0.08); border-radius:5px; height:16px; overflow:hidden; }
+.bar-fill{ background:var(--gold); height:100%; border-radius:5px; min-width:2px; }
+.bar-value{ width:56px; text-align:right; flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-weight:600; }
 
-.country-row{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(28,33,48,0.08); font-size:12.5px; }
+.country-row{ display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(28,33,48,0.08); font-size:12.5px; gap:10px; }
 .country-row:last-child{ border-bottom:none; }
 .country-name{ font-weight:600; }
-.country-req{ font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); }
+.country-req{ font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); flex-shrink:0; }
 
 .cf-link{ font-size:11.5px; color:#8a5b1c; text-decoration:underline; }
 .empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:40px 0; }
+
+@media (max-width: 420px){
+  .bar-label{ width:50px; font-size:11px; }
+  .bar-value{ width:44px; font-size:11px; }
+}
 </style>
 </head>
 <body>
@@ -82,16 +83,11 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
 </header>
 
 <main>
-  <h1 class="section-title">접속통계</h1>
+  <h1 class="section-title">접속통계 (최근 7일)</h1>
   <p class="section-desc">
     Cloudflare Analytics 데이터를 요약해서 보여줍니다. 더 자세한 유입경로(referrer) 등은
     <a class="cf-link" href="https://dash.cloudflare.com" target="_blank">Cloudflare 대시보드</a>에서 직접 확인해주세요.
   </p>
-
-  <div class="range-tabs">
-    <button class="range-tab active" data-range="7d">최근 7일</button>
-    <button class="range-tab" data-range="30d">최근 30일</button>
-  </div>
 
   <div class="card">
     <h3>오늘 시간대별 방문</h3>
@@ -99,12 +95,12 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
   </div>
 
   <div class="card">
-    <h3 id="dailyTitle">일자별 방문 (최근 7일)</h3>
+    <h3>일자별 방문 (최근 7일)</h3>
     <div id="dailyChart"><div class="empty-state">불러오는 중…</div></div>
   </div>
 
   <div class="card">
-    <h3 id="countryTitle">국가별 방문 (최근 7일 합계)</h3>
+    <h3>국가별 방문 (최근 7일 합계)</h3>
     <div id="countryList"><div class="empty-state">불러오는 중…</div></div>
   </div>
 </main>
@@ -128,7 +124,25 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   window.location.href = 'paperlotto_admin_login.html';
 });
 
-let currentRange = '7d';
+// 국가 코드 → 한국어 이름 매핑 (표기: "대한민국(KR)")
+const COUNTRY_NAMES_KO = {
+  KR:'대한민국', US:'미국', JP:'일본', CN:'중국', DE:'독일', FR:'프랑스', GB:'영국',
+  NL:'네덜란드', SE:'스웨덴', ES:'스페인', PT:'포르투갈', NO:'노르웨이', FI:'핀란드',
+  IT:'이탈리아', CA:'캐나다', BR:'브라질', SG:'싱가포르', HK:'홍콩', TR:'튀르키예',
+  RU:'러시아', AU:'호주', NZ:'뉴질랜드', IN:'인도', ID:'인도네시아', TH:'태국',
+  VN:'베트남', PH:'필리핀', MY:'말레이시아', MX:'멕시코', AR:'아르헨티나',
+  CL:'칠레', CO:'콜롬비아', PE:'페루', PL:'폴란드', CZ:'체코', AT:'오스트리아',
+  CH:'스위스', BE:'벨기에', DK:'덴마크', IE:'아일랜드', GR:'그리스', HU:'헝가리',
+  RO:'루마니아', UA:'우크라이나', IL:'이스라엘', AE:'아랍에미리트', SA:'사우디아라비아',
+  EG:'이집트', ZA:'남아프리카공화국', NG:'나이지리아', KE:'케냐', PK:'파키스탄',
+  BD:'방글라데시', TW:'대만', UNKNOWN:'알 수 없음'
+};
+function countryLabel(code){
+  if (!code) return '알 수 없음';
+  const ko = COUNTRY_NAMES_KO[code];
+  if (code === 'UNKNOWN') return '알 수 없음';
+  return ko ? (ko + '(' + code + ')') : code;
+}
 
 function fmtHour(iso) {
   const d = new Date(iso);
@@ -148,7 +162,7 @@ function renderBarChart(containerId, rows, labelFn, valueKey) {
   const max = Math.max(...rows.map(r => r.sum?.[valueKey] ?? 0), 1);
   el.innerHTML = rows.map(r => {
     const val = r.sum?.[valueKey] ?? 0;
-    const pct = Math.round((val / max) * 100);
+    const pct = Math.max(Math.round((val / max) * 100), val > 0 ? 3 : 0);
     const label = labelFn(r);
     return '<div class="bar-row">' +
       '<div class="bar-label">' + label + '</div>' +
@@ -165,7 +179,7 @@ function renderCountries(rows) {
     return;
   }
   el.innerHTML = rows.map(r =>
-    '<div class="country-row"><span class="country-name">' + (r.country || '알 수 없음') + '</span><span class="country-req">' + r.requests.toLocaleString() + '건</span></div>'
+    '<div class="country-row"><span class="country-name">' + countryLabel(r.country) + '</span><span class="country-req">' + r.requests.toLocaleString() + '건</span></div>'
   ).join('');
 }
 
@@ -173,11 +187,9 @@ async function loadAnalytics() {
   ['hourlyChart', 'dailyChart', 'countryList'].forEach(id => {
     document.getElementById(id).innerHTML = '<div class="empty-state">불러오는 중…</div>';
   });
-  document.getElementById('dailyTitle').textContent = '일자별 방문 (최근 ' + (currentRange === '30d' ? '30일' : '7일') + ')';
-  document.getElementById('countryTitle').textContent = '국가별 방문 (최근 ' + (currentRange === '30d' ? '30일' : '7일') + ' 합계)';
 
   try {
-    const resp = await fetch(ANALYTICS_URL + '?range=' + currentRange, {
+    const resp = await fetch(ANALYTICS_URL, {
       headers: { 'Authorization': 'Bearer ' + accessToken },
     });
     const data = await resp.json();
@@ -212,15 +224,6 @@ async function loadAnalytics() {
     document.getElementById('hourlyChart').innerHTML = '<div class="err-note">오류가 발생했습니다: ' + e.message + '</div>';
   }
 }
-
-document.querySelectorAll('.range-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.range-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    currentRange = tab.dataset.range;
-    loadAnalytics();
-  });
-});
 
 loadAnalytics();
 </script>
