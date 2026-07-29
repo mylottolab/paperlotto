@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -234,7 +235,7 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
     <p class="modal-sub" data-i18n="collModalSub">이동할 마이 시그니처를 고르거나 새로 만드세요.</p>
     <div id="collList" class="coll-list"></div>
     <div class="coll-new-row">
-      <input type="text" id="collNewName" placeholder="예: 미국 게임용">
+      <input type="text" id="collNewName">
       <button id="collCreateBtn" data-i18n="collCreateBtn">+ 새로 만들기 (500P)</button>
     </div>
     <button class="modal-close" id="collModalClose" data-i18n="modalClose">닫기</button>
@@ -263,6 +264,7 @@ const i18n = {
     collModalTitle:"마이 시그니처로 이동", collModalSub:"이동할 마이 시그니처를 고르거나 새로 만드세요.",
     collNone:"아직 만든 마이 시그니처가 없습니다. 아래에서 새로 만들어주세요.",
     collCreateBtn:"+ 새로 만들기 (500P)", modalClose:"닫기", collNameNeeded:"컬렉션 이름을 입력해주세요.",
+    phCollName:"예: 미국 게임용",
   },
   en: {
     navBack:"← All Games", pageTitle:"My Entries",
@@ -284,6 +286,7 @@ const i18n = {
     collModalTitle:"Move to My Signature", collModalSub:"Pick a My Signature collection to move into, or create a new one.",
     collNone:"You haven't created a My Signature yet. Create one below.",
     collCreateBtn:"+ Create new (500P)", modalClose:"Close", collNameNeeded:"Please enter a collection name.",
+    phCollName:"e.g. US games",
   },
   ja: {
     navBack:"← すべてのゲーム", pageTitle:"登録した番号",
@@ -305,6 +308,7 @@ const i18n = {
     collModalTitle:"マイシグニチャーへ移動", collModalSub:"移動先のマイシグニチャーを選ぶか、新しく作成してください。",
     collNone:"まだマイシグニチャーがありません。下から新しく作成してください。",
     collCreateBtn:"+ 新規作成 (500P)", modalClose:"閉じる", collNameNeeded:"コレクション名を入力してください。",
+    phCollName:"例: アメリカのゲーム用",
   },
 };
 let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
@@ -317,6 +321,7 @@ function applyLang(lang){
     var key = el.getAttribute('data-i18n');
     if (typeof t[key] === 'string') el.innerHTML = t[key];
   });
+  var ph = document.getElementById('collNewName'); if (ph) ph.placeholder = t.phCollName;
   document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
   renderListHeader();
   renderList();
@@ -619,25 +624,86 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
   try {
     const data = await chargeAndFetch(ids);
     const title = buildTitle(data.rows);
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text(title, 14, 18);
-    const body = data.rows.map(function(r){
-      return [
+
+    // Build a hidden, print-styled DOM node and render it as an image.
+    // This avoids jsPDF's default font (Helvetica), which cannot render
+    // Korean/Japanese characters and produces garbled text.
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-99999px;top:0;background:#ffffff;padding:24px;width:760px;font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#111;';
+    const h = document.createElement('h2');
+    h.textContent = title;
+    h.style.cssText = 'margin:0 0 16px 0;font-size:20px;';
+    wrap.appendChild(h);
+
+    const table = document.createElement('table');
+    table.style.cssText = 'width:100%;border-collapse:collapse;font-size:13px;';
+    const theadRow = ['Game','Round','Main','Bonus','Grade'];
+    const thead = document.createElement('tr');
+    theadRow.forEach(function(label){
+      const th = document.createElement('th');
+      th.textContent = label;
+      th.style.cssText = 'background:#2f6fed;color:#fff;text-align:left;padding:8px 10px;border:1px solid #d0d0d0;';
+      thead.appendChild(th);
+    });
+    table.appendChild(thead);
+
+    data.rows.forEach(function(r, i){
+      const cells = [
         GAME_FULL[r.game_id] || r.game_id,
         String(r.round_no),
         (r.main_numbers||[]).join(', '),
         (r.bonus_numbers||[]).join(', '),
         (r.grade === null || r.grade === undefined) ? '-' : (r.grade === 0 ? t.gradeLose : t.gradeTier(r.grade)),
       ];
+      const tr = document.createElement('tr');
+      tr.style.background = (i % 2 === 0) ? '#f7f7f9' : '#ffffff';
+      cells.forEach(function(val){
+        const td = document.createElement('td');
+        td.textContent = val;
+        td.style.cssText = 'padding:8px 10px;border:1px solid #d0d0d0;';
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
     });
-    doc.autoTable({
-      startY: 26,
-      head: [['Game', 'Round', 'Main', 'Bonus', 'Grade']],
-      body: body,
-      styles: { fontSize: 9 },
-    });
+    wrap.appendChild(table);
+    document.body.appendChild(wrap);
+
+    const canvas = await html2canvas(wrap, { scale: 2, backgroundColor: '#ffffff' });
+    document.body.removeChild(wrap);
+
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const usableWidth = pageWidth - margin * 2;
+    const imgWidthMm = usableWidth;
+    const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+
+    if (imgHeightMm <= pageHeight - margin * 2) {
+      doc.addImage(imgData, 'PNG', margin, margin, imgWidthMm, imgHeightMm);
+    } else {
+      // Slice the tall image across multiple pages.
+      const pageContentHeightPx = ((pageHeight - margin * 2) * canvas.width) / imgWidthMm;
+      let renderedPx = 0;
+      let first = true;
+      while (renderedPx < canvas.height) {
+        const sliceHeightPx = Math.min(pageContentHeightPx, canvas.height - renderedPx);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHeightPx;
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+        const sliceData = sliceCanvas.toDataURL('image/png');
+        const sliceHeightMm = (sliceHeightPx * imgWidthMm) / canvas.width;
+        if (!first) doc.addPage();
+        doc.addImage(sliceData, 'PNG', margin, margin, imgWidthMm, sliceHeightMm);
+        renderedPx += sliceHeightPx;
+        first = false;
+      }
+    }
+
     doc.save(title.replace(/\s+/g,'_') + '.pdf');
     alert(t.exportSuccess(data.rows.length));
   } catch (e) {
