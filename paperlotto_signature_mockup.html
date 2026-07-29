@@ -181,7 +181,7 @@ select, input[type="text"], input[type="number"]{
     <h3 data-i18n="collTitle">마이 시그니처</h3>
     <div class="coll-strip" id="collStrip"><div class="loading-note" data-i18n="loading">불러오는 중…</div></div>
     <div class="coll-new-row">
-      <input type="text" id="collNewName" placeholder="예: 미국 게임용">
+      <input type="text" id="collNewName">
       <button id="collCreateBtn" data-i18n="collCreateBtn">+ 새로 만들기 (500P)</button>
     </div>
   </div>
@@ -192,13 +192,13 @@ select, input[type="text"], input[type="number"]{
       <label data-i18n="gameLabel">게임</label>
       <select id="addGame"></select>
       <div class="row3">
-        <div><label data-i18n="roundLabel">회차 (선택)</label><input type="number" id="addRound" placeholder="예: 1235"></div>
-        <div><label data-i18n="memoLabel">메모 (선택)</label><input type="text" id="addMemo" placeholder="예: 생일 번호"></div>
+        <div><label data-i18n="roundLabel">회차 (선택)</label><input type="number" id="addRound"></div>
+        <div><label data-i18n="memoLabel">메모 (선택)</label><input type="text" id="addMemo"></div>
       </div>
       <label data-i18n="mainLabel">메인 번호 (쉼표로 구분)</label>
-      <input type="text" id="addMain" class="mono" placeholder="예: 3,7,15,22,29,41">
+      <input type="text" id="addMain" class="mono">
       <label data-i18n="bonusLabel">보너스 번호 (쉼표로 구분, 선택)</label>
-      <input type="text" id="addBonus" class="mono" placeholder="예: 26">
+      <input type="text" id="addBonus" class="mono">
       <button class="add-btn" id="addBtn" data-i18n="addBtn">추가하기</button>
     </div>
 
@@ -268,6 +268,7 @@ const i18n = {
     insufficientPointsMsg:function(balance, shortfall){
       return "포인트가 " + shortfall + "P 부족합니다. (보유 " + balance + "P)\n\n지금 포인트 충전 페이지로 이동할까요?";
     },
+    phCollName:"예: 미국 게임용", phRound:"예: 1235", phMemo:"예: 생일 번호", phMain:"예: 3,7,15,22,29,41", phBonus:"예: 26",
   },
   en: {
     navEntries:"← My Entries", pageTitle:"My Signature",
@@ -294,6 +295,7 @@ const i18n = {
     insufficientPointsMsg:function(balance, shortfall){
       return "You're short " + shortfall + "P. (Balance: " + balance + "P)\n\nGo to the points recharge page now?";
     },
+    phCollName:"e.g. US games", phRound:"e.g. 1235", phMemo:"e.g. Birthday numbers", phMain:"e.g. 3,7,15,22,29,41", phBonus:"e.g. 26",
   },
   ja: {
     navEntries:"← 登録した番号", pageTitle:"マイシグニチャー",
@@ -320,6 +322,7 @@ const i18n = {
     insufficientPointsMsg:function(balance, shortfall){
       return "ポイントが" + shortfall + "P不足しています。（保有 " + balance + "P）\n\n今すぐポイント充電ページへ移動しますか？";
     },
+    phCollName:"例: アメリカのゲーム用", phRound:"例: 1235", phMemo:"例: 誕生日の番号", phMain:"例: 3,7,15,22,29,41", phBonus:"例: 26",
   },
 };
 let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
@@ -332,6 +335,11 @@ function applyLang(lang){
     var key = el.getAttribute('data-i18n');
     if (typeof t[key] === 'string') el.innerHTML = t[key];
   });
+  var ph = document.getElementById('collNewName'); if (ph) ph.placeholder = t.phCollName;
+  ph = document.getElementById('addRound'); if (ph) ph.placeholder = t.phRound;
+  ph = document.getElementById('addMemo'); if (ph) ph.placeholder = t.phMemo;
+  ph = document.getElementById('addMain'); if (ph) ph.placeholder = t.phMain;
+  ph = document.getElementById('addBonus'); if (ph) ph.placeholder = t.phBonus;
   document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
   renderGameSelect();
   renderCollections();
