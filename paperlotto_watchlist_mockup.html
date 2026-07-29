@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -431,15 +432,87 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
   try {
     const data = await chargeAndFetch(ids);
     const title = buildTitle(data.rows);
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(14);
-    doc.text(title, 14, 18);
-    const body = data.rows.map(function(r){
-      const g = GAMES.find(function(x){ return x.id === r.game_id; });
-      return [g ? g[nameKey()] : r.game_id, r.round_no ? String(r.round_no) : '-', (r.main_numbers||[]).join(', '), (r.bonus_numbers||[]).join(', '), r.memo || ''];
+
+    // Build a hidden, print-styled DOM node and render it as an image.
+    // This avoids jsPDF's default font (Helvetica), which cannot render
+    // Korean/Japanese characters and produces garbled text.
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-99999px;top:0;background:#ffffff;padding:24px;width:760px;font-family:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#111;';
+    const h = document.createElement('h2');
+    h.textContent = title;
+    h.style.cssText = 'margin:0 0 16px 0;font-size:20px;';
+    wrap.appendChild(h);
+
+    const table = document.createElement('table');
+    table.style.cssText = 'width:100%;border-collapse:collapse;font-size:13px;';
+    const theadRow = ['Game','Round','Main','Bonus','Memo'];
+    const thead = document.createElement('tr');
+    theadRow.forEach(function(label){
+      const th = document.createElement('th');
+      th.textContent = label;
+      th.style.cssText = 'background:#2f6fed;color:#fff;text-align:left;padding:8px 10px;border:1px solid #d0d0d0;';
+      thead.appendChild(th);
     });
-    doc.autoTable({ startY: 26, head: [['Game','Round','Main','Bonus','Memo']], body: body, styles: { fontSize: 9 } });
+    table.appendChild(thead);
+
+    data.rows.forEach(function(r, i){
+      const g = GAMES.find(function(x){ return x.id === r.game_id; });
+      const cells = [
+        g ? g[nameKey()] : r.game_id,
+        r.round_no ? String(r.round_no) : '-',
+        (r.main_numbers||[]).join(', '),
+        (r.bonus_numbers||[]).join(', '),
+        r.memo || ''
+      ];
+      const tr = document.createElement('tr');
+      tr.style.background = (i % 2 === 0) ? '#f7f7f9' : '#ffffff';
+      cells.forEach(function(val){
+        const td = document.createElement('td');
+        td.textContent = val;
+        td.style.cssText = 'padding:8px 10px;border:1px solid #d0d0d0;';
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
+    });
+    wrap.appendChild(table);
+    document.body.appendChild(wrap);
+
+    const canvas = await html2canvas(wrap, { scale: 2, backgroundColor: '#ffffff' });
+    document.body.removeChild(wrap);
+
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const usableWidth = pageWidth - margin * 2;
+    const imgWidthMm = usableWidth;
+    const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+
+    if (imgHeightMm <= pageHeight - margin * 2) {
+      doc.addImage(imgData, 'PNG', margin, margin, imgWidthMm, imgHeightMm);
+    } else {
+      // Slice the tall image across multiple pages.
+      const pageContentHeightPx = ((pageHeight - margin * 2) * canvas.width) / imgWidthMm;
+      let renderedPx = 0;
+      let first = true;
+      while (renderedPx < canvas.height) {
+        const sliceHeightPx = Math.min(pageContentHeightPx, canvas.height - renderedPx);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHeightPx;
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, renderedPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+        const sliceData = sliceCanvas.toDataURL('image/png');
+        const sliceHeightMm = (sliceHeightPx * imgWidthMm) / canvas.width;
+        if (!first) doc.addPage();
+        doc.addImage(sliceData, 'PNG', margin, margin, imgWidthMm, sliceHeightMm);
+        renderedPx += sliceHeightPx;
+        first = false;
+      }
+    }
+
     doc.save(title.replace(/\s+/g,'_') + '.pdf');
     alert(t.exportSuccess(data.rows.length));
   } catch (e) {
