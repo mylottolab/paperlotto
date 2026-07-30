@@ -408,6 +408,27 @@ const GAME_FULL = {
   jp_miniloto:'Mini Loto', jp_loto7:'Loto 7', jp_loto6:'Loto 6', ca_lottomax:'Lotto Max',
   ca_lotto649:'Lotto 6/49', au_powerball:'AU Powerball', au_ozlotto:'Oz Lotto', au_tattslotto:'Saturday Lotto (Tatts Lotto)',
 };
+// 아직 draw_results에 실제 추첨 결과가 없는(미래) 회차의 추첨일을 추정하기 위한 게임별 정기 추첨 스케줄
+const GAME_SCHEDULE = {
+  kr_lotto645:     { drawDays:[6],   h:20, min:35, tz:'Asia/Seoul' },
+  us_powerball:    { drawDays:[1,3,6], h:22, min:59, tz:'America/New_York' },
+  us_megamillions: { drawDays:[2,5], h:23, min:0,  tz:'America/New_York' },
+  eu_euromillions: { drawDays:[2,5], h:21, min:0,  tz:'Europe/Paris' },
+  jp_loto6:        { drawDays:[1,4], h:18, min:30, tz:'Asia/Tokyo' },
+  jp_loto7:        { drawDays:[5],   h:18, min:45, tz:'Asia/Tokyo' },
+  jp_miniloto:     { drawDays:[2],   h:18, min:45, tz:'Asia/Tokyo' },
+  ca_lotto649:     { drawDays:[3,6], h:22, min:30, tz:'America/Toronto' },
+  ca_lottomax:     { drawDays:[2,5], h:22, min:30, tz:'America/Toronto' },
+  au_powerball:    { drawDays:[4],   h:20, min:30, tz:'Australia/Sydney' },
+  au_ozlotto:      { drawDays:[2],   h:20, min:30, tz:'Australia/Sydney' },
+  au_tattslotto:   { drawDays:[6],   h:20, min:30, tz:'Australia/Sydney' },
+};
+// draw_results에 없는(아직 안 뽑힌) 회차의 예상 추첨일 계산 — 하단 티커의 tkNextDrawDate()를 재사용
+function estimateNextDrawDate(gameId){
+  const s = GAME_SCHEDULE[gameId];
+  if (!s) return null;
+  return tkNextDrawDate(s.drawDays, s.h, s.min, s.tz);
+}
 
 let allEntries = [];
 let accessToken = null;
@@ -432,7 +453,7 @@ function renderListHeader(){
     '<span class="lh-col lh-round" data-sort="round_no">' + t.colRound + arrow('round_no') + '</span>' +
     '<span class="lh-numbers">' + t.colNumbers + '</span>' +
     '<span class="lh-col lh-memo" data-sort="memo">' + t.colMemo + arrow('memo') + '</span>' +
-    '<span class="lh-col lh-drawn" data-sort="draw_date">' + t.colDrawn + arrow('draw_date') + '</span>' +
+    '<span class="lh-col lh-drawn" data-sort="draw_date_display">' + t.colDrawn + arrow('draw_date_display') + '</span>' +
     '<span class="lh-col lh-grade" data-sort="grade">' + t.colGrade + arrow('grade') + '</span>';
   header.querySelectorAll('[data-sort]').forEach((el) => {
     el.addEventListener('click', () => {
@@ -502,7 +523,17 @@ async function loadDrawDates(){
       data.forEach((d) => { drawDateMap[gameId + '_' + d.round_no] = d.draw_date; });
     }
   }));
-  allEntries.forEach((e) => { e.draw_date = drawDateMap[e.game_id + '_' + e.round_no] || null; });
+  allEntries.forEach((e) => {
+    e.draw_date = drawDateMap[e.game_id + '_' + e.round_no] || null;
+    if (e.draw_date) {
+      e.draw_date_display = e.draw_date;
+      e.draw_date_is_estimate = false;
+    } else {
+      const estimated = estimateNextDrawDate(e.game_id);
+      e.draw_date_display = estimated ? estimated.toISOString() : null;
+      e.draw_date_is_estimate = !!estimated;
+    }
+  });
 }
 
 function populateFilters(){
@@ -570,7 +601,7 @@ function renderList(){
       ? '<button class="grade-btn" data-id="' + e.id + '">' + t.gradeBtn + '</button>'
       : '';
     const isDrawn = !!e.draw_date && new Date(e.draw_date) <= new Date();
-    const drawnHtml = !e.draw_date
+    const drawnHtml = !e.draw_date_display
       ? '<span class="entry-drawn">' + t.drawnUnknown + '</span>'
       : '<span class="entry-drawn ' + (isDrawn ? 'is-yes' : 'is-no') + '">' + (isDrawn ? t.drawnYes : t.drawnNo) + '</span>';
     const memoText = e.memo ? String(e.memo) : '-';
@@ -578,7 +609,7 @@ function renderList(){
       '<input type="checkbox" class="entry-check" data-id="' + e.id + '">' +
       '<div class="entry-date mono">' + fmtShortDate(e.created_at) + '</div>' +
       '<div class="entry-game">' + (GAME_LABELS[e.game_id] || e.game_id) + '</div>' +
-      '<div class="entry-round mono">#' + e.round_no + '<br><span class="rd-draw">' + (fmtShortDate(e.draw_date) || '-') + '</span></div>' +
+      '<div class="entry-round mono">#' + e.round_no + '<br><span class="rd-draw">' + (e.draw_date_display ? (e.draw_date_is_estimate ? '~' : '') + fmtShortDate(e.draw_date_display) : '-') + '</span></div>' +
       '<div class="entry-numbers">' + mainPips + bonusPips + goldBallHtml + '</div>' +
       '<div class="entry-memo" title="' + memoText.replace(/"/g,'&quot;') + '">' + memoText + '</div>' +
       drawnHtml +
