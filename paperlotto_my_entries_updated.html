@@ -168,6 +168,7 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
 .grade-win{ background:rgba(31,122,79,0.14); color:var(--ok); }
 .grade-lose{ background:rgba(28,33,48,0.08); color:var(--ink-dim); }
 .grade-pending{ background:rgba(184,134,46,0.14); color:#8a5b1c; }
+.grade-upcoming{ background:none; color:var(--ink-dim); padding:4px 4px; font-weight:400; }
 .entry-action{ flex-shrink:0; }
 .grade-btn{
   font-size:11px; font-weight:600; padding:6px 10px; border-radius:6px;
@@ -421,7 +422,7 @@ const GAME_SCHEDULE = {
   kr_lotto645:     { drawDays:[6],   h:20, min:35, tz:'Asia/Seoul' },
   us_powerball:    { drawDays:[1,3,6], h:22, min:59, tz:'America/New_York' },
   us_megamillions: { drawDays:[2,5], h:23, min:0,  tz:'America/New_York' },
-  eu_euromillions: { drawDays:[2,5], h:21, min:0,  tz:'Europe/Paris' },
+  eu_euromillions: { drawDays:[2,5], h:20, min:45,  tz:'Europe/Paris' },
   jp_loto6:        { drawDays:[1,4], h:18, min:30, tz:'Asia/Tokyo' },
   jp_loto7:        { drawDays:[5],   h:18, min:45, tz:'Asia/Tokyo' },
   jp_miniloto:     { drawDays:[2],   h:18, min:45, tz:'Asia/Tokyo' },
@@ -614,18 +615,24 @@ function renderList(){
           '<span class="goldball-tooltip">' + t.goldBallTooltip + '</span>' +
         '</span>'
       : '';
+    const isDrawn = !!e.draw_date && new Date(e.draw_date) <= new Date();
     let gradeHtml;
     if (e.grade === null || e.grade === undefined) {
-      gradeHtml = '<span class="entry-grade grade-pending">' + t.gradeWait + '</span>';
+      // 아직 추첨 자체가 안 된 회차는 '추첨예정'(드로우 칸)으로 이미 표시되므로,
+      // 등수 칸에 의미가 같은 '채점대기'를 중복으로 넣지 않고 대시로 통일한다.
+      // 실제로 추첨은 됐는데(운영자가 당첨번호를 아직 못 넣어서) 채점만 안 된 경우에만 '채점대기'를 보여준다.
+      gradeHtml = isDrawn
+        ? '<span class="entry-grade grade-pending">' + t.gradeWait + '</span>'
+        : '<span class="entry-grade grade-upcoming">-</span>';
     } else if (e.grade === 0) {
       gradeHtml = '<span class="entry-grade grade-lose">' + t.gradeLose + '</span>';
     } else {
       gradeHtml = '<span class="entry-grade grade-win">' + t.gradeTier(e.grade) + '</span>';
     }
-    const actionHtml = (e.grade === null || e.grade === undefined)
+    // 채점 확인 버튼도 마찬가지로, 실제 추첨이 끝나 채점 가능한 상태(=isDrawn)일 때만 노출한다.
+    const actionHtml = (e.grade === null || e.grade === undefined) && isDrawn
       ? '<button class="grade-btn" data-id="' + e.id + '">' + t.gradeBtn + '</button>'
       : '';
-    const isDrawn = !!e.draw_date && new Date(e.draw_date) <= new Date();
     const drawnHtml = !e.draw_date_str
       ? '<span class="entry-drawn">' + t.drawnUnknown + '</span>'
       : '<span class="entry-drawn ' + (isDrawn ? 'is-yes' : 'is-no') + '">' + (isDrawn ? t.drawnYes : t.drawnNo) + '</span>';
@@ -972,7 +979,7 @@ async function moveToCollection(collectionId){
 const TICKER_GAMES = [
   { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
   { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
-  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:21, drawMinute:0, tz:'Europe/Paris' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:20, drawMinute:45, tz:'Europe/Paris' },
   { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
