@@ -105,7 +105,7 @@ select, input[type="text"], input[type="number"]{
 .list-header .lh-col:hover{ color:var(--gold-bright); }
 .list-header .lh-game{ width:70px; flex-shrink:0; }
 .list-header .lh-round{ width:76px; flex-shrink:0; }
-.list-header .lh-numbers{ min-width:120px; }
+.list-header .lh-numbers{ width:210px; flex-shrink:0; }
 .list-header .lh-grade{ width:44px; flex-shrink:0; text-align:center; }
 .list-header .lh-memo{ flex:1; min-width:100px; }
 .list-header .lh-actions{ width:70px; flex-shrink:0; }
@@ -119,7 +119,7 @@ select, input[type="text"], input[type="number"]{
 .wl-game{ font-size:11px; font-weight:700; color:var(--ink-dim); width:70px; flex-shrink:0; }
 .wl-round{ font-size:11px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; width:76px; flex-shrink:0; line-height:1.5; }
 .wl-round .rd-draw{ font-size:10px; color:var(--ink-dim); opacity:0.75; }
-.wl-numbers{ display:flex; gap:4px; flex-wrap:wrap; min-width:120px; }
+.wl-numbers{ display:flex; gap:4px; flex-wrap:wrap; width:210px; flex-shrink:0; }
 .pip{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; background:rgba(28,33,48,0.07); color:var(--ink-dim); flex-shrink:0; }
 .pip.bonus{ background:var(--gold); color:var(--ink); }
 .wl-grade{ font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:12px; white-space:nowrap; flex-shrink:0; width:44px; text-align:center; }
@@ -194,12 +194,13 @@ select, input[type="text"], input[type="number"]{
   .tb-btn{ flex:1 1 auto; font-size:11.5px; padding:9px 10px; }
   .wl-row{ gap:8px; }
   .wl-game, .wl-round{ width:auto; }
+  .wl-numbers{ width:auto; min-width:90px; }
   .wl-memo{ flex:1 1 100%; order:5; }
   .wl-grade{ width:auto; }
   .pip{ width:22px; height:22px; font-size:10px; }
   .list-header{ font-size:9.5px; padding:8px 10px; gap:6px; flex-wrap:wrap; row-gap:4px; }
   .list-header .lh-game, .list-header .lh-round{ width:auto; }
-  .list-header .lh-numbers{ min-width:90px; }
+  .list-header .lh-numbers{ width:auto; min-width:90px; }
   .list-header .lh-grade{ width:auto; }
   .list-header .lh-memo{ flex:1 1 100%; order:5; min-width:0; }
   .list-header .lh-actions{ width:auto; }
