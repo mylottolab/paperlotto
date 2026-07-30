@@ -30,8 +30,30 @@ h1,h2{ font-family:'Fraunces',serif; margin:0; }
 a{ color:inherit; text-decoration:none; }
 .mono{ font-family:'IBM Plex Mono',monospace; }
 
+.site-sticky-top{ position:sticky; top:0; z-index:20; }
+.ticker-wrap{
+  position:relative; z-index:2; border-bottom:1px solid var(--board-line);
+  background:var(--board-2); overflow:hidden; padding:9px 0;
+}
+.ticker-label{
+  position:absolute; left:0; top:0; bottom:0; z-index:2;
+  display:flex; align-items:center; gap:8px; padding:0 16px 0 32px;
+  background:linear-gradient(90deg, var(--board-2) 60%, transparent);
+}
+.ticker-label .dot{ width:7px; height:7px; border-radius:50%; background:#e3574a; animation:tpulse 1.6s ease-in-out infinite; }
+@keyframes tpulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+.ticker-label span{ font-size:11px; letter-spacing:1.4px; color:var(--text-dim); font-weight:600; }
+.ticker-track{ display:flex; gap:0; width:max-content; animation:tickerScroll 52s linear infinite; padding-left:190px; }
+@keyframes tickerScroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.ticker-item{ display:flex; align-items:baseline; gap:9px; padding:0 26px; border-right:1px solid var(--board-line); white-space:nowrap; font-size:13px; }
+.ticker-item .flag{ width:8px; height:8px; border-radius:2px; }
+.ticker-item .name{ color:var(--text-mid); }
+.ticker-item .odds{ color:var(--text-dim); font-size:11.5px; }
+.ticker-item .cd{ color:var(--gold-bright); font-weight:600; letter-spacing:0.3px; }
+@media (prefers-reduced-motion: reduce){ .ticker-track{ animation:none; } }
+
 header{
-  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between;
   padding:18px 32px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
   background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
 }
@@ -86,6 +108,9 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
   .header-right{ width:100%; align-items:flex-end; }
   nav{ width:100%; justify-content:space-between; gap:6px; font-size:11px; flex-wrap:wrap; }
   .lang-toggle button{ padding:5px 9px; font-size:11px; }
+  .ticker-label{ padding:0 10px 0 16px; }
+  .ticker-label span{ font-size:10px; }
+  .ticker-item{ padding:0 16px; font-size:11.5px; }
   .list-header{ display:none; } /* 모바일에서는 행 자체가 wrap되어 헤더 정렬 UI가 어색해서 숨김 (정렬 기능 자체는 그대로 동작) */
 }
 .entry-row{
@@ -185,6 +210,7 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
 </head>
 <body>
 
+<div class="site-sticky-top">
 <header>
   <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
@@ -197,10 +223,19 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
       <button data-lang="ja" type="button">JA</button>
     </div>
     <nav>
-    <a href="paperlotto_hub_mockup.html" data-i18n="navBack">← 전체 게임</a>
+    <a href="index.html#board" data-i18n="navBack">전체 게임</a>
+    <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
+    <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지사항</a>
     <div id="authWidget"></div></nav>
   </div>
 </header>
+
+<!-- 신호 티커: 12개 게임 다음 추첨까지 남은 시간이 실시간으로 흐름 -->
+<div class="ticker-wrap">
+  <div class="ticker-label"><span class="dot"></span><span data-i18n="liveBoard">LIVE BOARD</span></div>
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+</div>
 
 <main>
   <div class="page-title" data-i18n="pageTitle">내 등록내역</div>
@@ -245,7 +280,8 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
 <script>
 const i18n = {
   ko: {
-    navBack:"← 전체 게임", pageTitle:"내 등록내역",
+    navBack:"전체 게임", pageTitle:"내 등록내역",
+    navGuide:"전략 가이드", navNotice:"공지사항", liveBoard:"LIVE BOARD",
     badgeTotal:"전체 등록", badgeGraded:"채점 완료", badgePending:"채점 대기", badgeWin:"당첨(1~5등)",
     filterAllGames:"전체 게임", filterAllYears:"전체 연도",
     bulkGrade:"전체 채점하기", exportExcel:"엑셀 다운로드 (100P)", exportPdf:"PDF 생성 (100P)",
@@ -267,7 +303,8 @@ const i18n = {
     phCollName:"예: 미국 게임용",
   },
   en: {
-    navBack:"← All Games", pageTitle:"My Entries",
+    navBack:"All Games", pageTitle:"My Entries",
+    navGuide:"Strategy Guide", navNotice:"Notices", liveBoard:"LIVE BOARD",
     badgeTotal:"Total Entries", badgeGraded:"Graded", badgePending:"Pending", badgeWin:"Winners (Tier 1–5)",
     filterAllGames:"All Games", filterAllYears:"All Years",
     bulkGrade:"Grade All", exportExcel:"Download Excel (100P)", exportPdf:"Generate PDF (100P)",
@@ -289,7 +326,8 @@ const i18n = {
     phCollName:"e.g. US games",
   },
   ja: {
-    navBack:"← すべてのゲーム", pageTitle:"登録した番号",
+    navBack:"すべてのゲーム", pageTitle:"登録した番号",
+    navGuide:"ストラテジーガイド", navNotice:"お知らせ", liveBoard:"LIVE BOARD",
     badgeTotal:"登録合計", badgeGraded:"採点済み", badgePending:"採点待ち", badgeWin:"当選(1〜5等)",
     filterAllGames:"すべてのゲーム", filterAllYears:"すべての年",
     bulkGrade:"一括採点", exportExcel:"エクセルダウンロード (100P)", exportPdf:"PDF生成 (100P)",
@@ -325,6 +363,7 @@ function applyLang(lang){
   document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
   renderListHeader();
   renderList();
+  if (typeof renderTicker === 'function') renderTicker();
 }
 document.querySelectorAll('.lang-toggle button').forEach(function(btn){ btn.addEventListener('click', function(){ applyLang(btn.dataset.lang); }); });
 
@@ -804,6 +843,75 @@ async function moveToCollection(collectionId){
     alert(e.message);
   }
 }
+
+// ─── 상단 LIVE 티커 (헤더 고정용, 페이지 자체 GAMES와는 별개의 독립 데이터) ───
+const TICKER_GAMES = [
+  { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
+  { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:21, drawMinute:0, tz:'Europe/Paris' },
+  { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'ca_lottomax', accent:'ca', nameKo:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', odds:'33,446,140', days:[2,5], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'ca_lotto649', accent:'ca', nameKo:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', odds:'13,983,816', days:[3,6], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'au_powerball', accent:'au', nameKo:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', odds:'134,490,400', days:[4], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_ozlotto', accent:'au', nameKo:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', odds:'62,891,499', days:[2], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_tattslotto', accent:'au', nameKo:'새터데이로또', nameEn:'Saturday Lotto', nameJa:'サタデーロト', odds:'8,145,060', days:[6], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'kr_lotto645', accent:'kr', nameKo:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', odds:'8,145,060', days:[6], drawHour:20, drawMinute:45, tz:'Asia/Seoul' },
+];
+const TICKER_WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+function tkZonedTimeToUtc(dateStr, hour, minute, timeZone){
+  const naiveUtc = new Date(`${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);
+  const tzDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone }));
+  const utcDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const offset = utcDate.getTime() - tzDate.getTime();
+  return new Date(naiveUtc.getTime() + offset);
+}
+function tkNextDrawDate(days, hour, minute, timeZone){
+  const now = new Date();
+  let best = null;
+  for (let addDays = 0; addDays < 8; addDays++){
+    const candidate = new Date(now.getTime() + addDays * 86400000);
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(candidate);
+    const wd = TICKER_WEEKDAY_NUM[wdName];
+    if (!days.includes(wd)) continue;
+    const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone }).format(candidate);
+    const drawUtc = tkZonedTimeToUtc(dateStr, hour, minute, timeZone);
+    if (drawUtc > now && (!best || drawUtc < best)) best = drawUtc;
+  }
+  return best;
+}
+function tkFmtCountdown(target){
+  const dayLabel = currentLang === 'ko' ? '일' : currentLang === 'ja' ? '日' : 'd';
+  const hourLabel = currentLang === 'ko' ? '시간' : currentLang === 'ja' ? '時間' : 'h';
+  const diff = Math.max(0, target - new Date());
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return d > 0 ? `${d}${dayLabel} ${h}${hourLabel}` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+TICKER_GAMES.forEach(g => { g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz); });
+function renderTicker(){
+  const nameKey = currentLang === 'ko' ? 'nameKo' : currentLang === 'ja' ? 'nameJa' : 'nameEn';
+  const items = TICKER_GAMES.map(g => `
+    <div class="ticker-item">
+      <span class="flag" style="background:var(--${g.accent})"></span>
+      <span class="name">${g[nameKey] || g.nameEn}</span>
+      <span class="odds mono">1/${g.odds}</span>
+      <span class="cd mono" data-tcd="${g.id}">${tkFmtCountdown(g.next)}</span>
+    </div>`).join('');
+  const track = document.getElementById('tickerTrack');
+  if (track) track.innerHTML = items + items;
+}
+setInterval(() => {
+  document.querySelectorAll('[data-tcd]').forEach(el => {
+    const g = TICKER_GAMES.find(x => x.id === el.dataset.tcd);
+    if (!g) return;
+    if (new Date() >= g.next) g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz);
+    el.textContent = tkFmtCountdown(g.next);
+  });
+}, 1000);
 
 applyLang(currentLang);
 loadEntries();
