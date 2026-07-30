@@ -661,6 +661,16 @@ async function dlLoadMeta(){
   }
 }
 
+function dlFormatRound(raw){
+  if (!raw) return '-';
+  const m = String(raw).match(/(\d+)/);
+  if (!m) return raw; // 숫자를 못 찾으면 원본 그대로 표시
+  const n = m[1];
+  if (currentLang === 'ko') return '제' + n + '회';
+  if (currentLang === 'ja') return '第' + n + '回';
+  return 'Round ' + n;
+}
+
 function renderDlCard(){
   if (!dlItem) return;
   const t = DL_LABELS[currentLang] || DL_LABELS.en;
@@ -670,7 +680,7 @@ function renderDlCard(){
   const dateRange = (dlItem.date_start && dlItem.date_end) ? (dlItem.date_start + ' ~ ' + dlItem.date_end) : '';
   info.innerHTML =
     '<div class="dl-title">📄 ' + t.title + '</div>' +
-    '<div class="dl-range">' + (dlItem.range_start || '-') + ' ~ ' + (dlItem.range_end || '-') + '</div>' +
+    '<div class="dl-range">' + dlFormatRound(dlItem.range_start) + ' ~ ' + dlFormatRound(dlItem.range_end) + '</div>' +
     (dateRange ? '<div class="dl-date-range">' + dateRange + '</div>' : '') +
     '<div class="dl-count">' + t.count(Number(dlItem.count)) + '</div>';
   btn.textContent = isFree ? t.btnFree : t.btnPaid;
