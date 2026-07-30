@@ -58,6 +58,10 @@ header{
 .brand-name{ font-size:17px; font-weight:600; }
 .brand-name em{ font-style:normal; color:var(--gold-bright); }
 nav{ display:flex; align-items:center; gap:18px; font-size:13.5px; color:var(--text-mid); flex-wrap:wrap; }
+.header-right{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 14px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:var(--ink); }
 
 main{ max-width:920px; margin:0 auto; padding:40px 24px 90px; }
 .page-title{ font-size:24px; margin-bottom:6px; }
@@ -90,6 +94,9 @@ main{ max-width:920px; margin:0 auto; padding:40px 24px 90px; }
 
 @media (max-width:480px){
   header{ padding:14px 16px; }
+  .header-right{ width:100%; align-items:flex-end; }
+  .lang-toggle button{ padding:5px 9px; font-size:11px; }
+  nav{ font-size:12px; gap:10px; }
   .ticker-label{ padding:0 10px 0 16px; }
   .ticker-label span{ font-size:10px; }
   .ticker-item{ padding:0 16px; font-size:11.5px; }
@@ -107,37 +114,42 @@ main{ max-width:920px; margin:0 auto; padding:40px 24px 90px; }
     <div class="brand-mark">P</div>
     <div class="brand-name">Paper<em>Lotto</em></div>
   </a>
-  <nav>
-    <a href="paperlotto_hub_mockup.html">전체 게임</a>
-    <a href="paperlotto_my_entries_updated.html">내 등록번호</a>
-    <a href="paperlotto_guide_mockup.html">전략 가이드</a>
-    <a href="paperlotto_board_notice.html">공지사항</a>
-    <a href="paperlotto_board_guide.html">사용설명</a>
-    <div id="authWidget"></div>
-  </nav>
+  <div class="header-right">
+    <div class="lang-toggle">
+      <button data-lang="ko" class="active" type="button">KR</button>
+      <button data-lang="en" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+    <nav>
+      <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
+      <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
+      <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
+      <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지사항</a>
+      <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용설명</a>
+      <div id="authWidget"></div>
+    </nav>
+  </div>
 </header>
 
 <!-- 신호 티커: 12개 게임 다음 추첨까지 남은 시간이 실시간으로 흐름 -->
 <div class="ticker-wrap">
-  <div class="ticker-label"><span class="dot"></span><span>LIVE BOARD</span></div>
+  <div class="ticker-label"><span class="dot"></span><span data-i18n="liveBoard">LIVE BOARD</span></div>
   <div class="ticker-track" id="tickerTrack"></div>
 </div>
 </div>
 
 <main>
-  <h1 class="page-title">📄 역대 당첨번호 다운로드</h1>
-  <p class="page-desc">12개국 복권의 역대 당첨번호 전체를 CSV 파일로 다운로드합니다. 다운로드 1회당 2,500P가 차감되며, 같은 게임을 24시간 이내에 다시 다운로드하면 무료입니다.</p>
+  <h1 class="page-title" data-i18n="pageTitle">📄 역대 당첨번호 다운로드</h1>
+  <p class="page-desc" data-i18n="pageDesc">12개국 복권의 역대 당첨번호 전체를 CSV 파일로 다운로드합니다. 다운로드 1회당 2,500P가 차감되며, 같은 게임을 24시간 이내에 다시 다운로드하면 무료입니다.</p>
 
   <div class="balance-panel">
-    <div><div class="balance-label">현재 보유 포인트</div><div class="balance-num" id="balanceNum">–</div></div>
+    <div><div class="balance-label" data-i18n="balanceLabel">현재 보유 포인트</div><div class="balance-num" id="balanceNum">–</div></div>
   </div>
 
-  <div id="loginNotice" class="login-notice" style="display:none;">
-    다운로드하려면 먼저 <a href="paperlotto_login_mockup.html">로그인</a>이 필요합니다.
-  </div>
+  <div id="loginNotice" class="login-notice" style="display:none;"></div>
 
   <div class="grid" id="grid">
-    <div class="empty-state">불러오는 중…</div>
+    <div class="empty-state" data-i18n="loading">불러오는 중…</div>
   </div>
 </main>
 
@@ -154,19 +166,92 @@ let accessToken = null;
 // game_id → 표시용 국기/이름. DB의 실제 game_id 값에 맞춰 필요시 추가/수정하세요.
 // (여기 없는 game_id가 와도 화면에는 정상적으로 뜨고, 국기 없이 game_id 그대로 표시됩니다.)
 const DISPLAY = {
-  kr_lotto645:     { flag:'🇰🇷', name:'한국 로또 6/45' },
-  us_powerball:    { flag:'🇺🇸', name:'파워볼' },
-  us_megamillions: { flag:'🇺🇸', name:'메가밀리언스' },
-  jp_loto6:        { flag:'🇯🇵', name:'일본 로또6' },
-  jp_loto7:        { flag:'🇯🇵', name:'일본 로또7' },
-  jp_miniloto:     { flag:'🇯🇵', name:'일본 미니로또' },
-  ca_lotto649:     { flag:'🇨🇦', name:'캐나다 로또 6/49' },
-  ca_lottomax:     { flag:'🇨🇦', name:'캐나다 로또맥스' },
-  au_powerball:    { flag:'🇦🇺', name:'호주 파워볼' },
-  au_ozlotto:      { flag:'🇦🇺', name:'호주 오즈로또' },
-  au_tattslotto:   { flag:'🇦🇺', name:'새터데이로또 (Tatts Lotto)' },
-  eu_euromillions: { flag:'🇪🇺', name:'유로밀리언스' },
+  kr_lotto645:     { flag:'🇰🇷', nameKo:'한국 로또 6/45', nameEn:'Korea Lotto 6/45', nameJa:'韓国ロト6/45' },
+  us_powerball:    { flag:'🇺🇸', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール' },
+  us_megamillions: { flag:'🇺🇸', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ' },
+  jp_loto6:        { flag:'🇯🇵', nameKo:'일본 로또6', nameEn:'Japan Loto 6', nameJa:'ロト6' },
+  jp_loto7:        { flag:'🇯🇵', nameKo:'일본 로또7', nameEn:'Japan Loto 7', nameJa:'ロト7' },
+  jp_miniloto:     { flag:'🇯🇵', nameKo:'일본 미니로또', nameEn:'Japan Mini Loto', nameJa:'ミニロト' },
+  ca_lotto649:     { flag:'🇨🇦', nameKo:'캐나다 로또 6/49', nameEn:'Canada Lotto 6/49', nameJa:'カナダロト6/49' },
+  ca_lottomax:     { flag:'🇨🇦', nameKo:'캐나다 로또맥스', nameEn:'Canada Lotto Max', nameJa:'ロトマックス' },
+  au_powerball:    { flag:'🇦🇺', nameKo:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール' },
+  au_ozlotto:      { flag:'🇦🇺', nameKo:'호주 오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト' },
+  au_tattslotto:   { flag:'🇦🇺', nameKo:'새터데이로또 (Tatts Lotto)', nameEn:'Saturday Lotto (Tatts Lotto)', nameJa:'サタデーロト' },
+  eu_euromillions: { flag:'🇪🇺', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ' },
 };
+function displayName(gameId){
+  const d = DISPLAY[gameId];
+  if (!d) return { flag:'🎟️', name:gameId };
+  const key = currentLang === 'ko' ? 'nameKo' : currentLang === 'ja' ? 'nameJa' : 'nameEn';
+  return { flag:d.flag, name:d[key] || d.nameEn };
+}
+
+// ─── 다국어 텍스트 ───
+const i18n = {
+  ko: {
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드", navNotice:"공지사항", navBoardGuide:"사용설명", liveBoard:"LIVE BOARD",
+    pageTitle:"📄 역대 당첨번호 다운로드",
+    pageDesc:"12개국 복권의 역대 당첨번호 전체를 CSV 파일로 다운로드합니다. 다운로드 1회당 2,500P가 차감되며, 같은 게임을 24시간 이내에 다시 다운로드하면 무료입니다.",
+    balanceLabel:"현재 보유 포인트",
+    loginNotice:'다운로드하려면 먼저 <a href="paperlotto_login_mockup.html">로그인</a>이 필요합니다.',
+    loading:"불러오는 중…", noData:"표시할 데이터가 없습니다.", loadError:"불러오는 중 오류가 발생했습니다.",
+    freeBadge:"무료 재다운로드", btnFree:"⬇ 무료로 다시 다운로드", btnPaid:"⬇ 다운로드 (2,500P)",
+    countUnit:(n)=> n.toLocaleString() + "개 회차 데이터",
+    confirmFree:(name)=> name + " 파일을 24시간 이내 무료로 다시 다운로드합니다.",
+    confirmPaid:(name)=> name + " 역대 당첨번호 파일을 2,500포인트로 다운로드하시겠습니까?",
+    insufficientPoints:"포인트가 부족합니다.", downloadFailed:"다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.",
+    downloadError:"다운로드 중 오류가 발생했습니다.",
+  },
+  en: {
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navNotice:"Notices", navBoardGuide:"How It Works", liveBoard:"LIVE BOARD",
+    pageTitle:"📄 Historical Winning Numbers Download",
+    pageDesc:"Download the full winning-number history for all 12 lotteries as CSV files. Each download costs 2,500P, and re-downloading the same game within 24 hours is free.",
+    balanceLabel:"Current Points Balance",
+    loginNotice:'You need to <a href="paperlotto_login_mockup.html">log in</a> first to download.',
+    loading:"Loading…", noData:"No data to display.", loadError:"An error occurred while loading.",
+    freeBadge:"Free re-download", btnFree:"⬇ Re-download for free", btnPaid:"⬇ Download (2,500P)",
+    countUnit:(n)=> n.toLocaleString() + " draws of data",
+    confirmFree:(name)=> "Re-download the " + name + " file for free (within 24 hours).",
+    confirmPaid:(name)=> "Download the full winning-number history for " + name + " for 2,500 points?",
+    insufficientPoints:"Not enough points.", downloadFailed:"Download failed. Please try again later.",
+    downloadError:"An error occurred during download.",
+  },
+  ja: {
+    navGames:"すべてのゲーム", navMyEntries:"マイ登録番号", navGuide:"戦略ガイド", navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
+    pageTitle:"📄 歴代当選番号ダウンロード",
+    pageDesc:"12か国の宝くじの歴代当選番号全てをCSVファイルでダウンロードします。ダウンロード1回につき2,500Pが差し引かれ、同じゲームを24時間以内に再ダウンロードすると無料です。",
+    balanceLabel:"現在の保有ポイント",
+    loginNotice:'ダウンロードするには先に<a href="paperlotto_login_mockup.html">ログイン</a>が必要です。',
+    loading:"読み込み中…", noData:"表示するデータがありません。", loadError:"読み込み中にエラーが発生しました。",
+    freeBadge:"無料再ダウンロード", btnFree:"⬇ 無料で再ダウンロード", btnPaid:"⬇ ダウンロード (2,500P)",
+    countUnit:(n)=> n.toLocaleString() + "回分のデータ",
+    confirmFree:(name)=> name + "のファイルを24時間以内は無料で再ダウンロードします。",
+    confirmPaid:(name)=> name + "の歴代当選番号ファイルを2,500ポイントでダウンロードしますか？",
+    insufficientPoints:"ポイントが不足しています。", downloadFailed:"ダウンロードに失敗しました。しばらくしてから再度お試しください。",
+    downloadError:"ダウンロード中にエラーが発生しました。",
+  },
+};
+let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
+
+function applyLang(lang){
+  currentLang = i18n[lang] ? lang : 'ko';
+  localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang; // auth-widget.js가 언어 변경을 감지하도록
+  const t = i18n[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (typeof t[key] === 'string') el.innerHTML = t[key];
+  });
+  document.getElementById('loginNotice').innerHTML = t.loginNotice;
+  document.querySelectorAll('.lang-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === currentLang);
+  });
+  loadGrid();
+  if (typeof renderTicker === 'function') renderTicker();
+}
+document.querySelectorAll('.lang-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+});
 
 async function refreshBalance(){
   const { data: { session } } = await sb.auth.getSession();
@@ -190,25 +275,27 @@ async function refreshBalance(){
 
 async function loadGrid(){
   const grid = document.getElementById('grid');
+  const t = i18n[currentLang];
   try {
     const headers = { 'Authorization': 'Bearer ' + (accessToken || SUPABASE_PUBLISHABLE_KEY) }; // 로그인 안 했어도 게이트웨이 인증 통과하도록 anon key로 대체
     const resp = await fetch(META_URL, { headers });
     const data = await resp.json();
     if (!resp.ok || !data.items || data.items.length === 0) {
-      grid.innerHTML = '<div class="empty-state">표시할 데이터가 없습니다.</div>';
+      grid.innerHTML = '<div class="empty-state">' + t.noData + '</div>';
       return;
     }
     grid.innerHTML = data.items.map(renderCard).join('');
   } catch (e) {
-    grid.innerHTML = '<div class="empty-state">불러오는 중 오류가 발생했습니다.</div>';
+    grid.innerHTML = '<div class="empty-state">' + t.loadError + '</div>';
   }
 }
 
 function renderCard(item){
-  const disp = DISPLAY[item.game_id] || { flag:'🎟️', name:item.game_id };
+  const t = i18n[currentLang];
+  const disp = displayName(item.game_id);
   const isFree = item.freeRedownloadUntil && new Date(item.freeRedownloadUntil).getTime() > Date.now();
-  const badge = isFree ? '<div class="free-badge">무료 재다운로드</div>' : '';
-  const btnLabel = isFree ? '⬇ 무료로 다시 다운로드' : '⬇ 다운로드 (2,500P)';
+  const badge = isFree ? '<div class="free-badge">' + t.freeBadge + '</div>' : '';
+  const btnLabel = isFree ? t.btnFree : t.btnPaid;
   const dateRangeText = (item.date_start && item.date_end) ? (item.date_start + ' ~ ' + item.date_end) : '';
   return (
     '<div class="card">' +
@@ -216,18 +303,17 @@ function renderCard(item){
       '<div class="name"><span class="flag">' + disp.flag + '</span>' + disp.name + '</div>' +
       '<div class="range">' + (item.range_start || '-') + ' ~ ' + (item.range_end || '-') + '</div>' +
       (dateRangeText ? '<div class="date-range">' + dateRangeText + '</div>' : '') +
-      '<div class="count">' + Number(item.count).toLocaleString() + '개 회차 데이터</div>' +
+      '<div class="count">' + t.countUnit(Number(item.count)) + '</div>' +
       '<button class="dl-btn" onclick="downloadFile(\'' + item.game_id + '\',' + isFree + ')">' + btnLabel + '</button>' +
     '</div>'
   );
 }
 
 async function downloadFile(gameId, isFree){
+  const t = i18n[currentLang];
   if (!accessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
-  const disp = DISPLAY[gameId] || { name:gameId };
-  const msg = isFree
-    ? (disp.name + ' 파일을 24시간 이내 무료로 다시 다운로드합니다.')
-    : (disp.name + ' 역대 당첨번호 파일을 2,500포인트로 다운로드하시겠습니까?');
+  const disp = displayName(gameId);
+  const msg = isFree ? t.confirmFree(disp.name) : t.confirmPaid(disp.name);
   if (!confirm(msg)) return;
 
   try {
@@ -238,7 +324,7 @@ async function downloadFile(gameId, isFree){
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      alert(err.error === 'INSUFFICIENT_POINTS' ? '포인트가 부족합니다.' : '다운로드에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      alert(err.error === 'INSUFFICIENT_POINTS' ? t.insufficientPoints : t.downloadFailed);
       return;
     }
     const blob = await resp.blob();
@@ -251,17 +337,15 @@ async function downloadFile(gameId, isFree){
     await refreshBalance();
     await loadGrid();
   } catch (e) {
-    alert('다운로드 중 오류가 발생했습니다.');
+    alert(t.downloadError);
   }
 }
 
 // ─── 상단 LIVE 티커 (헤더 고정용, 페이지 자체 데이터와는 별개의 독립 데이터) ───
-// 이 페이지는 언어 전환 기능이 없어(한국어 전용) currentLang을 고정합니다.
-const currentLang = 'ko';
 const TICKER_GAMES = [
   { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
   { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
-  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:21, drawMinute:0, tz:'Europe/Paris' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:20, drawMinute:45, tz:'Europe/Paris' },
   { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
@@ -325,11 +409,10 @@ setInterval(() => {
     el.textContent = tkFmtCountdown(g.next);
   });
 }, 1000);
-renderTicker();
 
 (async function init(){
   await refreshBalance();
-  await loadGrid();
+  applyLang(currentLang);
 })();
 </script>
 
