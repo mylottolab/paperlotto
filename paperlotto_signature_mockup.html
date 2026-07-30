@@ -95,6 +95,21 @@ select, input[type="text"], input[type="number"]{
 .tb-btn:disabled{ opacity:0.4; cursor:not-allowed; }
 
 .list-wrap{ background:var(--paper); color:var(--ink); border-radius:14px; overflow:hidden; }
+.list-header{
+  display:flex; align-items:center; gap:12px; padding:10px 18px; background:var(--board-2);
+  border-radius:10px 10px 0 0; font-size:10.5px; font-weight:700; color:var(--text-hi); letter-spacing:0.03em;
+}
+.list-header .lh-check{ width:16px; flex-shrink:0; display:flex; align-items:center; }
+.list-header .lh-check input[type="checkbox"]{ width:15px; height:15px; cursor:pointer; }
+.list-header .lh-col{ cursor:pointer; user-select:none; display:flex; align-items:center; gap:3px; }
+.list-header .lh-col:hover{ color:var(--gold-bright); }
+.list-header .lh-game{ width:70px; flex-shrink:0; }
+.list-header .lh-round{ width:76px; flex-shrink:0; }
+.list-header .lh-numbers{ min-width:120px; }
+.list-header .lh-grade{ width:44px; flex-shrink:0; text-align:center; }
+.list-header .lh-memo{ flex:1; min-width:100px; }
+.list-header .lh-actions{ width:70px; flex-shrink:0; }
+.list-header .lh-arrow{ font-size:9px; opacity:0.85; color:var(--gold-bright); }
 .wl-row{
   display:flex; align-items:center; gap:12px; padding:14px 18px;
   border-bottom:1px solid rgba(28,33,48,0.08); flex-wrap:wrap;
@@ -102,10 +117,13 @@ select, input[type="text"], input[type="number"]{
 .wl-row:last-child{ border-bottom:none; }
 .wl-row input[type="checkbox"]{ width:16px; height:16px; flex-shrink:0; }
 .wl-game{ font-size:11px; font-weight:700; color:var(--ink-dim); width:70px; flex-shrink:0; }
-.wl-round{ font-size:11px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; width:60px; flex-shrink:0; }
+.wl-round{ font-size:11px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; width:76px; flex-shrink:0; line-height:1.5; }
+.wl-round .rd-draw{ font-size:10px; color:var(--ink-dim); opacity:0.75; }
 .wl-numbers{ display:flex; gap:4px; flex-wrap:wrap; min-width:120px; }
 .pip{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; background:rgba(28,33,48,0.07); color:var(--ink-dim); flex-shrink:0; }
 .pip.bonus{ background:var(--gold); color:var(--ink); }
+.wl-grade{ font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:12px; white-space:nowrap; flex-shrink:0; width:44px; text-align:center; }
+.wl-grade:not(:empty){ background:rgba(31,122,79,0.14); color:var(--ok); }
 .wl-memo{ flex:1; min-width:100px; font-size:12px; color:var(--ink-dim); font-style:italic; }
 .wl-actions{ display:flex; gap:6px; flex-shrink:0; }
 .icon-btn{
@@ -177,7 +195,14 @@ select, input[type="text"], input[type="number"]{
   .wl-row{ gap:8px; }
   .wl-game, .wl-round{ width:auto; }
   .wl-memo{ flex:1 1 100%; order:5; }
+  .wl-grade{ width:auto; }
   .pip{ width:22px; height:22px; font-size:10px; }
+  .list-header{ font-size:9.5px; padding:8px 10px; gap:6px; flex-wrap:wrap; row-gap:4px; }
+  .list-header .lh-game, .list-header .lh-round{ width:auto; }
+  .list-header .lh-numbers{ min-width:90px; }
+  .list-header .lh-grade{ width:auto; }
+  .list-header .lh-memo{ flex:1 1 100%; order:5; min-width:0; }
+  .list-header .lh-actions{ width:auto; }
 }
 </style>
 </head>
@@ -248,6 +273,7 @@ select, input[type="text"], input[type="number"]{
       <button class="tb-btn" id="deleteSelectedBtn" data-i18n="deleteSelected">선택 삭제</button>
     </div>
 
+    <div class="list-header" id="listHeader"></div>
     <div class="list-wrap" id="listWrap">
       <div class="loading-note" data-i18n="loading">불러오는 중…</div>
     </div>
@@ -311,7 +337,8 @@ const i18n = {
       return "포인트가 " + shortfall + "P 부족합니다. (보유 " + balance + "P)\n\n지금 포인트 충전 페이지로 이동할까요?";
     },
     phCollName:"예: 미국 게임용", phRound:"예: 1235", phMemo:"예: 생일 번호", phMain:"예: 3,7,15,22,29,41", phBonus:"예: 26",
-    colGame:"게임", colRound:"회차", colDrawDate:"추첨일", colMain:"메인번호", colBonus:"보너스번호", colMemo:"메모",
+    colGame:"게임", colRound:"회차/추첨일", colDrawDate:"추첨일", colMain:"메인번호", colBonus:"보너스번호", colMemo:"메모", colNumbers:"번호", colGrade:"등수",
+    gradeTier:function(n){ return n + "등"; },
   },
   en: {
     navEntries:"My Entries", pageTitle:"My Signature",
@@ -341,7 +368,8 @@ const i18n = {
       return "You're short " + shortfall + "P. (Balance: " + balance + "P)\n\nGo to the points recharge page now?";
     },
     phCollName:"e.g. US games", phRound:"e.g. 1235", phMemo:"e.g. Birthday numbers", phMain:"e.g. 3,7,15,22,29,41", phBonus:"e.g. 26",
-    colGame:"Game", colRound:"Round", colDrawDate:"Drawing date", colMain:"Main", colBonus:"Bonus", colMemo:"Memo",
+    colGame:"Game", colRound:"Round/Draw", colDrawDate:"Drawing date", colMain:"Main", colBonus:"Bonus", colMemo:"Memo", colNumbers:"Numbers", colGrade:"Grade",
+    gradeTier:function(n){ return "Tier " + n; },
   },
   ja: {
     navEntries:"登録した番号", pageTitle:"マイシグニチャー",
@@ -371,7 +399,8 @@ const i18n = {
       return "ポイントが" + shortfall + "P不足しています。（保有 " + balance + "P）\n\n今すぐポイント充電ページへ移動しますか？";
     },
     phCollName:"例: アメリカのゲーム用", phRound:"例: 1235", phMemo:"例: 誕生日の番号", phMain:"例: 3,7,15,22,29,41", phBonus:"例: 26",
-    colGame:"ゲーム", colRound:"回", colDrawDate:"抽選日", colMain:"メイン番号", colBonus:"ボーナス番号", colMemo:"メモ",
+    colGame:"ゲーム", colRound:"回/抽選日", colDrawDate:"抽選日", colMain:"メイン番号", colBonus:"ボーナス番号", colMemo:"メモ", colNumbers:"番号", colGrade:"等級",
+    gradeTier:function(n){ return n + "等"; },
   },
 };
 let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
@@ -392,6 +421,7 @@ function applyLang(lang){
   document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
   renderGameSelect();
   renderCollections();
+  renderListHeader();
   renderList();
   if (typeof renderTicker === 'function') renderTicker();
 }
@@ -419,20 +449,103 @@ const GAMES = [
   { id:'au_tattslotto', nameKo:'새터데이로또', nameEn:'Tatts Lotto', nameJa:'サタデーロト' },
 ];
 function nameKey(){ return currentLang === 'ko' ? 'nameKo' : currentLang === 'ja' ? 'nameJa' : 'nameEn'; }
+
+// 아직 draw_results에 실제 추첨 결과가 없는(미래) 회차의 추첨일을 추정하기 위한 게임별 정기 추첨 스케줄 (my_entries와 동일)
+const GAME_SCHEDULE = {
+  kr_lotto645:     { drawDays:[6],   h:20, min:35, tz:'Asia/Seoul' },
+  us_powerball:    { drawDays:[1,3,6], h:22, min:59, tz:'America/New_York' },
+  us_megamillions: { drawDays:[2,5], h:23, min:0,  tz:'America/New_York' },
+  eu_euromillions: { drawDays:[2,5], h:20, min:45, tz:'Europe/Paris' },
+  jp_loto6:        { drawDays:[1,4], h:18, min:30, tz:'Asia/Tokyo' },
+  jp_loto7:        { drawDays:[5],   h:18, min:45, tz:'Asia/Tokyo' },
+  jp_miniloto:     { drawDays:[2],   h:18, min:45, tz:'Asia/Tokyo' },
+  ca_lotto649:     { drawDays:[3,6], h:22, min:30, tz:'America/Toronto' },
+  ca_lottomax:     { drawDays:[2,5], h:22, min:30, tz:'America/Toronto' },
+  au_powerball:    { drawDays:[4],   h:20, min:30, tz:'Australia/Sydney' },
+  au_ozlotto:      { drawDays:[2],   h:20, min:30, tz:'Australia/Sydney' },
+  au_tattslotto:   { drawDays:[6],   h:20, min:30, tz:'Australia/Sydney' },
+};
+function fmtShortDate(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return String(d.getFullYear()).slice(2) + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+}
+// draw_results에 없는(아직 안 뽑힌) 회차의 예상 추첨일 계산. 게임의 현지 시간대 기준으로 날짜를 뽑아야
+// 브라우저(사용자)의 시간대에 따라 하루 어긋나는 걸 피할 수 있다 (my_entries와 동일 로직).
+function estimateNextDrawLocalStr(gameId){
+  const s = GAME_SCHEDULE[gameId];
+  if (!s) return null;
+  const next = tkNextDrawDate(s.drawDays, s.h, s.min, s.tz);
+  if (!next) return null;
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: s.tz, year:'2-digit', month:'2-digit', day:'2-digit' }).formatToParts(next);
+  const y = (parts.find(p => p.type === 'year') || {}).value;
+  const m = (parts.find(p => p.type === 'month') || {}).value;
+  const d = (parts.find(p => p.type === 'day') || {}).value;
+  if (!y || !m || !d) return null;
+  return y + '.' + m + '.' + d;
+}
 function renderGameSelect(){
   const el = document.getElementById('addGame');
   if (el) el.innerHTML = GAMES.map(function(g){ return '<option value="'+g.id+'">'+g[nameKey()]+'</option>'; }).join('');
 }
 
 let accessToken = null;
+let currentUserId = null;
 let allCollections = [];
 let currentCollectionId = null;
 let allRows = [];
+let sortKey = null;
+let sortDir = 'asc';
+
+function renderListHeader(){
+  const t = i18n[currentLang];
+  const header = document.getElementById('listHeader');
+  if (!header) return;
+  const arrow = (key) => sortKey === key ? '<span class="lh-arrow">' + (sortDir === 'asc' ? '▲' : '▼') + '</span>' : '';
+  header.innerHTML =
+    '<span class="lh-check"><input type="checkbox" id="checkAllHeader"></span>' +
+    '<span class="lh-col lh-game" data-sort="game_id">' + t.colGame + arrow('game_id') + '</span>' +
+    '<span class="lh-col lh-round" data-sort="round_no">' + t.colRound + arrow('round_no') + '</span>' +
+    '<span class="lh-numbers">' + t.colNumbers + '</span>' +
+    '<span class="lh-col lh-grade" data-sort="grade">' + t.colGrade + arrow('grade') + '</span>' +
+    '<span class="lh-col lh-memo" data-sort="memo">' + t.colMemo + arrow('memo') + '</span>' +
+    '<span class="lh-actions"></span>';
+  header.querySelectorAll('[data-sort]').forEach((el) => {
+    el.addEventListener('click', () => {
+      const key = el.dataset.sort;
+      if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = key; sortDir = 'asc'; }
+      renderListHeader();
+      renderList();
+    });
+  });
+  const checkAll = document.getElementById('checkAllHeader');
+  if (checkAll) {
+    checkAll.addEventListener('change', () => {
+      document.querySelectorAll('.wl-check').forEach((c) => { c.checked = checkAll.checked; });
+    });
+  }
+}
+
+function sortRows(rows){
+  if (!sortKey) return rows;
+  const dir = sortDir === 'asc' ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (av === undefined || av === null) av = '';
+    if (bv === undefined || bv === null) bv = '';
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
 
 async function ensureSession(){
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return false;
   accessToken = session.access_token;
+  currentUserId = session.user.id;
   return true;
 }
 
@@ -609,10 +722,83 @@ async function loadEntries(){
   try {
     const data = await callSignature({ action: 'list_entries', collection_id: currentCollectionId });
     allRows = data.rows || [];
+    await attachDrawDates();
+    await attachGradesFromMyEntries();
     renderList();
   } catch (e) {
     listWrap.innerHTML = '<div class="empty-note">' + e.message + '</div>';
   }
+}
+
+// 회차(round_no)가 있는 항목은 실제 추첨일(draw_results)을 찾아서 같이 붙여준다.
+// 실제 결과가 아직 없으면(미래 회차) 정기 스케줄로 추정한 날짜에 '~'를 붙여서 구분한다.
+// round_no 없이 draw_date만 직접 입력해둔 항목은 그 값을 그대로 쓴다.
+async function attachDrawDates(){
+  const gameGroups = {};
+  allRows.forEach((r) => {
+    if (!r.round_no) return;
+    if (!gameGroups[r.game_id]) gameGroups[r.game_id] = new Set();
+    gameGroups[r.game_id].add(r.round_no);
+  });
+  const drawDateMap = {};
+  await Promise.all(Object.keys(gameGroups).map(async (gameId) => {
+    const rounds = Array.from(gameGroups[gameId]);
+    const { data, error } = await sb.from('draw_results').select('round_no, draw_date').eq('game_id', gameId).in('round_no', rounds);
+    if (!error && data) {
+      data.forEach((d) => { drawDateMap[gameId + '_' + d.round_no] = d.draw_date; });
+    }
+  }));
+  allRows.forEach((r) => {
+    if (r.round_no) {
+      const actual = drawDateMap[r.game_id + '_' + r.round_no];
+      if (actual) {
+        r.draw_date_str = fmtShortDate(actual);
+        r.draw_date_is_estimate = false;
+      } else if (r.draw_date) {
+        r.draw_date_str = fmtShortDate(r.draw_date);
+        r.draw_date_is_estimate = false;
+      } else {
+        const est = estimateNextDrawLocalStr(r.game_id);
+        r.draw_date_str = est ? ('~' + est) : null;
+        r.draw_date_is_estimate = !!est;
+      }
+    } else if (r.draw_date) {
+      r.draw_date_str = fmtShortDate(r.draw_date);
+      r.draw_date_is_estimate = false;
+    } else {
+      r.draw_date_str = null;
+      r.draw_date_is_estimate = false;
+    }
+  });
+}
+
+// 마이 시그니처 항목은 자체적으로 당첨 등수를 갖고 있지 않다(그냥 저장해둔 번호 조합이기 때문).
+// 대신 "내 등록내역"(entries 테이블)에서 같은 게임/회차/번호 조합을 찾아 이미 채점된 등수가 있으면 그대로 가져온다.
+// 낙첨(0)이나 채점 대기(null)는 표시하지 않고, 당첨 등수(1 이상)가 있는 경우에만 보여준다.
+async function attachGradesFromMyEntries(){
+  allRows.forEach((r) => { r.grade = null; });
+  if (!currentUserId || allRows.length === 0) return;
+  const gameIds = [...new Set(allRows.map((r) => r.game_id).filter(Boolean))];
+  if (gameIds.length === 0) return;
+  const { data, error } = await sb
+    .from('entries')
+    .select('game_id, round_no, main_numbers, bonus_numbers, grade')
+    .eq('user_id', currentUserId)
+    .eq('confirmed', true)
+    .in('game_id', gameIds)
+    .not('grade', 'is', null)
+    .gt('grade', 0);
+  if (error || !data) return;
+  const numKey = (arr) => (arr || []).map(Number).sort((a,b) => a-b).join(',');
+  const lookup = {};
+  data.forEach((e) => {
+    const key = e.game_id + '_' + e.round_no + '_' + numKey(e.main_numbers) + '_' + numKey(e.bonus_numbers);
+    lookup[key] = e.grade;
+  });
+  allRows.forEach((r) => {
+    const key = r.game_id + '_' + r.round_no + '_' + numKey(r.main_numbers) + '_' + numKey(r.bonus_numbers);
+    if (lookup[key] !== undefined) r.grade = lookup[key];
+  });
 }
 
 function renderList(){
@@ -620,18 +806,30 @@ function renderList(){
   const t = i18n[currentLang];
   if (!currentCollectionId) return;
   if (allRows.length === 0) { listWrap.innerHTML = '<div class="empty-note">' + t.empty + '</div>'; return; }
+  const rows = sortRows(allRows);
 
-  listWrap.innerHTML = allRows.map(function(r){
+  listWrap.innerHTML = rows.map(function(r){
     const mainPips = (r.main_numbers||[]).map(function(n){ return '<span class="pip">'+n+'</span>'; }).join('');
     const bonusPips = (r.bonus_numbers||[]).map(function(n){ return '<span class="pip bonus">'+n+'</span>'; }).join('');
     const g = GAMES.find(function(x){ return x.id === r.game_id; });
     const gameName = g ? g[nameKey()] : r.game_id;
-    const roundOrDate = r.round_no ? ('#'+r.round_no) : (r.draw_date || '-');
+    let roundCellHtml;
+    if (r.round_no) {
+      roundCellHtml = '#' + r.round_no + (r.draw_date_str ? ('<br><span class="rd-draw">' + r.draw_date_str + '</span>') : '');
+    } else if (r.draw_date_str) {
+      roundCellHtml = r.draw_date_str;
+    } else {
+      roundCellHtml = '-';
+    }
+    const gradeHtml = (r.grade !== null && r.grade !== undefined && r.grade > 0)
+      ? '<span class="wl-grade">' + t.gradeTier(r.grade) + '</span>'
+      : '<span class="wl-grade"></span>';
     return '<div class="wl-row" data-id="'+r.id+'">' +
       '<input type="checkbox" class="wl-check" data-id="'+r.id+'">' +
       '<div class="wl-game">'+gameName+'</div>' +
-      '<div class="wl-round mono">'+roundOrDate+'</div>' +
+      '<div class="wl-round mono">'+roundCellHtml+'</div>' +
       '<div class="wl-numbers">'+mainPips+bonusPips+'</div>' +
+      gradeHtml +
       '<div class="wl-memo">'+(r.memo || '')+'</div>' +
       '<div class="wl-actions">' +
         '<button class="icon-btn edit" data-edit="'+r.id+'">✎</button>' +
