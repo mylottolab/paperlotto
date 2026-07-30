@@ -290,6 +290,16 @@ async function loadGrid(){
   }
 }
 
+function wfFormatRound(raw){
+  if (!raw) return '-';
+  const m = String(raw).match(/(\d+)/);
+  if (!m) return raw; // 숫자를 못 찾으면 원본 그대로 표시
+  const n = m[1];
+  if (currentLang === 'ko') return '제' + n + '회';
+  if (currentLang === 'ja') return '第' + n + '回';
+  return 'Round ' + n;
+}
+
 function renderCard(item){
   const t = i18n[currentLang];
   const disp = displayName(item.game_id);
@@ -301,7 +311,7 @@ function renderCard(item){
     '<div class="card">' +
       badge +
       '<div class="name"><span class="flag">' + disp.flag + '</span>' + disp.name + '</div>' +
-      '<div class="range">' + (item.range_start || '-') + ' ~ ' + (item.range_end || '-') + '</div>' +
+      '<div class="range">' + wfFormatRound(item.range_start) + ' ~ ' + wfFormatRound(item.range_end) + '</div>' +
       (dateRangeText ? '<div class="date-range">' + dateRangeText + '</div>' : '') +
       '<div class="count">' + t.countUnit(Number(item.count)) + '</div>' +
       '<button class="dl-btn" onclick="downloadFile(\'' + item.game_id + '\',' + isFree + ')">' + btnLabel + '</button>' +
