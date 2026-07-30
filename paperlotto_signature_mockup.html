@@ -30,8 +30,30 @@ h1,h2{ font-family:'Fraunces',serif; margin:0; }
 a{ color:inherit; text-decoration:none; }
 .mono{ font-family:'IBM Plex Mono',monospace; }
 
+.site-sticky-top{ position:sticky; top:0; z-index:20; }
+.ticker-wrap{
+  position:relative; z-index:2; border-bottom:1px solid var(--board-line);
+  background:var(--board-2); overflow:hidden; padding:9px 0;
+}
+.ticker-label{
+  position:absolute; left:0; top:0; bottom:0; z-index:2;
+  display:flex; align-items:center; gap:8px; padding:0 16px 0 32px;
+  background:linear-gradient(90deg, var(--board-2) 60%, transparent);
+}
+.ticker-label .dot{ width:7px; height:7px; border-radius:50%; background:#e3574a; animation:tpulse 1.6s ease-in-out infinite; }
+@keyframes tpulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+.ticker-label span{ font-size:11px; letter-spacing:1.4px; color:var(--text-dim); font-weight:600; }
+.ticker-track{ display:flex; gap:0; width:max-content; animation:tickerScroll 52s linear infinite; padding-left:190px; }
+@keyframes tickerScroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.ticker-item{ display:flex; align-items:baseline; gap:9px; padding:0 26px; border-right:1px solid var(--board-line); white-space:nowrap; font-size:13px; }
+.ticker-item .flag{ width:8px; height:8px; border-radius:2px; }
+.ticker-item .name{ color:var(--text-mid); }
+.ticker-item .odds{ color:var(--text-dim); font-size:11.5px; }
+.ticker-item .cd{ color:var(--gold-bright); font-weight:600; letter-spacing:0.3px; }
+@media (prefers-reduced-motion: reduce){ .ticker-track{ animation:none; } }
+
 header{
-  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between;
   padding:18px 32px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
   background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
 }
@@ -57,7 +79,7 @@ select, input[type="text"], input[type="number"]{
   width:100%; padding:10px 12px; border:1.5px solid rgba(28,33,48,0.15); border-radius:8px;
   font-size:13px; font-family:'Inter',sans-serif; color:var(--ink); background:#fff;
 }
-.row3{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
 .add-btn{
   margin-top:14px; padding:11px 16px; border:none; border-radius:8px; background:var(--ink); color:var(--paper);
   font-size:13px; font-weight:600; cursor:pointer;
@@ -141,6 +163,11 @@ select, input[type="text"], input[type="number"]{
 @media (max-width:640px){
   header{ padding:14px 16px; }
   .header-right{ width:100%; align-items:flex-end; }
+  nav{ width:100%; justify-content:flex-end; flex-wrap:wrap; gap:6px 10px; font-size:11px; }
+  .lang-toggle button{ padding:5px 9px; font-size:11px; }
+  .ticker-label{ padding:0 10px 0 16px; }
+  .ticker-label span{ font-size:10px; }
+  .ticker-item{ padding:0 16px; font-size:11.5px; }
   main{ padding:20px 14px 70px; }
   .page-title{ font-size:20px; }
   .panel{ padding:16px; }
@@ -156,6 +183,7 @@ select, input[type="text"], input[type="number"]{
 </head>
 <body>
 
+<div class="site-sticky-top">
 <header>
   <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
     <div class="brand-mark">P</div>
@@ -168,11 +196,21 @@ select, input[type="text"], input[type="number"]{
       <button data-lang="ja" type="button">JA</button>
     </div>
     <nav>
-      <a href="paperlotto_my_entries_updated.html" data-i18n="navEntries">← 내 등록내역</a>
+      <a href="index.html#board" data-i18n="navGames">전체 게임</a>
+      <a href="paperlotto_my_entries_updated.html" data-i18n="navEntries">내 등록내역</a>
+      <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
+      <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지사항</a>
       <div id="authWidget"></div>
     </nav>
   </div>
 </header>
+
+<!-- 신호 티커: 12개 게임 다음 추첨까지 남은 시간이 실시간으로 흐름 -->
+<div class="ticker-wrap">
+  <div class="ticker-label"><span class="dot"></span><span data-i18n="liveBoard">LIVE BOARD</span></div>
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+</div>
 
 <main>
   <div class="page-title" data-i18n="pageTitle">마이 시그니처</div>
@@ -194,6 +232,7 @@ select, input[type="text"], input[type="number"]{
       <select id="addGame"></select>
       <div class="row3">
         <div><label data-i18n="roundLabel">회차 (선택)</label><input type="number" id="addRound"></div>
+        <div><label data-i18n="drawDateLabel">추첨일 (선택)</label><input type="date" id="addDrawDate"></div>
         <div><label data-i18n="memoLabel">메모 (선택)</label><input type="text" id="addMemo"></div>
       </div>
       <label data-i18n="mainLabel">메인 번호 (쉼표로 구분)</label>
@@ -245,7 +284,8 @@ select, input[type="text"], input[type="number"]{
 <script>
 const i18n = {
   ko: {
-    navEntries:"← 내 등록내역", pageTitle:"마이 시그니처",
+    navEntries:"내 등록내역", pageTitle:"마이 시그니처",
+    navGames:"전체 게임", navGuide:"전략 가이드", navNotice:"공지사항", liveBoard:"LIVE BOARD",
     pageSub:"등록내역에서 옮겨온 번호와 직접 추가한 번호를 자유롭게 수정·삭제하며 관리합니다. 메모도 남길 수 있습니다.",
     collTitle:"마이 시그니처", collCreateBtn:"+ 새로 만들기 (500P)", collNameNeeded:"컬렉션 이름을 입력해주세요.",
     newBadge:"방금 생성됨", renameTitle:"이름 변경", deleteCollTitle:"삭제",
@@ -258,6 +298,7 @@ const i18n = {
     confirmCancel:"취소", confirmProceed:"생성하기 (500P 차감)", confirmCreating:"생성 중…",
     collNone:"아직 만든 마이 시그니처가 없습니다. 위에서 새로 만들어주세요.",
     addTitle:"+ 새 번호 직접 추가", gameLabel:"게임", roundLabel:"회차 (선택)", memoLabel:"메모 (선택)",
+    drawDateLabel:"추첨일 (선택)",
     mainLabel:"메인 번호 (쉼표로 구분)", bonusLabel:"보너스 번호 (쉼표로 구분, 선택)", addBtn:"추가하기",
     exportExcel:"엑셀 다운로드 (100P)", exportPdf:"PDF 생성 (100P)", deleteSelected:"선택 삭제",
     loading:"불러오는 중…", empty:"아직 번호가 없습니다.", loginNeeded:"로그인이 필요합니다.",
@@ -270,9 +311,11 @@ const i18n = {
       return "포인트가 " + shortfall + "P 부족합니다. (보유 " + balance + "P)\n\n지금 포인트 충전 페이지로 이동할까요?";
     },
     phCollName:"예: 미국 게임용", phRound:"예: 1235", phMemo:"예: 생일 번호", phMain:"예: 3,7,15,22,29,41", phBonus:"예: 26",
+    colGame:"게임", colRound:"회차", colDrawDate:"추첨일", colMain:"메인번호", colBonus:"보너스번호", colMemo:"메모",
   },
   en: {
-    navEntries:"← My Entries", pageTitle:"My Signature",
+    navEntries:"My Entries", pageTitle:"My Signature",
+    navGames:"All Games", navGuide:"Strategy Guide", navNotice:"Notices", liveBoard:"LIVE BOARD",
     pageSub:"Freely edit, delete, and add memos to numbers moved from your entries or added directly.",
     collTitle:"My Signature collections", collCreateBtn:"+ Create new (500P)", collNameNeeded:"Please enter a collection name.",
     newBadge:"Just created", renameTitle:"Rename", deleteCollTitle:"Delete",
@@ -285,6 +328,7 @@ const i18n = {
     confirmCancel:"Cancel", confirmProceed:"Create (charge 500P)", confirmCreating:"Creating…",
     collNone:"You haven't created a My Signature yet. Create one above.",
     addTitle:"+ Add a new number set", gameLabel:"Game", roundLabel:"Round (optional)", memoLabel:"Memo (optional)",
+    drawDateLabel:"Drawing date (optional)",
     mainLabel:"Main numbers (comma-separated)", bonusLabel:"Bonus numbers (comma-separated, optional)", addBtn:"Add",
     exportExcel:"Download Excel (100P)", exportPdf:"Generate PDF (100P)", deleteSelected:"Delete Selected",
     loading:"Loading…", empty:"No numbers yet.", loginNeeded:"Please log in.",
@@ -297,9 +341,11 @@ const i18n = {
       return "You're short " + shortfall + "P. (Balance: " + balance + "P)\n\nGo to the points recharge page now?";
     },
     phCollName:"e.g. US games", phRound:"e.g. 1235", phMemo:"e.g. Birthday numbers", phMain:"e.g. 3,7,15,22,29,41", phBonus:"e.g. 26",
+    colGame:"Game", colRound:"Round", colDrawDate:"Drawing date", colMain:"Main", colBonus:"Bonus", colMemo:"Memo",
   },
   ja: {
-    navEntries:"← 登録した番号", pageTitle:"マイシグニチャー",
+    navEntries:"登録した番号", pageTitle:"マイシグニチャー",
+    navGames:"すべてのゲーム", navGuide:"ストラテジーガイド", navNotice:"お知らせ", liveBoard:"LIVE BOARD",
     pageSub:"登録内容から移動した番号と自分で追加した番号を自由に編集・削除できます。メモも残せます。",
     collTitle:"マイシグニチャー一覧", collCreateBtn:"+ 新規作成 (500P)", collNameNeeded:"コレクション名を入力してください。",
     newBadge:"作成しました", renameTitle:"名前変更", deleteCollTitle:"削除",
@@ -312,6 +358,7 @@ const i18n = {
     confirmCancel:"キャンセル", confirmProceed:"作成する (500P消費)", confirmCreating:"作成中…",
     collNone:"まだマイシグニチャーがありません。上で新しく作成してください。",
     addTitle:"+ 新しい番号を直接追加", gameLabel:"ゲーム", roundLabel:"回（任意）", memoLabel:"メモ（任意）",
+    drawDateLabel:"抽選日（任意）",
     mainLabel:"メイン番号（カンマ区切り）", bonusLabel:"ボーナス番号（カンマ区切り、任意）", addBtn:"追加",
     exportExcel:"エクセルダウンロード (100P)", exportPdf:"PDF生成 (100P)", deleteSelected:"選択削除",
     loading:"読み込み中…", empty:"まだ番号がありません。", loginNeeded:"ログインが必要です。",
@@ -324,6 +371,7 @@ const i18n = {
       return "ポイントが" + shortfall + "P不足しています。（保有 " + balance + "P）\n\n今すぐポイント充電ページへ移動しますか？";
     },
     phCollName:"例: アメリカのゲーム用", phRound:"例: 1235", phMemo:"例: 誕生日の番号", phMain:"例: 3,7,15,22,29,41", phBonus:"例: 26",
+    colGame:"ゲーム", colRound:"回", colDrawDate:"抽選日", colMain:"メイン番号", colBonus:"ボーナス番号", colMemo:"メモ",
   },
 };
 let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
@@ -345,6 +393,7 @@ function applyLang(lang){
   renderGameSelect();
   renderCollections();
   renderList();
+  if (typeof renderTicker === 'function') renderTicker();
 }
 document.querySelectorAll('.lang-toggle button').forEach(function(btn){ btn.addEventListener('click', function(){ applyLang(btn.dataset.lang); }); });
 
@@ -577,10 +626,11 @@ function renderList(){
     const bonusPips = (r.bonus_numbers||[]).map(function(n){ return '<span class="pip bonus">'+n+'</span>'; }).join('');
     const g = GAMES.find(function(x){ return x.id === r.game_id; });
     const gameName = g ? g[nameKey()] : r.game_id;
+    const roundOrDate = r.round_no ? ('#'+r.round_no) : (r.draw_date || '-');
     return '<div class="wl-row" data-id="'+r.id+'">' +
       '<input type="checkbox" class="wl-check" data-id="'+r.id+'">' +
       '<div class="wl-game">'+gameName+'</div>' +
-      '<div class="wl-round mono">'+(r.round_no ? '#'+r.round_no : '-')+'</div>' +
+      '<div class="wl-round mono">'+roundOrDate+'</div>' +
       '<div class="wl-numbers">'+mainPips+bonusPips+'</div>' +
       '<div class="wl-memo">'+(r.memo || '')+'</div>' +
       '<div class="wl-actions">' +
@@ -603,6 +653,7 @@ document.getElementById('addBtn').addEventListener('click', async function(){
   if (!currentCollectionId) { alert(t.selectCollectionFirst); return; }
   const gameId = document.getElementById('addGame').value;
   const roundRaw = document.getElementById('addRound').value.trim();
+  const drawDateRaw = document.getElementById('addDrawDate').value;
   const memo = document.getElementById('addMemo').value.trim();
   const mainRaw = document.getElementById('addMain').value.trim();
   const bonusRaw = document.getElementById('addBonus').value.trim();
@@ -617,9 +668,11 @@ document.getElementById('addBtn').addEventListener('click', async function(){
     await callSignature({
       action: 'add_manual', collection_id: currentCollectionId, game_id: gameId,
       round_no: roundRaw ? +roundRaw : null,
+      draw_date: drawDateRaw || null,
       main_numbers: mainNumbers, bonus_numbers: bonusNumbers, memo: memo || null,
     });
     document.getElementById('addRound').value = '';
+    document.getElementById('addDrawDate').value = '';
     document.getElementById('addMemo').value = '';
     document.getElementById('addMain').value = '';
     document.getElementById('addBonus').value = '';
@@ -723,13 +776,14 @@ document.getElementById('exportExcelBtn').addEventListener('click', async functi
     const data = await chargeAndFetch(ids);
     const sheetRows = data.rows.map(function(r){
       const g = GAMES.find(function(x){ return x.id === r.game_id; });
-      return {
-        '게임': g ? g[nameKey()] : r.game_id,
-        '회차': r.round_no || '',
-        '메인번호': (r.main_numbers||[]).join(', '),
-        '보너스번호': (r.bonus_numbers||[]).join(', '),
-        '메모': r.memo || '',
-      };
+      const row = {};
+      row[t.colGame] = g ? g[nameKey()] : r.game_id;
+      row[t.colRound] = r.round_no || '';
+      row[t.colDrawDate] = r.draw_date || '';
+      row[t.colMain] = (r.main_numbers||[]).join(', ');
+      row[t.colBonus] = (r.bonus_numbers||[]).join(', ');
+      row[t.colMemo] = r.memo || '';
+      return row;
     });
     const ws = XLSX.utils.json_to_sheet(sheetRows);
     const wb = XLSX.utils.book_new();
@@ -765,7 +819,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
 
     const table = document.createElement('table');
     table.style.cssText = 'width:100%;border-collapse:collapse;font-size:13px;';
-    const theadRow = ['Game','Round','Main','Bonus','Memo'];
+    const theadRow = [t.colGame, t.colRound, t.colDrawDate, t.colMain, t.colBonus, t.colMemo];
     const thead = document.createElement('tr');
     theadRow.forEach(function(label){
       const th = document.createElement('th');
@@ -780,6 +834,7 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
       const cells = [
         g ? g[nameKey()] : r.game_id,
         r.round_no ? String(r.round_no) : '-',
+        r.draw_date || '-',
         (r.main_numbers||[]).join(', '),
         (r.bonus_numbers||[]).join(', '),
         r.memo || ''
@@ -841,6 +896,75 @@ document.getElementById('exportPdfBtn').addEventListener('click', async function
     btn.disabled = false;
   }
 });
+
+// ─── 상단 LIVE 티커 (헤더 고정용, 페이지 자체 GAMES와는 별개의 독립 데이터) ───
+const TICKER_GAMES = [
+  { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
+  { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:21, drawMinute:0, tz:'Europe/Paris' },
+  { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'ca_lottomax', accent:'ca', nameKo:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', odds:'33,446,140', days:[2,5], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'ca_lotto649', accent:'ca', nameKo:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', odds:'13,983,816', days:[3,6], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'au_powerball', accent:'au', nameKo:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', odds:'134,490,400', days:[4], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_ozlotto', accent:'au', nameKo:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', odds:'62,891,499', days:[2], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_tattslotto', accent:'au', nameKo:'새터데이로또', nameEn:'Saturday Lotto', nameJa:'サタデーロト', odds:'8,145,060', days:[6], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'kr_lotto645', accent:'kr', nameKo:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', odds:'8,145,060', days:[6], drawHour:20, drawMinute:45, tz:'Asia/Seoul' },
+];
+const TICKER_WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+function tkZonedTimeToUtc(dateStr, hour, minute, timeZone){
+  const naiveUtc = new Date(`${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);
+  const tzDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone }));
+  const utcDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const offset = utcDate.getTime() - tzDate.getTime();
+  return new Date(naiveUtc.getTime() + offset);
+}
+function tkNextDrawDate(days, hour, minute, timeZone){
+  const now = new Date();
+  let best = null;
+  for (let addDays = 0; addDays < 8; addDays++){
+    const candidate = new Date(now.getTime() + addDays * 86400000);
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(candidate);
+    const wd = TICKER_WEEKDAY_NUM[wdName];
+    if (!days.includes(wd)) continue;
+    const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone }).format(candidate);
+    const drawUtc = tkZonedTimeToUtc(dateStr, hour, minute, timeZone);
+    if (drawUtc > now && (!best || drawUtc < best)) best = drawUtc;
+  }
+  return best;
+}
+function tkFmtCountdown(target){
+  const dayLabel = currentLang === 'ko' ? '일' : currentLang === 'ja' ? '日' : 'd';
+  const hourLabel = currentLang === 'ko' ? '시간' : currentLang === 'ja' ? '時間' : 'h';
+  const diff = Math.max(0, target - new Date());
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return d > 0 ? `${d}${dayLabel} ${h}${hourLabel}` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+TICKER_GAMES.forEach(g => { g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz); });
+function renderTicker(){
+  const nameKey = currentLang === 'ko' ? 'nameKo' : currentLang === 'ja' ? 'nameJa' : 'nameEn';
+  const items = TICKER_GAMES.map(g => `
+    <div class="ticker-item">
+      <span class="flag" style="background:var(--${g.accent})"></span>
+      <span class="name">${g[nameKey] || g.nameEn}</span>
+      <span class="odds mono">1/${g.odds}</span>
+      <span class="cd mono" data-tcd="${g.id}">${tkFmtCountdown(g.next)}</span>
+    </div>`).join('');
+  const track = document.getElementById('tickerTrack');
+  if (track) track.innerHTML = items + items;
+}
+setInterval(() => {
+  document.querySelectorAll('[data-tcd]').forEach(el => {
+    const g = TICKER_GAMES.find(x => x.id === el.dataset.tcd);
+    if (!g) return;
+    if (new Date() >= g.next) g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz);
+    el.textContent = tkFmtCountdown(g.next);
+  });
+}, 1000);
 
 applyLang(currentLang);
 loadCollections();
