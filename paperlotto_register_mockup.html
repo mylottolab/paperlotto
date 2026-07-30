@@ -469,7 +469,7 @@ const GAMES = [
   { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', sub:'JP', main:5, range:31, bonus:0, days:[2] },
   { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', sub:'JP', main:7, range:37, bonus:0, days:[5] },
   { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', sub:'JP', main:6, range:43, bonus:0, days:[1,4] },
-  { id:'ca_lottomax', accent:'ca', nameKo:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', sub:'CA', main:7, range:52, bonus:0, days:[2,5] },
+  { id:'ca_lottomax', accent:'ca', nameKo:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', sub:'CA', main:7, range:50, bonus:0, days:[2,5] },
   { id:'ca_lotto649', accent:'ca', nameKo:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', sub:'CA', main:6, range:49, bonus:0, days:[3,6] },
   { id:'au_powerball', accent:'au', nameKo:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', sub:'AU', main:7, range:35, bonus:1, bonusRange:20, days:[4] },
   { id:'au_ozlotto', accent:'au', nameKo:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', sub:'AU', main:7, range:47, bonus:0, days:[2] },
@@ -1178,7 +1178,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
     if (pastMode) {
       // 과거회차: 등록 즉시 채점 결과가 함께 옴 — 등수별로 정리해서 보여준다
-      const gradeLabel = (g) => g === 1 ? t.gradeTier(1) : g === 2 ? t.gradeTier(2) : g === 3 ? t.gradeTier(3) : g === 4 ? t.gradeTier(4) : g === 5 ? t.gradeTier(5) : g === 0 ? t.gradeNone : t.gradeUnknown;
+      const gradeLabel = (g) => g === 0 ? t.gradeNone : (g > 0 ? t.gradeTier(g) : t.gradeUnknown);
       const lines = (data.results || []).map((r, i) => {
         if (r.grade === null || r.grade === undefined) return `#${i+1}: ${r.gradeMessage || t.gradeUnknown}`;
         return `#${i+1}: ${gradeLabel(r.grade)}`;

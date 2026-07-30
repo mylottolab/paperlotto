@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>게임 규칙 · 당첨조건 — PaperLotto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --kr:#c8203a; --jp:#2a3a7a; --us:#2c4fa3; --ca:#d8232a; --au:#1f7a6e; --eu:#2451c4;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  word-break:keep-all; overflow-wrap:break-word;
+  background-image:linear-gradient(var(--board-line) 1px, transparent 1px), linear-gradient(90deg, var(--board-line) 1px, transparent 1px);
+  background-size:64px 64px; background-color:var(--board);
+}
+h1,h2,h3{ font-family:'Fraunces',serif; margin:0; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; border-radius:4px; }
+
+.site-sticky-top{ position:sticky; top:0; z-index:20; }
+header{
+  position:relative; display:flex; align-items:center; justify-content:space-between;
+  padding:20px 32px; border-bottom:1px solid var(--board-line);
+  background:rgba(12,16,32,0.9); backdrop-filter:blur(6px); flex-wrap:wrap; gap:12px;
+}
+.ticker-wrap{
+  position:relative; z-index:2; border-bottom:1px solid var(--board-line);
+  background:var(--board-2); overflow:hidden; padding:9px 0;
+}
+.ticker-label{
+  position:absolute; left:0; top:0; bottom:0; z-index:2;
+  display:flex; align-items:center; gap:8px; padding:0 16px 0 32px;
+  background:linear-gradient(90deg, var(--board-2) 60%, transparent);
+}
+.ticker-label .dot{ width:7px; height:7px; border-radius:50%; background:#e3574a; animation:tpulse 1.6s ease-in-out infinite; }
+@keyframes tpulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+.ticker-label span{ font-size:11px; letter-spacing:1.4px; color:var(--text-dim); font-weight:600; }
+.ticker-track{ display:flex; gap:0; width:max-content; animation:tickerScroll 52s linear infinite; padding-left:190px; }
+@keyframes tickerScroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.ticker-item{ display:flex; align-items:baseline; gap:9px; padding:0 26px; border-right:1px solid var(--board-line); white-space:nowrap; font-size:13px; }
+.ticker-item .flag{ width:8px; height:8px; border-radius:2px; }
+.ticker-item .name{ color:var(--text-mid); }
+.ticker-item .odds{ color:var(--text-dim); font-size:11.5px; }
+.ticker-item .cd{ color:var(--gold-bright); font-weight:600; letter-spacing:0.3px; }
+@media (prefers-reduced-motion: reduce){ .ticker-track{ animation:none; } }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
+.brand-mark{ width:34px; height:34px; border-radius:7px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-size:17px; transform:rotate(-4deg); }
+.brand-name{ font-size:20px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav{ display:flex; align-items:center; gap:22px; font-size:14px; color:var(--text-mid); flex-wrap:wrap; }
+nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 14px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:var(--ink); }
+
+.page-head{ max-width:880px; margin:36px auto 0; padding:0 24px; }
+.page-eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:1.6px; color:var(--gold-bright); }
+.page-title{ font-size:clamp(26px,4vw,36px); font-weight:600; margin-top:10px; }
+.page-sub{ color:var(--text-mid); font-size:14.5px; margin-top:10px; max-width:640px; line-height:1.7; }
+
+.region-filter{ max-width:880px; margin:26px auto 0; padding:0 24px; display:flex; gap:8px; flex-wrap:wrap; }
+.region-btn{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); font-size:12.5px; font-family:'Inter',sans-serif; padding:6px 14px; border-radius:20px; cursor:pointer; }
+.region-btn.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:600; }
+
+.guide-list{ max-width:880px; margin:22px auto 60px; padding:0 24px; display:flex; flex-direction:column; gap:16px; }
+
+.game-card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:0; overflow:hidden; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); }
+.game-card::before{ content:''; display:block; height:5px; background:var(--accent, var(--gold)); }
+.game-card-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 22px; cursor:pointer; }
+.game-card-title{ display:flex; align-items:center; gap:10px; }
+.game-flag{ font-size:20px; }
+.game-name{ font-size:16.5px; font-weight:600; }
+.game-name-sub{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-dim); margin-top:2px; }
+.game-toggle-icon{ font-family:'IBM Plex Mono',monospace; font-size:14px; color:var(--ink-dim); transition:transform .2s; flex-shrink:0; }
+.game-card.open .game-toggle-icon{ transform:rotate(45deg); }
+
+.game-card-body{ display:none; padding:0 22px 22px; }
+.game-card.open .game-card-body{ display:block; }
+
+.strategy-note{ font-size:12px; color:var(--ink-dim); margin-bottom:14px; font-style:italic; }
+.strategy-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; }
+.strategy-list li{ display:flex; gap:12px; align-items:flex-start; font-size:14px; line-height:1.7; }
+.strategy-list .mark{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--gold); font-weight:700; margin-top:3px; flex-shrink:0; }
+.strategy-list .detail-link{ display:inline-block; margin-top:6px; font-size:12.5px; color:var(--gold); text-decoration:underline; }
+
+.rule-composition{ display:flex; flex-direction:column; gap:6px; margin-bottom:16px; padding:12px 14px; background:var(--paper-2); border-radius:10px; }
+.rule-composition .rc-row{ display:flex; gap:8px; font-size:13px; line-height:1.6; }
+.rule-composition .rc-label{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--gold); flex-shrink:0; width:64px; padding-top:1px; }
+.rule-table{ width:100%; border-collapse:collapse; font-size:13px; }
+.rule-table th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.04em; color:var(--ink-dim); font-weight:700; padding:6px 8px; border-bottom:1px solid rgba(28,33,48,0.15); }
+.rule-table td{ padding:7px 8px; border-bottom:1px solid rgba(28,33,48,0.08); }
+.rule-table tr:last-child td{ border-bottom:none; }
+.rule-table .rt-grade{ font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--gold); white-space:nowrap; width:52px; }
+.rule-note{ font-size:11.5px; color:var(--ink-dim); margin-top:12px; font-style:italic; line-height:1.6; }
+.detail-link{ display:inline-block; margin-top:14px; font-size:12.5px; color:var(--gold); text-decoration:underline; }
+
+.pending-note{ font-size:13.5px; color:var(--ink-dim); padding:6px 0 2px; }
+
+.footer-disclaimer{ max-width:880px; margin:0 auto 50px; padding:0 24px; font-size:12px; color:var(--text-dim); line-height:1.7; }
+
+@media (max-width:640px){
+  header{ padding:16px 18px; }
+  nav{ gap:14px; font-size:13px; order:3; width:100%; justify-content:space-between; }
+  .ticker-label{ padding:0 10px 0 16px; }
+  .ticker-label span{ font-size:10px; }
+  .ticker-item{ padding:0 16px; font-size:11.5px; }
+  .game-card-head{ padding:15px 16px; }
+  .game-card-body{ padding:0 16px 18px; }
+  .rule-table{ font-size:12px; }
+  .rule-table th, .rule-table td{ padding:6px 5px; }
+  .rule-composition .rc-label{ width:56px; font-size:9.5px; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-sticky-top">
+<header>
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
+    <div class="brand-mark">P</div>
+    <div>
+      <div class="brand-name">Paper<em>Lotto</em></div>
+    </div>
+  </a>
+  <nav>
+    <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
+    <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
+    <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지사항</a>
+    <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용설명</a>
+    <div id="authWidget"></div>
+    <div class="lang-toggle">
+      <button data-lang="ko" class="active" type="button">KR</button>
+      <button data-lang="en" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+  </nav>
+</header>
+
+<!-- 신호 티커: 12개 게임 다음 추첨까지 남은 시간이 실시간으로 흐름 -->
+<div class="ticker-wrap">
+  <div class="ticker-label"><span class="dot"></span><span data-i18n="liveBoard">LIVE BOARD</span></div>
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+</div>
+
+<div class="page-head">
+  <div class="page-eyebrow">GAME RULES</div>
+  <h1 class="page-title" data-i18n="pageTitle">12개 게임, 공 구성부터 당첨등수까지</h1>
+  <p class="page-sub" data-i18n="pageSub">각 게임의 번호 구성(메인/보너스 범위)과 등수별 당첨조건을 한 곳에 정리했습니다. 각국 복권 운영사의 공식 규정을 기준으로 작성했으며, 규정이 개정되면 이 페이지도 함께 갱신됩니다.</p>
+</div>
+
+<div class="region-filter" id="regionFilter"></div>
+<div class="guide-list" id="guideList"></div>
+
+<div class="footer-disclaimer" data-i18n="footerNote">
+  본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.
+</div>
+
+<script>
+// =====================================================
+// 게임별 규칙 데이터 (공 구성 + 등수별 당첨조건)
+// 2026-07-31 리서치로 12개 게임 전부 공식 등수 체계 교차검증 완료.
+// detail: 해당 게임 상세페이지 파일명 (더 읽어보기 링크용)
+// =====================================================
+const GAMES = [
+  { id:'kr_lotto645', region:'kr', flag:'🇰🇷', accent:'var(--kr)', detail:'paperlotto_detail_korea_mockup.html', status:'ready' },
+  { id:'us_powerball', region:'us', flag:'🇺🇸', accent:'var(--us)', detail:'paperlotto_detail_powerball_mockup.html', status:'ready' },
+  { id:'us_megamillions', region:'us', flag:'🇺🇸', accent:'var(--us)', detail:'paperlotto_detail_megamillions_mockup.html', status:'ready' },
+  { id:'eu_euromillions', region:'eu', flag:'🇪🇺', accent:'var(--eu)', detail:'paperlotto_detail_euromillions_mockup.html', status:'ready' },
+  { id:'jp_miniloto', region:'jp', flag:'🇯🇵', accent:'var(--jp)', detail:'paperlotto_detail_miniloto_mockup.html', status:'ready' },
+  { id:'jp_loto6', region:'jp', flag:'🇯🇵', accent:'var(--jp)', detail:'paperlotto_detail_loto6_mockup.html', status:'ready' },
+  { id:'jp_loto7', region:'jp', flag:'🇯🇵', accent:'var(--jp)', detail:'paperlotto_detail_loto7_mockup.html', status:'ready' },
+  { id:'ca_lottomax', region:'ca', flag:'🇨🇦', accent:'var(--ca)', detail:'paperlotto_detail_lottomax_updated.html', status:'ready' },
+  { id:'ca_lotto649', region:'ca', flag:'🇨🇦', accent:'var(--ca)', detail:'paperlotto_detail_lotto649_updated.html', status:'ready' },
+  { id:'au_powerball', region:'au', flag:'🇦🇺', accent:'var(--au)', detail:'paperlotto_detail_aupowerball_mockup.html', status:'ready' },
+  { id:'au_ozlotto', region:'au', flag:'🇦🇺', accent:'var(--au)', detail:'paperlotto_detail_ozlotto_mockup.html', status:'ready' },
+  { id:'au_tattslotto', region:'au', flag:'🇦🇺', accent:'var(--au)', detail:'paperlotto_detail_tattslotto_mockup.html', status:'ready' },
+];
+
+const I18N = {
+  ko:{
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드",
+    navNotice:"공지사항", navBoardGuide:"사용설명", liveBoard:"LIVE BOARD",
+    pageTitle:"12개 게임, 공 구성부터 당첨등수까지",
+    pageSub:"각 게임의 번호 구성(메인/보너스 범위)과 등수별 당첨조건을 한 곳에 정리했습니다. 각국 복권 운영사의 공식 규정을 기준으로 작성했으며, 규정이 개정되면 이 페이지도 함께 갱신됩니다.",
+    footerNote:"본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
+    regionAll:"전체", regionKr:"한국", regionUs:"미국", regionJp:"일본", regionCa:"캐나다", regionAu:"호주", regionEu:"유럽",
+    readMore:"상세페이지에서 더 보기 →",
+    pending:"이 게임의 규칙 정보는 아직 준비 중입니다.",
+    rcMain:"메인번호", rcBonus:"보너스", rtGrade:"등수", rtCondition:"당첨 조건",
+    names:{
+      kr_lotto645:{name:'로또 6/45', sub:'Korea · Lotto 6/45'},
+      us_powerball:{name:'파워볼', sub:'USA · Powerball'},
+      us_megamillions:{name:'메가밀리언스', sub:'USA · Mega Millions'},
+      eu_euromillions:{name:'유로밀리언스', sub:'EU · EuroMillions'},
+      jp_miniloto:{name:'미니로또', sub:'Japan · Mini Loto'},
+      jp_loto6:{name:'로또6', sub:'Japan · Loto 6'},
+      jp_loto7:{name:'로또7', sub:'Japan · Loto 7'},
+      ca_lottomax:{name:'로또맥스', sub:'Canada · Lotto Max'},
+      ca_lotto649:{name:'로또 6/49', sub:'Canada · Lotto 6/49'},
+      au_powerball:{name:'호주 파워볼', sub:'Australia · Powerball'},
+      au_ozlotto:{name:'오즈로또', sub:'Australia · Oz Lotto'},
+      au_tattslotto:{name:'새터데이로또(Tatts Lotto)', sub:'Australia · Saturday Lotto'},
+    },
+    rules:{
+      kr_lotto645:{
+        main:"6개, 1~45 중 선택", bonus:"같은 통에서 1개 추가 추첨 (직접 선택 안 함)",
+        tiers:[["1등","6개 일치"],["2등","5개 + 보너스 일치"],["3등","5개 일치"],["4등","4개 일치"],["5등","3개 일치"]],
+      },
+      us_powerball:{
+        main:"5개, 1~69 중 선택", bonus:"별도 통에서 1개, 1~26 (직접 선택)",
+        tiers:[["1등","5개 + 파워볼"],["2등","5개"],["3등","4개 + 파워볼"],["4등","4개"],["5등","3개 + 파워볼"],["6등","3개"],["7등","2개 + 파워볼"],["8등","1개 + 파워볼"],["9등","0개 + 파워볼"]],
+      },
+      us_megamillions:{
+        main:"5개, 1~70 중 선택", bonus:"별도 통에서 1개, 1~24 (직접 선택)",
+        tiers:[["1등","5개 + 메가볼"],["2등","5개"],["3등","4개 + 메가볼"],["4등","4개"],["5등","3개 + 메가볼"],["6등","3개"],["7등","2개 + 메가볼"],["8등","1개 + 메가볼"],["9등","0개 + 메가볼"]],
+      },
+      eu_euromillions:{
+        main:"5개, 1~50 중 선택", bonus:"별도 통에서 2개(럭키스타), 1~12 (직접 선택)",
+        tiers:[["1등","5개 + 스타 2개"],["2등","5개 + 스타 1개"],["3등","5개 + 스타 0개"],["4등","4개 + 스타 2개"],["5등","4개 + 스타 1개"],["6등","3개 + 스타 2개"],["7등","4개 + 스타 0개"],["8등","2개 + 스타 2개"],["9등","3개 + 스타 1개"],["10등","3개 + 스타 0개"],["11등","1개 + 스타 2개"],["12등","2개 + 스타 1개"],["13등","2개 + 스타 0개"]],
+        note:"※ 등수 순서가 \"맞춘 개수 순\"이 아니라 공식 상금 배분 순서입니다 (예: 4개+스타0개보다 3개+스타2개가 더 높은 등수).",
+      },
+      jp_miniloto:{
+        main:"5개, 1~31 중 선택", bonus:"같은 통에서 1개 추가 추첨",
+        tiers:[["1등","5개 일치"],["2등","4개 + 보너스 일치"],["3등","4개 일치"],["4등","3개 일치"]],
+      },
+      jp_loto6:{
+        main:"6개, 1~43 중 선택", bonus:"같은 통에서 1개 추가 추첨",
+        tiers:[["1등","6개 일치"],["2등","5개 + 보너스 일치"],["3등","5개 일치"],["4등","4개 일치"],["5등","3개 일치"]],
+      },
+      jp_loto7:{
+        main:"7개, 1~37 중 선택", bonus:"같은 통에서 2개 추가 추첨",
+        tiers:[["1등","7개 일치"],["2등","6개 + 보너스 1개 이상"],["3등","6개 일치"],["4등","5개 일치"],["5등","4개 일치"],["6등","3개 + 보너스 1개 이상"]],
+      },
+      ca_lottomax:{
+        main:"7개, 1~50 중 선택", bonus:"같은 통에서 1개 추가 추첨",
+        tiers:[["1등","7개 일치"],["2등","6개 + 보너스 일치"],["3등","6개 일치"],["4등","5개 + 보너스 일치"],["5등","5개 일치"],["6등","4개 + 보너스 일치"],["7등","4개 일치 (고정 $20)"],["8등","3개 + 보너스 일치 (고정 $20)"],["9등","3개 일치 (무료 재응모)"]],
+      },
+      ca_lotto649:{
+        main:"6개, 1~49 중 선택", bonus:"같은 통에서 1개 추가 추첨",
+        tiers:[["1등","6개 일치"],["2등","5개 + 보너스 일치"],["3등","5개 일치"],["4등","4개 일치"],["5등","3개 일치 (고정 $10)"],["6등","2개 + 보너스 일치 (고정 $5)"],["7등","2개 일치 (무료 재응모)"]],
+      },
+      au_powerball:{
+        main:"7개, 1~35 중 선택", bonus:"별도 통에서 1개, 1~20 (직접 선택)",
+        tiers:[["1등","7개 + 파워볼"],["2등","7개"],["3등","6개 + 파워볼"],["4등","6개"],["5등","5개 + 파워볼"],["6등","4개 + 파워볼"],["7등","5개"],["8등","3개 + 파워볼"],["9등","2개 + 파워볼"]],
+        note:"※ 6등(4개+파워볼)이 7등(5개, 파워볼 없음)보다 높습니다 — 파워볼 일치를 더 높게 쳐주는 호주 특유의 규정입니다.",
+      },
+      au_ozlotto:{
+        main:"7개, 1~47 중 선택", bonus:"같은 통에서 3개(서플리멘터리) 추가 추첨",
+        tiers:[["1등","7개 일치"],["2등","6개 + 서플 1개 이상"],["3등","6개 일치"],["4등","5개 + 서플 1개 이상"],["5등","5개 일치"],["6등","4개 일치"],["7등","3개 + 서플 1개 이상"]],
+      },
+      au_tattslotto:{
+        main:"6개, 1~45 중 선택", bonus:"같은 통에서 2개(서플리멘터리) 추가 추첨",
+        tiers:[["1등","6개 일치"],["2등","5개 + 서플 1개 이상"],["3등","5개 일치"],["4등","4개 일치"],["5등","3개 + 서플 1개 이상"],["6등","서플리멘터리 2개 모두 일치 (메인 개수 무관)"]],
+      },
+    },
+  },
+  en:{
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide",
+    navNotice:"Notices", navBoardGuide:"How It Works", liveBoard:"LIVE BOARD",
+    pageTitle:"All 12 games — ball composition to prize tiers",
+    pageSub:"A single reference for each game's number composition (main/bonus ranges) and prize-tier winning conditions, based on each country's official lottery operator rules. Updated whenever a rule changes.",
+    footerNote:"This content is provided for informational and statistical simulation purposes only. PaperLotto does not sell lottery tickets and does not pay out any prizes.",
+    regionAll:"All", regionKr:"Korea", regionUs:"USA", regionJp:"Japan", regionCa:"Canada", regionAu:"Australia", regionEu:"EU",
+    readMore:"Read more on the detail page →",
+    pending:"Rule information for this game is not ready yet.",
+    rcMain:"Main", rcBonus:"Bonus", rtGrade:"Tier", rtCondition:"Winning condition",
+    names:{
+      kr_lotto645:{name:'Lotto 6/45', sub:'Korea · Lotto 6/45'},
+      us_powerball:{name:'Powerball', sub:'USA · Powerball'},
+      us_megamillions:{name:'Mega Millions', sub:'USA · Mega Millions'},
+      eu_euromillions:{name:'EuroMillions', sub:'EU · EuroMillions'},
+      jp_miniloto:{name:'Mini Loto', sub:'Japan · Mini Loto'},
+      jp_loto6:{name:'Loto 6', sub:'Japan · Loto 6'},
+      jp_loto7:{name:'Loto 7', sub:'Japan · Loto 7'},
+      ca_lottomax:{name:'Lotto Max', sub:'Canada · Lotto Max'},
+      ca_lotto649:{name:'Lotto 6/49', sub:'Canada · Lotto 6/49'},
+      au_powerball:{name:'Australia Powerball', sub:'Australia · Powerball'},
+      au_ozlotto:{name:'Oz Lotto', sub:'Australia · Oz Lotto'},
+      au_tattslotto:{name:'Saturday Lotto (Tatts Lotto)', sub:'Australia · Saturday Lotto'},
+    },
+    rules:{
+      kr_lotto645:{
+        main:"6 numbers from 1–45", bonus:"1 extra drawn from the same pool (not player-picked)",
+        tiers:[["Tier 1","Match 6"],["Tier 2","Match 5 + bonus"],["Tier 3","Match 5"],["Tier 4","Match 4"],["Tier 5","Match 3"]],
+      },
+      us_powerball:{
+        main:"5 numbers from 1–69", bonus:"1 from a separate pool, 1–26 (player-picked)",
+        tiers:[["Tier 1","5 + Powerball"],["Tier 2","5"],["Tier 3","4 + Powerball"],["Tier 4","4"],["Tier 5","3 + Powerball"],["Tier 6","3"],["Tier 7","2 + Powerball"],["Tier 8","1 + Powerball"],["Tier 9","0 + Powerball"]],
+      },
+      us_megamillions:{
+        main:"5 numbers from 1–70", bonus:"1 from a separate pool, 1–24 (player-picked)",
+        tiers:[["Tier 1","5 + Mega Ball"],["Tier 2","5"],["Tier 3","4 + Mega Ball"],["Tier 4","4"],["Tier 5","3 + Mega Ball"],["Tier 6","3"],["Tier 7","2 + Mega Ball"],["Tier 8","1 + Mega Ball"],["Tier 9","0 + Mega Ball"]],
+      },
+      eu_euromillions:{
+        main:"5 numbers from 1–50", bonus:"2 Lucky Stars from a separate pool, 1–12 (player-picked)",
+        tiers:[["Tier 1","5 + 2 stars"],["Tier 2","5 + 1 star"],["Tier 3","5 + 0 stars"],["Tier 4","4 + 2 stars"],["Tier 5","4 + 1 star"],["Tier 6","3 + 2 stars"],["Tier 7","4 + 0 stars"],["Tier 8","2 + 2 stars"],["Tier 9","3 + 1 star"],["Tier 10","3 + 0 stars"],["Tier 11","1 + 2 stars"],["Tier 12","2 + 1 star"],["Tier 13","2 + 0 stars"]],
+        note:"※ Tier order follows the official prize-pool split, not raw match count (e.g. 3+2 stars ranks above 4+0 stars).",
+      },
+      jp_miniloto:{
+        main:"5 numbers from 1–31", bonus:"1 extra drawn from the same pool",
+        tiers:[["Tier 1","Match 5"],["Tier 2","Match 4 + bonus"],["Tier 3","Match 4"],["Tier 4","Match 3"]],
+      },
+      jp_loto6:{
+        main:"6 numbers from 1–43", bonus:"1 extra drawn from the same pool",
+        tiers:[["Tier 1","Match 6"],["Tier 2","Match 5 + bonus"],["Tier 3","Match 5"],["Tier 4","Match 4"],["Tier 5","Match 3"]],
+      },
+      jp_loto7:{
+        main:"7 numbers from 1–37", bonus:"2 extra drawn from the same pool",
+        tiers:[["Tier 1","Match 7"],["Tier 2","6 + 1 bonus or more"],["Tier 3","Match 6"],["Tier 4","Match 5"],["Tier 5","Match 4"],["Tier 6","3 + 1 bonus or more"]],
+      },
+      ca_lottomax:{
+        main:"7 numbers from 1–50", bonus:"1 extra drawn from the same pool",
+        tiers:[["Tier 1","Match 7"],["Tier 2","6 + bonus"],["Tier 3","Match 6"],["Tier 4","5 + bonus"],["Tier 5","Match 5"],["Tier 6","4 + bonus"],["Tier 7","Match 4 (fixed $20)"],["Tier 8","3 + bonus (fixed $20)"],["Tier 9","Match 3 (Free Play)"]],
+      },
+      ca_lotto649:{
+        main:"6 numbers from 1–49", bonus:"1 extra drawn from the same pool",
+        tiers:[["Tier 1","Match 6"],["Tier 2","5 + bonus"],["Tier 3","Match 5"],["Tier 4","Match 4"],["Tier 5","Match 3 (fixed $10)"],["Tier 6","2 + bonus (fixed $5)"],["Tier 7","Match 2 (Free Play)"]],
+      },
+      au_powerball:{
+        main:"7 numbers from 1–35", bonus:"1 from a separate pool, 1–20 (player-picked)",
+        tiers:[["Div 1","7 + Powerball"],["Div 2","7"],["Div 3","6 + Powerball"],["Div 4","6"],["Div 5","5 + Powerball"],["Div 6","4 + Powerball"],["Div 7","5"],["Div 8","3 + Powerball"],["Div 9","2 + Powerball"]],
+        note:"※ Div 6 (4 + Powerball) ranks above Div 7 (5, no Powerball) — Australia's rules weight a Powerball match more heavily.",
+      },
+      au_ozlotto:{
+        main:"7 numbers from 1–47", bonus:"3 supplementary drawn from the same pool",
+        tiers:[["Div 1","Match 7"],["Div 2","6 + 1 supp. or more"],["Div 3","Match 6"],["Div 4","5 + 1 supp. or more"],["Div 5","Match 5"],["Div 6","Match 4"],["Div 7","3 + 1 supp. or more"]],
+      },
+      au_tattslotto:{
+        main:"6 numbers from 1–45", bonus:"2 supplementary drawn from the same pool",
+        tiers:[["Div 1","Match 6"],["Div 2","5 + 1 supp. or more"],["Div 3","Match 5"],["Div 4","Match 4"],["Div 5","3 + 1 supp. or more"],["Div 6","Both supplementary numbers matched (regardless of main count)"]],
+      },
+    },
+  },
+  ja:{
+    navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド",
+    navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
+    pageTitle:"12ゲームの球構成から当選等級まで",
+    pageSub:"各ゲームの番号構成（メイン・ボーナスの範囲)と等級別当選条件を一か所にまとめました。各国の宝くじ運営会社の公式規定を基準に作成し、規定改正時にはこのページも合わせて更新します。",
+    footerNote:"本コンテンツは情報提供および統計的シミュレーション目的でのみ提供されます。PaperLottoは宝くじを販売せず、いかなる形でも賞金を支払いません。",
+    regionAll:"すべて", regionKr:"韓国", regionUs:"アメリカ", regionJp:"日本", regionCa:"カナダ", regionAu:"オーストラリア", regionEu:"欧州",
+    readMore:"詳細ページでもっと見る →",
+    pending:"このゲームの規則情報は準備中です。",
+    rcMain:"メイン番号", rcBonus:"ボーナス", rtGrade:"等級", rtCondition:"当選条件",
+    names:{
+      kr_lotto645:{name:'韓国ロト6/45', sub:'Korea · Lotto 6/45'},
+      us_powerball:{name:'パワーボール', sub:'USA · Powerball'},
+      us_megamillions:{name:'メガミリオンズ', sub:'USA · Mega Millions'},
+      eu_euromillions:{name:'ユーロミリオンズ', sub:'EU · EuroMillions'},
+      jp_miniloto:{name:'ミニロト', sub:'Japan · Mini Loto'},
+      jp_loto6:{name:'ロト6', sub:'Japan · Loto 6'},
+      jp_loto7:{name:'ロト7', sub:'Japan · Loto 7'},
+      ca_lottomax:{name:'ロトマックス', sub:'Canada · Lotto Max'},
+      ca_lotto649:{name:'ロト 6/49', sub:'Canada · Lotto 6/49'},
+      au_powerball:{name:'豪パワーボール', sub:'Australia · Powerball'},
+      au_ozlotto:{name:'オズロト', sub:'Australia · Oz Lotto'},
+      au_tattslotto:{name:'サタデーロト（Tatts Lotto）', sub:'Australia · Saturday Lotto'},
+    },
+    rules:{
+      kr_lotto645:{
+        main:"6個、1〜45から選択", bonus:"同じ抽選機から1個追加抽選(自分で選択しない)",
+        tiers:[["1等","6個一致"],["2等","5個+ボーナス一致"],["3等","5個一致"],["4等","4個一致"],["5等","3個一致"]],
+      },
+      us_powerball:{
+        main:"5個、1〜69から選択", bonus:"別の抽選機から1個、1〜26(自分で選択)",
+        tiers:[["1等","5個+パワーボール"],["2等","5個"],["3等","4個+パワーボール"],["4等","4個"],["5等","3個+パワーボール"],["6等","3個"],["7等","2個+パワーボール"],["8等","1個+パワーボール"],["9等","0個+パワーボール"]],
+      },
+      us_megamillions:{
+        main:"5個、1〜70から選択", bonus:"別の抽選機から1個、1〜24(自分で選択)",
+        tiers:[["1等","5個+メガボール"],["2等","5個"],["3等","4個+メガボール"],["4等","4個"],["5等","3個+メガボール"],["6等","3個"],["7等","2個+メガボール"],["8等","1個+メガボール"],["9等","0個+メガボール"]],
+      },
+      eu_euromillions:{
+        main:"5個、1〜50から選択", bonus:"別の抽選機から2個(ラッキースター)、1〜12(自分で選択)",
+        tiers:[["1等","5個+スター2個"],["2等","5個+スター1個"],["3等","5個+スター0個"],["4等","4個+スター2個"],["5等","4個+スター1個"],["6等","3個+スター2個"],["7等","4個+スター0個"],["8等","2個+スター2個"],["9等","3個+スター1個"],["10等","3個+スター0個"],["11等","1個+スター2個"],["12等","2個+スター1個"],["13等","2個+スター0個"]],
+        note:"※等級の順序は「一致数の順」ではなく、公式の賞金配分順です(例:4個+スター0個より3個+スター2個の方が上位等級)。",
+      },
+      jp_miniloto:{
+        main:"5個、1〜31から選択", bonus:"同じ抽選機から1個追加抽選",
+        tiers:[["1等","5個一致"],["2等","4個+ボーナス一致"],["3等","4個一致"],["4等","3個一致"]],
+      },
+      jp_loto6:{
+        main:"6個、1〜43から選択", bonus:"同じ抽選機から1個追加抽選",
+        tiers:[["1等","6個一致"],["2等","5個+ボーナス一致"],["3等","5個一致"],["4等","4個一致"],["5等","3個一致"]],
+      },
+      jp_loto7:{
+        main:"7個、1〜37から選択", bonus:"同じ抽選機から2個追加抽選",
+        tiers:[["1等","7個一致"],["2等","6個+ボーナス1個以上"],["3等","6個一致"],["4等","5個一致"],["5等","4個一致"],["6等","3個+ボーナス1個以上"]],
+      },
+      ca_lottomax:{
+        main:"7個、1〜50から選択", bonus:"同じ抽選機から1個追加抽選",
+        tiers:[["1等","7個一致"],["2等","6個+ボーナス一致"],["3等","6個一致"],["4等","5個+ボーナス一致"],["5等","5個一致"],["6等","4個+ボーナス一致"],["7等","4個一致(固定$20)"],["8等","3個+ボーナス一致(固定$20)"],["9等","3個一致(無料再挑戦)"]],
+      },
+      ca_lotto649:{
+        main:"6個、1〜49から選択", bonus:"同じ抽選機から1個追加抽選",
+        tiers:[["1等","6個一致"],["2等","5個+ボーナス一致"],["3等","5個一致"],["4等","4個一致"],["5等","3個一致(固定$10)"],["6等","2個+ボーナス一致(固定$5)"],["7等","2個一致(無料再挑戦)"]],
+      },
+      au_powerball:{
+        main:"7個、1〜35から選択", bonus:"別の抽選機から1個、1〜20(自分で選択)",
+        tiers:[["Div 1","7個+パワーボール"],["Div 2","7個"],["Div 3","6個+パワーボール"],["Div 4","6個"],["Div 5","5個+パワーボール"],["Div 6","4個+パワーボール"],["Div 7","5個"],["Div 8","3個+パワーボール"],["Div 9","2個+パワーボール"]],
+        note:"※Div6(4個+パワーボール)がDiv7(5個、パワーボールなし)より上位です — パワーボール一致を高く評価するオーストラリア特有の規定です。",
+      },
+      au_ozlotto:{
+        main:"7個、1〜47から選択", bonus:"同じ抽選機から3個(補充番号)追加抽選",
+        tiers:[["Div 1","7個一致"],["Div 2","6個+補充1個以上"],["Div 3","6個一致"],["Div 4","5個+補充1個以上"],["Div 5","5個一致"],["Div 6","4個一致"],["Div 7","3個+補充1個以上"]],
+      },
+      au_tattslotto:{
+        main:"6個、1〜45から選択", bonus:"同じ抽選機から2個(補充番号)追加抽選",
+        tiers:[["Div 1","6個一致"],["Div 2","5個+補充1個以上"],["Div 3","5個一致"],["Div 4","4個一致"],["Div 5","3個+補充1個以上"],["Div 6","補充番号2個をすべて一致(メイン一致数は問わない)"]],
+      },
+    },
+  },
+};
+
+let currentLang = 'ko';
+let currentRegion = 'all';
+const openCards = new Set();
+
+function renderRegionFilter(){
+  const t = I18N[currentLang];
+  const regions = [
+    ['all', t.regionAll], ['kr', t.regionKr], ['us', t.regionUs], ['jp', t.regionJp],
+    ['ca', t.regionCa], ['au', t.regionAu], ['eu', t.regionEu],
+  ];
+  const wrap = document.getElementById('regionFilter');
+  wrap.innerHTML = regions.map(([key, label]) =>
+    `<button class="region-btn${key===currentRegion?' active':''}" data-region="${key}" type="button">${label}</button>`
+  ).join('');
+  wrap.querySelectorAll('.region-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ currentRegion = btn.dataset.region; render(); });
+  });
+}
+
+function renderGuideList(){
+  const t = I18N[currentLang];
+  const list = document.getElementById('guideList');
+  const filtered = currentRegion==='all' ? GAMES : GAMES.filter(g=>g.region===currentRegion);
+
+  list.innerHTML = filtered.map(g=>{
+    const nameInfo = t.names[g.id];
+    const isOpen = openCards.has(g.id);
+    let bodyHtml;
+    const r = t.rules[g.id];
+    if (r){
+      const tableRows = r.tiers.map((row)=>`<tr><td class="rt-grade">${row[0]}</td><td>${row[1]}</td></tr>`).join('');
+      bodyHtml = `<div class="rule-composition">
+          <div class="rc-row"><span class="rc-label">${t.rcMain}</span><span>${r.main}</span></div>
+          <div class="rc-row"><span class="rc-label">${t.rcBonus}</span><span>${r.bonus}</span></div>
+        </div>
+        <table class="rule-table">
+          <thead><tr><th>${t.rtGrade}</th><th>${t.rtCondition}</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+        ${r.note ? `<div class="rule-note">${r.note}</div>` : ''}
+        <a class="detail-link" href="${g.detail}">${t.readMore}</a>`;
+    } else {
+      bodyHtml = `<div class="pending-note">${t.pending}</div>`;
+    }
+    return `<div class="game-card${isOpen?' open':''}" data-id="${g.id}" style="--accent:${g.accent}">
+      <div class="game-card-head">
+        <div class="game-card-title">
+          <span class="game-flag">${g.flag}</span>
+          <div>
+            <div class="game-name">${nameInfo.name}</div>
+            <div class="game-name-sub">${nameInfo.sub}</div>
+          </div>
+        </div>
+        <span class="game-toggle-icon">+</span>
+      </div>
+      <div class="game-card-body">${bodyHtml}</div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('.game-card-head').forEach(head=>{
+    head.addEventListener('click', ()=>{
+      const card = head.closest('.game-card');
+      const id = card.dataset.id;
+      if (openCards.has(id)) openCards.delete(id); else openCards.add(id);
+      card.classList.toggle('open');
+    });
+  });
+}
+
+function applyStaticI18n(){
+  const t = I18N[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+}
+
+function render(){
+  document.documentElement.lang = currentLang; // auth-widget.js가 언어 변경을 감지하도록
+  applyStaticI18n();
+  renderRegionFilter();
+  renderGuideList();
+  if (typeof renderTicker === 'function') renderTicker();
+}
+
+document.querySelectorAll('.lang-toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentLang = btn.dataset.lang;
+    document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active', b===btn));
+    render();
+  });
+});
+
+// ─── 상단 LIVE 티커 (헤더 고정용, 페이지 자체 GAMES와는 별개의 독립 데이터) ───
+const TICKER_GAMES = [
+  { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
+  { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:20, drawMinute:45, tz:'Europe/Paris' },
+  { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'ca_lottomax', accent:'ca', nameKo:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', odds:'33,446,140', days:[2,5], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'ca_lotto649', accent:'ca', nameKo:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', odds:'13,983,816', days:[3,6], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'au_powerball', accent:'au', nameKo:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', odds:'134,490,400', days:[4], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_ozlotto', accent:'au', nameKo:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', odds:'62,891,499', days:[2], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_tattslotto', accent:'au', nameKo:'새터데이로또', nameEn:'Saturday Lotto', nameJa:'サタデーロト', odds:'8,145,060', days:[6], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'kr_lotto645', accent:'kr', nameKo:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', odds:'8,145,060', days:[6], drawHour:20, drawMinute:45, tz:'Asia/Seoul' },
+];
+const TICKER_WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+function tkZonedTimeToUtc(dateStr, hour, minute, timeZone){
+  const naiveUtc = new Date(`${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);
+  const tzDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone }));
+  const utcDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const offset = utcDate.getTime() - tzDate.getTime();
+  return new Date(naiveUtc.getTime() + offset);
+}
+function tkNextDrawDate(days, hour, minute, timeZone){
+  const now = new Date();
+  let best = null;
+  for (let addDays = 0; addDays < 8; addDays++){
+    const candidate = new Date(now.getTime() + addDays * 86400000);
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(candidate);
+    const wd = TICKER_WEEKDAY_NUM[wdName];
+    if (!days.includes(wd)) continue;
+    const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone }).format(candidate);
+    const drawUtc = tkZonedTimeToUtc(dateStr, hour, minute, timeZone);
+    if (drawUtc > now && (!best || drawUtc < best)) best = drawUtc;
+  }
+  return best;
+}
+function tkFmtCountdown(target){
+  const dayLabel = currentLang === 'ko' ? '일' : currentLang === 'ja' ? '日' : 'd';
+  const hourLabel = currentLang === 'ko' ? '시간' : currentLang === 'ja' ? '時間' : 'h';
+  const diff = Math.max(0, target - new Date());
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return d > 0 ? `${d}${dayLabel} ${h}${hourLabel}` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+TICKER_GAMES.forEach(g => { g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz); });
+function renderTicker(){
+  const nameKey = currentLang === 'ko' ? 'nameKo' : currentLang === 'ja' ? 'nameJa' : 'nameEn';
+  const items = TICKER_GAMES.map(g => `
+    <div class="ticker-item">
+      <span class="flag" style="background:var(--${g.accent})"></span>
+      <span class="name">${g[nameKey] || g.nameEn}</span>
+      <span class="odds mono">1/${g.odds}</span>
+      <span class="cd mono" data-tcd="${g.id}">${tkFmtCountdown(g.next)}</span>
+    </div>`).join('');
+  const track = document.getElementById('tickerTrack');
+  if (track) track.innerHTML = items + items;
+}
+setInterval(() => {
+  document.querySelectorAll('[data-tcd]').forEach(el => {
+    const g = TICKER_GAMES.find(x => x.id === el.dataset.tcd);
+    if (!g) return;
+    if (new Date() >= g.next) g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz);
+    el.textContent = tkFmtCountdown(g.next);
+  });
+}, 1000);
+
+// 첫 번째 게임은 기본으로 펼쳐서 보여줌
+render();
+</script>
+<script src="auth-widget.js"></script>
+</body>
+</html>
