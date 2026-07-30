@@ -614,6 +614,7 @@ function applyStaticI18n(){
 }
 
 function render(){
+  document.documentElement.lang = currentLang; // auth-widget.js가 언어 변경을 감지하도록
   applyStaticI18n();
   renderRegionFilter();
   renderGuideList();
