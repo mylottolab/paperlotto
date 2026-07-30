@@ -120,9 +120,10 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
   .list-header .lh-game{ width:44px; }
   .list-header .lh-round{ width:60px; }
   .list-header .lh-numbers{ min-width:90px; }
-  .list-header .lh-memo{ width:56px; }
-  .list-header .lh-drawn{ width:52px; }
-  .list-header .lh-grade{ width:44px; }
+  .list-header .row-break{ flex-basis:100%; width:100%; height:0; overflow:visible; }
+  .list-header .lh-memo{ width:auto; }
+  .list-header .lh-drawn{ width:auto; }
+  .list-header .lh-grade{ width:auto; }
 }
 .entry-row{
   display:flex; align-items:center; gap:10px; padding:14px 18px;
@@ -139,6 +140,7 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
 .entry-drawn{ font-size:10.5px; font-weight:600; width:64px; flex-shrink:0; }
 .entry-drawn.is-yes{ color:var(--ok); }
 .entry-drawn.is-no{ color:var(--ink-dim); }
+.row-break{ flex-basis:0; width:0; height:0; overflow:hidden; }
 .pip{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; background:rgba(28,33,48,0.07); color:var(--ink-dim); flex-shrink:0; }
 .pip.bonus{ background:var(--gold); color:var(--ink); }
 
@@ -210,15 +212,21 @@ main{ max-width:820px; margin:0 auto; padding:28px 24px 90px; }
   .tb-btn{ flex:1 1 auto; font-size:11.5px; padding:9px 10px; }
 
   .entry-row{
-    flex-wrap:wrap; padding:10px 10px; gap:6px; row-gap:8px; font-size:11px;
+    flex-wrap:wrap; padding:10px 10px; gap:6px; row-gap:6px; font-size:11px;
   }
   .entry-date{ width:52px; }
   .entry-game{ width:44px; }
   .entry-round{ width:60px; }
   .entry-numbers{ min-width:90px; }
-  .entry-memo{ width:56px; }
-  .entry-drawn{ width:52px; }
-  .entry-grade{ margin-left:0; }
+  .row-break{ flex-basis:100%; width:100%; height:0; overflow:visible; }
+  .entry-memo{
+    width:100%; white-space:normal; overflow:visible; text-overflow:clip;
+    font-size:11px; color:var(--ink-dim); font-style:italic;
+  }
+  .entry-memo:empty, .entry-memo[data-empty="1"]{ display:none; }
+  .entry-drawn{ width:auto; font-size:10px; }
+  .entry-grade{ margin-left:0; font-size:10.5px; padding:3px 8px; }
+  .entry-action{ order:0; }
   .pip{ width:22px; height:22px; font-size:10px; }
 }
 @media (max-width:380px){
@@ -423,11 +431,22 @@ const GAME_SCHEDULE = {
   au_ozlotto:      { drawDays:[2],   h:20, min:30, tz:'Australia/Sydney' },
   au_tattslotto:   { drawDays:[6],   h:20, min:30, tz:'Australia/Sydney' },
 };
-// draw_results에 없는(아직 안 뽑힌) 회차의 예상 추첨일 계산 — 하단 티커의 tkNextDrawDate()를 재사용
-function estimateNextDrawDate(gameId){
+// draw_results에 없는(아직 안 뽑힌) 회차의 예상 추첨일 계산 — 하단 티커의 tkNextDrawDate()를 재사용.
+// 주의: tkNextDrawDate()가 반환하는 Date는 특정 UTC 순간일 뿐이라, 이걸 그대로 브라우저의 로컬시간(예: 한국시간)
+// 기준 getFullYear()/getMonth()/getDate()로 읽으면 게임의 "현지 날짜"와 하루 어긋날 수 있다.
+// (예: 미국 파워볼이 현지 8/1 22:59에 추첨돼도 이는 UTC로는 8/2, 한국시간으로도 8/2가 되어버림)
+// 그래서 Intl.DateTimeFormat에 게임의 timeZone을 명시해서 "그 나라 기준 날짜"를 직접 뽑아낸다.
+function estimateNextDrawLocalStr(gameId){
   const s = GAME_SCHEDULE[gameId];
   if (!s) return null;
-  return tkNextDrawDate(s.drawDays, s.h, s.min, s.tz);
+  const next = tkNextDrawDate(s.drawDays, s.h, s.min, s.tz);
+  if (!next) return null;
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: s.tz, year:'2-digit', month:'2-digit', day:'2-digit' }).formatToParts(next);
+  const y = (parts.find(p => p.type === 'year') || {}).value;
+  const m = (parts.find(p => p.type === 'month') || {}).value;
+  const d = (parts.find(p => p.type === 'day') || {}).value;
+  if (!y || !m || !d) return null;
+  return y + '.' + m + '.' + d;
 }
 
 let allEntries = [];
@@ -451,9 +470,12 @@ function renderListHeader(){
     '<span class="lh-col lh-date" data-sort="created_at">' + t.colDate + arrow('created_at') + '</span>' +
     '<span class="lh-col lh-game" data-sort="game_id">' + t.colGame + arrow('game_id') + '</span>' +
     '<span class="lh-col lh-round" data-sort="round_no">' + t.colRound + arrow('round_no') + '</span>' +
+    '<span class="row-break"></span>' +
     '<span class="lh-numbers">' + t.colNumbers + '</span>' +
+    '<span class="row-break"></span>' +
     '<span class="lh-col lh-memo" data-sort="memo">' + t.colMemo + arrow('memo') + '</span>' +
-    '<span class="lh-col lh-drawn" data-sort="draw_date_display">' + t.colDrawn + arrow('draw_date_display') + '</span>' +
+    '<span class="row-break"></span>' +
+    '<span class="lh-col lh-drawn" data-sort="draw_date_sort_key">' + t.colDrawn + arrow('draw_date_sort_key') + '</span>' +
     '<span class="lh-col lh-grade" data-sort="grade">' + t.colGrade + arrow('grade') + '</span>';
   header.querySelectorAll('[data-sort]').forEach((el) => {
     el.addEventListener('click', () => {
@@ -526,12 +548,15 @@ async function loadDrawDates(){
   allEntries.forEach((e) => {
     e.draw_date = drawDateMap[e.game_id + '_' + e.round_no] || null;
     if (e.draw_date) {
-      e.draw_date_display = e.draw_date;
       e.draw_date_is_estimate = false;
+      e.draw_date_str = fmtShortDate(e.draw_date);
+      e.draw_date_sort_key = e.draw_date;
     } else {
-      const estimated = estimateNextDrawDate(e.game_id);
-      e.draw_date_display = estimated ? estimated.toISOString() : null;
-      e.draw_date_is_estimate = !!estimated;
+      const estimatedStr = estimateNextDrawLocalStr(e.game_id);
+      e.draw_date_is_estimate = !!estimatedStr;
+      e.draw_date_str = estimatedStr ? ('~' + estimatedStr) : null;
+      // 정렬용 키는 '26.08.01' 형태를 나중 비교가 쉬운 '2026-08-01' 형태로 변환
+      e.draw_date_sort_key = estimatedStr ? ('20' + estimatedStr.split('.').join('-')) : null;
     }
   });
 }
@@ -601,17 +626,21 @@ function renderList(){
       ? '<button class="grade-btn" data-id="' + e.id + '">' + t.gradeBtn + '</button>'
       : '';
     const isDrawn = !!e.draw_date && new Date(e.draw_date) <= new Date();
-    const drawnHtml = !e.draw_date_display
+    const drawnHtml = !e.draw_date_str
       ? '<span class="entry-drawn">' + t.drawnUnknown + '</span>'
       : '<span class="entry-drawn ' + (isDrawn ? 'is-yes' : 'is-no') + '">' + (isDrawn ? t.drawnYes : t.drawnNo) + '</span>';
-    const memoText = e.memo ? String(e.memo) : '-';
+    const hasMemo = !!e.memo;
+    const memoText = hasMemo ? String(e.memo) : '-';
     return '<div class="entry-row" data-id="' + e.id + '">' +
       '<input type="checkbox" class="entry-check" data-id="' + e.id + '">' +
       '<div class="entry-date mono">' + fmtShortDate(e.created_at) + '</div>' +
       '<div class="entry-game">' + (GAME_LABELS[e.game_id] || e.game_id) + '</div>' +
-      '<div class="entry-round mono">#' + e.round_no + '<br><span class="rd-draw">' + (e.draw_date_display ? (e.draw_date_is_estimate ? '~' : '') + fmtShortDate(e.draw_date_display) : '-') + '</span></div>' +
+      '<div class="entry-round mono">#' + e.round_no + '<br><span class="rd-draw">' + (e.draw_date_str || '-') + '</span></div>' +
+      '<span class="row-break"></span>' +
       '<div class="entry-numbers">' + mainPips + bonusPips + goldBallHtml + '</div>' +
-      '<div class="entry-memo" title="' + memoText.replace(/"/g,'&quot;') + '">' + memoText + '</div>' +
+      '<span class="row-break"></span>' +
+      '<div class="entry-memo"' + (hasMemo ? '' : ' data-empty="1"') + ' title="' + memoText.replace(/"/g,'&quot;') + '">' + memoText + '</div>' +
+      '<span class="row-break"></span>' +
       drawnHtml +
       gradeHtml +
       '<div class="entry-action">' + actionHtml + '</div>' +
