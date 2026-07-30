@@ -302,6 +302,8 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   nav a{ white-space:nowrap; }
   .lang-toggle button{ padding:5px 9px; font-size:11px; }
   .hero{ padding:56px 20px 40px; }
+  .hero-actions{ gap:8px; flex-wrap:nowrap; width:100%; }
+  .hero-actions .btn{ font-size:12px; padding:11px 8px; flex:1 1 0; justify-content:center; gap:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   main{ padding:0 18px 70px; }
   .foot-legal{ font-size:10px; line-height:2; }
 }
@@ -349,6 +351,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   <div class="hero-actions">
     <a href="#board" class="btn btn-primary" data-i18n="heroBtnBoard">게임 보드 보기 ↓</a>
     <a href="paperlotto_guide_mockup.html" class="btn btn-ghost" data-i18n="heroBtnGuide">전략 가이드 읽기</a>
+    <a href="paperlotto_game_rules_mockup.html" class="btn btn-ghost" data-i18n="heroBtnRules">게임 규칙</a>
   </div>
   <div class="hero-note" data-i18n="heroNote">PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.</div>
 </section>
@@ -449,7 +452,7 @@ const i18n = {
     liveBoard:"LIVE BOARD",
     heroTitle:'세계 12개 복권을,<br><span class="accent">실제 돈 없이</span> 종이 위에서 실험하세요',
     heroSub:"한국·미국·일본·캐나다·호주·유럽 — 당신의 전략 번호를 가상으로 등록하고, 실제 추첨 결과와 비교하며 데이터로 검증합니다.",
-    heroBtnBoard:"게임 보드 보기 ↓", heroBtnGuide:"전략 가이드 읽기",
+    heroBtnBoard:"게임 보드 보기 ↓", heroBtnGuide:"전략 가이드 읽기", heroBtnRules:"게임 규칙",
     heroNote:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
     wfBannerTitle:"역대 당첨번호, 데이터로 받아보세요",
     wfBannerDesc:"12개국 복권 전체 회차의 당첨번호를 CSV 파일로 다운로드할 수 있습니다. (다운로드당 2,500P, 24시간 이내 재다운로드 무료)",
@@ -473,7 +476,7 @@ const i18n = {
     liveBoard:"LIVE BOARD",
     heroTitle:'Try 12 lotteries from around the world<br><span class="accent">with no real money</span>, on paper',
     heroSub:"Korea · US · Japan · Canada · Australia · Europe — register your strategic numbers virtually and validate them against real draw results with data.",
-    heroBtnBoard:"View Game Board ↓", heroBtnGuide:"Read Strategy Guide",
+    heroBtnBoard:"View Game Board ↓", heroBtnGuide:"Read Strategy Guide", heroBtnRules:"Game Rules",
     heroNote:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
     wfBannerTitle:"Get historical winning numbers, as data",
     wfBannerDesc:"Download the full winning-number history for all 12 lotteries as a CSV file. (2,500P per download, free re-download within 24h)",
@@ -497,7 +500,7 @@ const i18n = {
     liveBoard:"LIVE BOARD",
     heroTitle:'世界12の宝くじを、<br><span class="accent">実際のお金を使わず</span>紙の上で体験',
     heroSub:"韓国・アメリカ・日本・カナダ・オーストラリア・ヨーロッパ — 戦略番号を仮想登録し、実際の抽選結果と比較してデータで検証します。",
-    heroBtnBoard:"ゲームボードを見る ↓", heroBtnGuide:"攻略ガイドを読む",
+    heroBtnBoard:"ゲームボードを見る ↓", heroBtnGuide:"攻略ガイドを読む", heroBtnRules:"ゲームルール",
     heroNote:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
     wfBannerTitle:"歴代当選番号を、データで受け取る",
     wfBannerDesc:"12カ国の宝くじ全回の当選番号をCSVファイルでダウンロードできます。（1回2,500P、24時間以内の再ダウンロードは無料）",
