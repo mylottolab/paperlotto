@@ -80,7 +80,7 @@ nav{ display:flex; align-items:center; gap:22px; font-size:14px; color:var(--tex
 nav a{ text-decoration:none; }
 nav a:hover{ color:var(--text-hi); }
 .header-right{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
-.row-break-1, .row-break-2{ display:none; }
+.row-break-1, .row-break-2, #authSlot1, #authSlot2{ display:none; }
 .lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; flex-shrink:0; }
 .lang-toggle button{
   border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600;
@@ -304,21 +304,17 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 @media (max-width:640px){
   header{ padding:10px 16px; flex-wrap:wrap; gap:6px; }
   .header-right{
-    width:100%; align-items:flex-start;
-    display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:4px 10px;
+    width:100%; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; gap:4px 10px;
   }
-  /* nav와 authWidget은 그대로 두되 display:contents로 "투명화"해서, 그 자식들(링크들 / 포인트+충전 줄 / 이메일+로그아웃 줄)이
-     .header-right의 flex 대열에 바로 합류하게 만든다. 그래야 아래 order 값으로 자유롭게 3줄로 재배치할 수 있다. */
-  nav{ display:contents; }
-  #authWidget{ display:contents; }
-  .lang-toggle{ order:1; }
-  #authWidget .auth-widget-row:first-child{ order:2; } /* 포인트 + 충전 */
-  #authWidget .auth-login-btn{ order:2; } /* 비로그인 상태일 때의 로그인 버튼도 같은 자리에 */
-  .row-break-1{ display:block; order:3; flex-basis:100%; width:100%; height:0; }
-  nav a{ order:4; white-space:nowrap; }
-  .row-break-2{ display:block; order:5; flex-basis:100%; width:100%; height:0; }
-  #authWidget .auth-widget-row:last-child{ order:6; } /* 이메일 + 로그아웃 */
-  nav{ font-size:11px; gap:6px 12px; }
+  /* DOM 순서 자체를 [언어선택, 포인트+충전] → (강제 줄바꿈) → [nav 링크들] → (강제 줄바꿈) → [이메일+로그아웃]
+     순으로 만들어두었기 때문에(아래 JS에서 이메일+로그아웃 줄을 authSlot2로 옮김), 별도의 order 지정 없이
+     flex-wrap만으로 정확히 3줄이 된다. (display:contents는 일부 모바일 브라우저에서 flex와 함께 쓰일 때
+     버그가 있어 가로 스크롤을 유발할 수 있어 사용하지 않는다.) */
+  .row-break-1, .row-break-2{ display:block; flex-basis:100%; width:100%; height:0; }
+  nav{ display:flex; flex-wrap:wrap; gap:6px 12px; font-size:11px; }
+  nav a{ white-space:nowrap; }
+  #authSlot1, #authSlot2{ display:flex; }
+  #authWidget:empty{ display:none; }
   .lang-toggle button{ padding:5px 9px; font-size:11px; }
   .ticker-wrap{ padding:7px 0; }
   .ticker-label{ padding:0 10px 0 16px; }
@@ -350,6 +346,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <button data-lang="ja" type="button">JA</button>
     </div>
     <span class="row-break-1"></span>
+    <div id="authSlot1"></div>
     <span class="row-break-2"></span>
     <nav>
       <a href="#board" data-i18n="navGames">전체 게임</a>
@@ -359,6 +356,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용설명</a>
       <div id="authWidget"></div>
     </nav>
+    <div id="authSlot2"></div>
   </div>
 </header>
 
@@ -668,5 +666,37 @@ applyLang(currentLang);
 </script>
 
 <script src="auth-widget.js"></script>
+<script>
+// ─── 모바일 전용 헤더 재배치 ───────────────────────────────────────────
+// auth-widget.js가 #authWidget 안에 넣어주는 내용(로그인 전: 로그인 버튼 1개 /
+// 로그인 후: [포인트+충전] [이메일+로그아웃] 2줄)을, 좁은 화면에서는 실제 DOM 위치를
+// #authSlot1(언어선택 옆) / #authSlot2(nav 링크 아래)로 옮겨서 3줄 레이아웃을 만든다.
+// (display:contents로 처리하면 일부 모바일 브라우저의 flexbox 버그로 가로 스크롤이
+// 생길 수 있어서, 안전하게 실제 요소를 이동시키는 방식을 쓴다.)
+(function(){
+  const authWidget = document.getElementById('authWidget');
+  const slot1 = document.getElementById('authSlot1');
+  const slot2 = document.getElementById('authSlot2');
+  if (!authWidget || !slot1 || !slot2) return;
+  const mq = window.matchMedia('(max-width:640px)');
+
+  function relocate(){
+    if (mq.matches) {
+      // 모바일: authWidget의 1번째 자식은 slot1로, 2번째(있으면)는 slot2로
+      const first = authWidget.firstElementChild;
+      if (first) slot1.appendChild(first);
+      const second = authWidget.firstElementChild; // 위에서 옮기고 남은 다음 자식
+      if (second) slot2.appendChild(second);
+    } else {
+      // 데스크톱: slot에 있던 걸 원래 authWidget 자리로 복원 (순서 유지)
+      if (slot1.firstElementChild) authWidget.appendChild(slot1.firstElementChild);
+      if (slot2.firstElementChild) authWidget.appendChild(slot2.firstElementChild);
+    }
+  }
+  new MutationObserver(relocate).observe(authWidget, { childList:true });
+  if (mq.addEventListener) mq.addEventListener('change', relocate);
+  relocate();
+})();
+</script>
 </body>
 </html>
