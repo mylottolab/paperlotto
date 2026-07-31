@@ -135,6 +135,30 @@ table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
 .strategy-list .mark{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--gold); font-weight:700; margin-top:3px; flex-shrink:0; }
 .strategy-note{ font-size:12px; color:var(--ink-dim); margin-bottom:16px; font-style:italic; }
 
+.sg-cta-banner{
+  display:flex; align-items:center; gap:16px; margin:20px 0; text-decoration:none;
+  padding:20px 24px; border-radius:14px;
+  background:linear-gradient(135deg, var(--gold-bright), var(--gold));
+  color:var(--ink); box-shadow:0 10px 30px -12px rgba(224,170,78,0.6);
+  position:relative; overflow:hidden;
+}
+.sg-cta-banner:hover{ filter:brightness(1.04); }
+.sg-cta-banner::after{
+  content:'NEW'; position:absolute; top:11px; right:-30px; background:#1c2130; color:#fff;
+  font-size:10px; font-weight:800; padding:3px 34px; transform:rotate(35deg); letter-spacing:1px;
+}
+.sg-cta-icon{ font-size:32px; flex-shrink:0; }
+.sg-cta-text{ flex:1; min-width:200px; }
+.sg-cta-title{ font-family:'Fraunces',serif; font-size:17px; font-weight:700; margin-bottom:4px; color:var(--ink); }
+.sg-cta-sub{ font-size:12.5px; opacity:0.85; line-height:1.5; color:var(--ink); }
+.sg-cta-btn{
+  flex-shrink:0; background:#1c2130; color:#fff; padding:11px 20px; border-radius:9px;
+  font-weight:700; font-size:13px; white-space:nowrap;
+}
+@media (max-width:640px){
+  .sg-cta-banner{ flex-direction:column; align-items:flex-start; text-align:left; }
+  .sg-cta-btn{ width:100%; text-align:center; }
+}
 .final-cta{ margin-top:44px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); border-radius:14px; padding:38px 34px; color:var(--ink); text-align:center; }
 .final-cta h3{ font-size:24px; font-weight:600; margin-bottom:10px; }
 .final-cta p{ font-size:14px; opacity:0.85; max-width:440px; margin:0 auto 22px; line-height:1.7; }
@@ -285,6 +309,15 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="sheet-body" id="s4body"></div>
   </div>
 
+  <a class="sg-cta-banner" href="paperlotto_guide_mockup.html?open=au_tattslotto">
+    <div class="sg-cta-icon">🎯</div>
+    <div class="sg-cta-text">
+      <div class="sg-cta-title" data-i18n="sgCtaTitle">🎯 전략 번호 생성기로 나만의 조합 만들기</div>
+      <div class="sg-cta-sub" data-i18n="sgCtaSub">홀짝비율·상위빈도·번호합 등 조건을 지정해서 원하는 개수만큼 번호를 생성해보세요.</div>
+    </div>
+    <span class="sg-cta-btn" data-i18n="sgCtaBtn">생성기 열기 →</span>
+  </a>
+
   <div class="final-cta">
     <h3 data-i18n="finalH">실제 돈 없이, 판단은 진짜로</h3>
     <p data-i18n="finalP">한국 로또와 쌍둥이처럼 닮은 구조에, 호주만의 이벤트 추첨까지. PaperLotto에서 직접 비교하며 경험해보세요.</p>
@@ -366,6 +399,7 @@ const i18n = {
         <li><span class="mark">02</span>다만 보너스 번호가 2개(한국은 1개)라서, "보너스 1~2개 중 하나라도 일치"하는 조건이 한국보다 조금 더 자주 걸릴 수 있어요.</li>
         <li><span class="mark">03</span>Superdraw·Megadraw 주간을 노려서 등록해보는 것도 호주식 관전 포인트입니다.</li>
       </ul>`,
+    sgCtaTitle:"🎯 전략 번호 생성기로 나만의 조합 만들기", sgCtaSub:"홀짝비율·상위빈도·번호합 등 조건을 지정해서 원하는 개수만큼 번호를 생성해보세요.", sgCtaBtn:"생성기 열기 →",
     finalH:"실제 돈 없이, 판단은 진짜로",
     finalP:"한국 로또와 쌍둥이처럼 닮은 구조에, 호주만의 이벤트 추첨까지. PaperLotto에서 직접 비교하며 경험해보세요.",
     finalDisclaimer:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
@@ -421,6 +455,7 @@ const i18n = {
         <li><span class="mark">02</span>With 2 bonus numbers (versus 1 in Korea), "matching at least one of 1–2 bonus numbers" may hit slightly more often than in Korea.</li>
         <li><span class="mark">03</span>Targeting Superdraw/Megadraw weeks to register is also a distinctly Australian point of interest.</li>
       </ul>`,
+    sgCtaTitle:"🎯 Build Your Own Combinations with the Strategy Generator", sgCtaSub:"Set conditions like odd-even ratio, top frequency, and number sum, then generate as many combinations as you want.", sgCtaBtn:"Open Generator →",
     finalH:"No real money, real decisions",
     finalP:"A structure that's practically a twin of Korea's lotto, plus Australia's own special-event draws. Compare and experience it directly on PaperLotto.",
     finalDisclaimer:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
@@ -476,6 +511,7 @@ const i18n = {
         <li><span class="mark">02</span>ただしボーナス番号が2個（韓国は1個）のため、「ボーナス1〜2個のうちどちらか一致」する条件が韓国よりやや頻繁に発生する可能性があります。</li>
         <li><span class="mark">03</span>Superdraw・Megadrawの週を狙って登録するのもオーストラリアならではの見どころです。</li>
       </ul>`,
+    sgCtaTitle:"🎯 戦略番号ジェネレーターで自分だけの組み合わせを", sgCtaSub:"奇偶比率・上位頻度・番号合計などの条件を指定して、好きな数だけ番号を生成してみましょう。", sgCtaBtn:"ジェネレーターを開く →",
     finalH:"実際のお金なしで、判断は本物",
     finalP:"韓国ロトと双子のように似た構造に、オーストラリア独自のイベント抽選まで。PaperLottoで直接比較しながら体験しましょう。",
     finalDisclaimer:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",

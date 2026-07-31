@@ -138,6 +138,30 @@ table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
 .strategy-list .mark{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--gold); font-weight:700; margin-top:3px; flex-shrink:0; }
 .strategy-note{ font-size:12px; color:var(--ink-dim); margin-bottom:16px; font-style:italic; }
 
+.sg-cta-banner{
+  display:flex; align-items:center; gap:16px; margin:20px 0; text-decoration:none;
+  padding:20px 24px; border-radius:14px;
+  background:linear-gradient(135deg, var(--gold-bright), var(--gold));
+  color:var(--ink); box-shadow:0 10px 30px -12px rgba(224,170,78,0.6);
+  position:relative; overflow:hidden;
+}
+.sg-cta-banner:hover{ filter:brightness(1.04); }
+.sg-cta-banner::after{
+  content:'NEW'; position:absolute; top:11px; right:-30px; background:#1c2130; color:#fff;
+  font-size:10px; font-weight:800; padding:3px 34px; transform:rotate(35deg); letter-spacing:1px;
+}
+.sg-cta-icon{ font-size:32px; flex-shrink:0; }
+.sg-cta-text{ flex:1; min-width:200px; }
+.sg-cta-title{ font-family:'Fraunces',serif; font-size:17px; font-weight:700; margin-bottom:4px; color:var(--ink); }
+.sg-cta-sub{ font-size:12.5px; opacity:0.85; line-height:1.5; color:var(--ink); }
+.sg-cta-btn{
+  flex-shrink:0; background:#1c2130; color:#fff; padding:11px 20px; border-radius:9px;
+  font-weight:700; font-size:13px; white-space:nowrap;
+}
+@media (max-width:640px){
+  .sg-cta-banner{ flex-direction:column; align-items:flex-start; text-align:left; }
+  .sg-cta-btn{ width:100%; text-align:center; }
+}
 .final-cta{ margin-top:44px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); border-radius:14px; padding:38px 34px; color:var(--ink); text-align:center; }
 .final-cta h3{ font-size:24px; font-weight:600; margin-bottom:10px; }
 .final-cta p{ font-size:14px; opacity:0.85; max-width:440px; margin:0 auto 22px; line-height:1.7; }
@@ -288,6 +312,15 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="sheet-body" id="s4body"></div>
   </div>
 
+  <a class="sg-cta-banner" href="paperlotto_guide_mockup.html?open=jp_loto6">
+    <div class="sg-cta-icon">🎯</div>
+    <div class="sg-cta-text">
+      <div class="sg-cta-title" data-i18n="sgCtaTitle">🎯 전략 번호 생성기로 나만의 조합 만들기</div>
+      <div class="sg-cta-sub" data-i18n="sgCtaSub">홀짝비율·상위빈도·번호합 등 조건을 지정해서 원하는 개수만큼 번호를 생성해보세요.</div>
+    </div>
+    <span class="sg-cta-btn" data-i18n="sgCtaBtn">생성기 열기 →</span>
+  </a>
+
   <div class="final-cta">
     <h3 data-i18n="finalH">실제 돈 없이, 판단은 진짜로</h3>
     <p data-i18n="finalP">일본 복권의 원조, 주 2회 추첨의 기회, 세금 0원까지 — 한국 로또와 가장 닮은 이 게임을 PaperLotto에서 경험해보세요.</p>
@@ -370,6 +403,7 @@ const i18n = {
         <li><span class="mark">01</span>한국 로또 6/45와 구조가 가장 비슷한 일본 게임이에요 (6개 선택, 보너스 1개, 같은 풀 추첨). 한국 로또 전략을 거의 그대로 적용해볼 수 있습니다.</li>
         <li><span class="mark">02</span>주 2회 추첨이라는 특성상, 한 주에 두 번의 결과를 비교하며 전략을 더 빠르게 검증해볼 수 있어요.</li>
       </ul>`,
+    sgCtaTitle:"🎯 전략 번호 생성기로 나만의 조합 만들기", sgCtaSub:"홀짝비율·상위빈도·번호합 등 조건을 지정해서 원하는 개수만큼 번호를 생성해보세요.", sgCtaBtn:"생성기 열기 →",
     finalH:"실제 돈 없이, 판단은 진짜로",
     finalP:"일본 복권의 원조, 주 2회 추첨의 기회, 세금 0원까지 — 한국 로또와 가장 닮은 이 게임을 PaperLotto에서 경험해보세요.",
     finalDisclaimer:"PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다.",
@@ -426,6 +460,7 @@ const i18n = {
         <li><span class="mark">01</span>Structurally the closest Japanese game to Korea's Lotto 6/45 (6 picks, 1 bonus, same pool). You can apply Korean lotto strategies almost as-is.</li>
         <li><span class="mark">02</span>With two draws a week, you can compare two sets of results within a single week and validate your strategy faster.</li>
       </ul>`,
+    sgCtaTitle:"🎯 Build Your Own Combinations with the Strategy Generator", sgCtaSub:"Set conditions like odd-even ratio, top frequency, and number sum, then generate as many combinations as you want.", sgCtaBtn:"Open Generator →",
     finalH:"No real money, real decisions",
     finalP:"The original Japanese lottery, twice-weekly draws, zero tax — try the game most similar to Korea's lotto virtually on PaperLotto.",
     finalDisclaimer:"PaperLotto does not sell lottery tickets and does not pay out any prizes.",
@@ -482,6 +517,7 @@ const i18n = {
         <li><span class="mark">01</span>韓国のロト6/45と構造が最も似ている日本のゲームです（6個選択、ボーナス1個、同じプールから抽選）。韓国ロトの戦略をほぼそのまま応用できます。</li>
         <li><span class="mark">02</span>週2回抽選という特性上、1週間で2回の結果を比較しながら戦略をより早く検証できます。</li>
       </ul>`,
+    sgCtaTitle:"🎯 戦略番号ジェネレーターで自分だけの組み合わせを", sgCtaSub:"奇偶比率・上位頻度・番号合計などの条件を指定して、好きな数だけ番号を生成してみましょう。", sgCtaBtn:"ジェネレーターを開く →",
     finalH:"実際のお金なしで、判断は本物",
     finalP:"日本の宝くじの元祖、週2回の抽選機会、非課税まで — 韓国のロトに最も似たこのゲームをPaperLottoで体験しましょう。",
     finalDisclaimer:"PaperLottoは宝くじを販売しておらず、いかなる形式の賞金も支払いません。",
