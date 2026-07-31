@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>전략 가이드 — PaperLotto</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -93,6 +97,87 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
 .strategy-list li{ display:flex; gap:12px; align-items:flex-start; font-size:14px; line-height:1.7; }
 .strategy-list .mark{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--gold); font-weight:700; margin-top:3px; flex-shrink:0; }
 .strategy-list .detail-link{ display:inline-block; margin-top:6px; font-size:12.5px; color:var(--gold); text-decoration:underline; }
+
+/* ── 전략 번호 생성기 위젯 ── */
+.sg-wrap{ margin-top:22px; padding-top:20px; border-top:1px dashed rgba(28,33,48,0.18); }
+.sg-title-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+.sg-title{ font-family:'Fraunces',serif; font-size:17px; font-weight:600; }
+.sg-help-link{ font-size:12px; color:var(--gold); text-decoration:underline; cursor:pointer; background:none; border:none; padding:0; font-family:inherit; }
+.sg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px 12px; margin-bottom:14px; }
+.sg-field{ display:flex; flex-direction:column; gap:4px; }
+.sg-field label{ font-size:11px; color:var(--ink-dim); font-weight:600; display:flex; align-items:center; gap:4px; }
+.sg-field input, .sg-field select{
+  font-family:inherit; font-size:12.5px; padding:7px 9px; border-radius:7px;
+  border:1px solid rgba(28,33,48,0.18); background:#fff; color:var(--ink);
+}
+.sg-field input:focus, .sg-field select:focus{ outline:2px solid var(--gold-bright); outline-offset:1px; }
+.sg-advanced-toggle{
+  font-size:12px; color:var(--ink-dim); background:none; border:1px dashed rgba(28,33,48,0.25);
+  border-radius:8px; padding:6px 12px; cursor:pointer; font-family:inherit; margin-bottom:12px;
+}
+.sg-advanced{ display:none; }
+.sg-advanced.open{ display:block; }
+.sg-cost-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:10px 14px; background:var(--paper-2); border-radius:8px; font-size:12.5px; }
+.sg-cost-row b{ color:var(--gold-dark, #8a5b1c); font-family:'IBM Plex Mono',monospace; }
+.sg-generate-btn{
+  width:100%; padding:12px; border:none; border-radius:9px; background:var(--gold); color:var(--ink);
+  font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;
+}
+.sg-generate-btn:hover{ background:var(--gold-bright); }
+.sg-generate-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+.sg-status{ font-size:12.5px; color:var(--ink-dim); margin-top:8px; min-height:16px; }
+.sg-status.err{ color:#b23b3b; font-weight:600; }
+.sg-status.ok{ color:#1f7a4f; font-weight:600; }
+.sg-results{ display:none; margin-top:16px; }
+.sg-results.open{ display:block; }
+.sg-results-toolbar{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.sg-results-toolbar label{ font-size:12px; display:flex; align-items:center; gap:5px; }
+.sg-results-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+.sg-btn-sm{
+  font-size:11.5px; padding:6px 11px; border-radius:7px; border:1px solid rgba(28,33,48,0.2);
+  background:#fff; color:var(--ink); cursor:pointer; font-family:inherit; font-weight:600;
+}
+.sg-btn-sm:hover{ border-color:var(--gold); color:var(--gold-dark, #8a5b1c); }
+.sg-btn-sm.primary{ background:var(--gold); border-color:var(--gold); color:var(--ink); }
+.sg-btn-sm.primary:hover{ background:var(--gold-bright); }
+.sg-result-list{ max-height:340px; overflow-y:auto; border:1px solid rgba(28,33,48,0.12); border-radius:9px; }
+.sg-result-row{ display:flex; align-items:center; gap:10px; padding:8px 12px; border-bottom:1px solid rgba(28,33,48,0.08); font-size:12.5px; }
+.sg-result-row:last-child{ border-bottom:none; }
+.sg-result-no{ font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); width:34px; flex-shrink:0; }
+.sg-result-main{ display:flex; gap:4px; flex-wrap:wrap; flex:1; }
+.sg-pip{ width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; background:rgba(28,33,48,0.07); color:var(--ink); }
+.sg-pip.bonus{ background:var(--gold); color:var(--ink); }
+.sg-result-overlap{ font-size:10.5px; color:var(--ink-dim); width:42px; text-align:right; flex-shrink:0; }
+
+.sg-help-modal{
+  display:none; position:fixed; inset:0; z-index:200; background:rgba(12,16,32,0.7);
+  align-items:center; justify-content:center; padding:20px;
+}
+.sg-help-modal.open{ display:flex; }
+.sg-help-panel{
+  background:var(--paper); color:var(--ink); border-radius:14px; max-width:640px; width:100%;
+  max-height:80vh; overflow-y:auto; padding:26px 28px;
+}
+.sg-help-panel h3{ font-family:'Fraunces',serif; font-size:19px; margin-bottom:4px; }
+.sg-help-close{ float:right; background:none; border:none; font-size:20px; cursor:pointer; color:var(--ink-dim); }
+.sg-help-card{ margin-top:16px; padding-bottom:14px; border-bottom:1px solid rgba(28,33,48,0.1); }
+.sg-help-card:last-child{ border-bottom:none; }
+.sg-help-card .hc-title{ font-weight:700; font-size:13.5px; color:#8a5b1c; margin-bottom:4px; }
+.sg-help-card .hc-body{ font-size:12.5px; line-height:1.7; color:var(--ink-dim); white-space:pre-line; }
+
+.sg-sig-picker{
+  display:none; margin-top:10px; padding:12px; background:var(--paper-2); border-radius:9px;
+}
+.sg-sig-picker.open{ display:block; }
+.sg-sig-picker select{ width:100%; padding:8px; border-radius:7px; border:1px solid rgba(28,33,48,0.18); margin-bottom:8px; font-family:inherit; }
+.sg-sig-new-row{ display:flex; gap:6px; }
+.sg-sig-new-row input{ flex:1; padding:8px; border-radius:7px; border:1px solid rgba(28,33,48,0.18); font-family:inherit; }
+
+@media (max-width:640px){
+  .sg-grid{ grid-template-columns:repeat(2,1fr); }
+  .sg-result-row{ font-size:11.5px; }
+  .sg-pip{ width:21px; height:21px; font-size:9.5px; }
+}
 
 .pending-note{ font-size:13.5px; color:var(--ink-dim); padding:6px 0 2px; }
 
@@ -576,7 +661,8 @@ function renderGuideList(){
         <ul class="strategy-list">
           ${s.items.map((text,i)=>`<li><span class="mark">0${i+1}</span>${text}</li>`).join('')}
         </ul>
-        <a class="detail-link" href="${g.detail}">${t.readMore}</a>`;
+        <a class="detail-link" href="${g.detail}">${t.readMore}</a>
+        ${sgWidgetHtml(g.id)}`;
     } else {
       bodyHtml = `<div class="pending-note">${t.pending}</div>`;
     }
@@ -633,7 +719,7 @@ document.querySelectorAll('.lang-toggle button').forEach(btn=>{
 const TICKER_GAMES = [
   { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
   { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
-  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:21, drawMinute:0, tz:'Europe/Paris' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:20, drawMinute:45, tz:'Europe/Paris' },
   { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
@@ -698,9 +784,558 @@ setInterval(() => {
   });
 }, 1000);
 
+// ============================================================================
+// 전략 번호 생성기 (Strategy Number Generator) — 전략가이드 아코디언 내장형
+// 데스크톱용 Python 프로그램(GlobalLottoStrategy.py)의 조건 생성 로직을 그대로
+// 서버(generate-strategy-numbers Edge Function)로 이식해서 호출합니다.
+// 실제 채점/포인트/데이터는 전부 서버에서 처리하고, 여기는 폼 입력 + 결과 표시 + 내보내기만 담당합니다.
+// ============================================================================
+const SG_SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SG_SUPABASE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const SG_GENERATE_URL = SG_SUPABASE_URL + "/functions/v1/generate-strategy-numbers";
+const SG_SIGNATURE_URL = SG_SUPABASE_URL + "/functions/v1/signature";
+const sgSb = window.supabase.createClient(SG_SUPABASE_URL, SG_SUPABASE_KEY);
+let sgAccessToken = null;
+let sgPerComboCost = null; // point_costs에서 조회한 조합당 가격 (캐시)
+
+async function sgRefreshToken(){
+  const { data: { session } } = await sgSb.auth.getSession();
+  sgAccessToken = session ? session.access_token : null;
+}
+
+// generate-strategy-numbers Edge Function의 GAME_SPECS와 동일하게 유지해야 함
+const GAME_SPECS = {
+  kr_lotto645:     { main: 6, range: 45, bonus: 0, bonusRange: null },
+  us_powerball:    { main: 5, range: 69, bonus: 1, bonusRange: 26 },
+  us_megamillions: { main: 5, range: 70, bonus: 1, bonusRange: 24 },
+  eu_euromillions: { main: 5, range: 50, bonus: 2, bonusRange: 12 },
+  jp_miniloto:     { main: 5, range: 31, bonus: 0, bonusRange: null },
+  jp_loto7:        { main: 7, range: 37, bonus: 0, bonusRange: null },
+  jp_loto6:        { main: 6, range: 43, bonus: 0, bonusRange: null },
+  ca_lottomax:     { main: 7, range: 50, bonus: 0, bonusRange: null },
+  ca_lotto649:     { main: 6, range: 49, bonus: 0, bonusRange: null },
+  au_powerball:    { main: 7, range: 35, bonus: 1, bonusRange: 20 },
+  au_ozlotto:      { main: 7, range: 47, bonus: 0, bonusRange: null },
+  au_tattslotto:   { main: 6, range: 45, bonus: 0, bonusRange: null },
+};
+
+const sgState = {}; // gameId -> { combos:[], selected:Set<number> }
+
+const SG_I18N = {
+  ko: {
+    title:"전략 번호 생성기", helpLink:"조건 설명 보기 ⓘ", helpModalTitle:"조건 설명",
+    anyLabel:"무관", includeLabel:"포함", excludeLabel:"제외", fewerLabel:"적은 순", moreLabel:"많은 순",
+    yn:{Y:"Y (예)", N:"N (아니오)"},
+    f:{
+      oddEven:"홀짝비율", topRange:"상위빈도범위", topUse:"상위번호사용", include:"포함수", exclude:"제외수",
+      requestedCount:"요청조합수", lastDigits:"끝수", lastDigitMode:"끝수조건", sumMin:"번호합 최소", sumMax:"번호합 최대",
+      startRound:"시작회차", endRound:"종료회차", consecutiveLimit:"연속제한", lastWeekPref:"지난주기준",
+      randomInclude:"무작위포함(부족분 채움)", bonusInclude:"보너스 생성", repeatCount:"반복생성횟수", repeatMode:"반복출력방식",
+    },
+    advancedToggle:"고급 옵션 더 보기",
+    costLabel:"예상 비용", costUnknown:"생성 시 확인",
+    generateBtn:"번호 생성하기", generating:"생성 중…",
+    loginRequired:"로그인이 필요합니다.",
+    doneMsg:(n,cost,balance)=> `${n}개 생성 완료 · ${cost.toLocaleString()}P 차감 (잔액 ${balance.toLocaleString()}P)`,
+    partialMsg:(n,req)=> `⚠ 조건을 만족하는 조합이 ${n}개뿐이라, 요청하신 ${req}개보다 적게 생성됐습니다. (무작위포함=Y로 설정하면 부족분을 채워서 정확히 ${req}개를 받을 수 있어요)`,
+    emptyMsg:"조건을 만족하는 조합을 하나도 찾지 못했습니다. 조건을 완화하거나 무작위포함을 Y로 설정해보세요.",
+    insufficientPoints:(shortfall)=> `포인트가 부족합니다 (부족: ${shortfall.toLocaleString()}P). 충전 후 다시 시도해주세요.`,
+    genericError:"번호 생성 중 오류가 발생했습니다.",
+    selectAll:"전체선택", saveToSignature:"마이시그니처에 저장",
+    pickCollectionPlaceholder:"저장할 컬렉션 선택", newCollectionOption:"+ 새 컬렉션 만들기",
+    newCollectionPlaceholder:"새 컬렉션 이름", createAndSave:"저장",
+    noSelection:"저장할 조합을 먼저 선택해주세요 (선택 안 하면 전체가 저장됩니다).",
+    confirmNewCollection:(name)=> `"${name}" 컬렉션을 새로 만드는 데 500P가 차감됩니다. 계속할까요?`,
+    saveSuccess:(n)=> `${n}개를 마이시그니처에 저장했습니다.`,
+    saveFail:"저장에 실패했습니다.",
+    overlapLabel:"직전겹침",
+    helpCards:[
+      ["전략명","저장/구분용 전략 이름입니다 (엑셀·PDF 파일명에도 쓰입니다)."],
+      ["홀짝비율","메인번호 중 홀수 개수를 지정합니다. 무관은 제한 없음."],
+      ["상위빈도범위","선택한 회차 범위에서 자주 나온 번호 상위 N개를 후보군으로 봅니다. 예: 20 → 출현빈도 1~20위."],
+      ["상위번호사용","한 조합에 상위빈도 후보군 번호를 정확히 몇 개 포함할지 지정합니다. 예: 상위빈도범위 20, 상위번호사용 3 → 상위 20개 중 정확히 3개."],
+      ["포함수","모든 생성 조합에 반드시 들어가야 하는 번호입니다. 쉼표로 구분해 입력합니다. 예: 3, 11, 27"],
+      ["제외수","생성 조합에서 절대 쓰지 않을 번호입니다. 예: 1, 2, 3"],
+      ["끝수 / 끝수조건","끝수는 번호의 일의 자리 숫자입니다 (예: 3의 끝수는 3, 13, 23...). 끝수조건 '포함'은 지정 끝수가 최소 1개 있어야 하고, '제외'는 아예 안 씀을 뜻합니다."],
+      ["번호합 최소·최대","메인번호 합계의 허용 범위입니다. 빈칸은 해당 경계를 제한하지 않습니다."],
+      ["시작회차·종료회차","빈도분석(상위빈도범위)에 쓸 과거 회차 범위입니다. 빈칸이면 보유 데이터 전체를 사용합니다."],
+      ["연속제한","한 조합에서 허용할 최장 연속번호 길이입니다. 예: 2 → 10,11은 가능하지만 10,11,12는 불가."],
+      ["지난주기준","가장 최근 당첨 메인번호와 겹치는 개수 기준으로 정렬합니다. 적은 순 / 많은 순 / 무관 중 선택."],
+      ["무작위포함(부족분 채움)","지정한 조건만으로 요청 개수를 다 못 채울 때의 처리 방식입니다.\nY: 포함/제외수는 지키되 나머지 조건은 무시하고 무작위로 부족분을 채워 요청 개수를 정확히 맞춥니다.\nN: 채우지 않고, 조건을 만족한 만큼만(요청보다 적을 수 있음) 돌려줍니다."],
+      ["보너스 생성","파워볼·메가밀리언스·유로밀리언스처럼 이용자가 직접 보너스를 고르는 게임에서, 보너스 번호도 같이 생성할지 여부입니다. 같은 통에서 사후 추첨되는 보너스(한국 로또 등)는 이 옵션과 무관합니다."],
+      ["요청조합수","서로 다른 기본 조합을 몇 개 만들지 지정합니다. 실제 과금은 여기서 실제로 만들어진 개수 기준입니다."],
+      ["반복생성횟수 / 반복출력방식","각 조합을 결과 목록에 몇 번 반복 표시할지(과금과 무관), 그리고 반복 방식(AABBCC: 조합마다 연속반복 / ABCABC: 전체 묶음 반복)입니다."],
+    ],
+  },
+  en: {
+    title:"Strategy Number Generator", helpLink:"View condition guide ⓘ", helpModalTitle:"Condition Guide",
+    anyLabel:"Any", includeLabel:"Include", excludeLabel:"Exclude", fewerLabel:"Fewer overlap first", moreLabel:"More overlap first",
+    yn:{Y:"Y (Yes)", N:"N (No)"},
+    f:{
+      oddEven:"Odd–Even Ratio", topRange:"Top Frequency Pool", topUse:"Use Top Numbers", include:"Required Numbers", exclude:"Excluded Numbers",
+      requestedCount:"Requested Combinations", lastDigits:"Last Digits", lastDigitMode:"Last-Digit Rule", sumMin:"Sum Min", sumMax:"Sum Max",
+      startRound:"Start Round", endRound:"End Round", consecutiveLimit:"Consecutive Limit", lastWeekPref:"Previous Draw Preference",
+      randomInclude:"Fill Shortfall Randomly", bonusInclude:"Generate Bonus", repeatCount:"Repeat Count", repeatMode:"Repeat Order",
+    },
+    advancedToggle:"More advanced options",
+    costLabel:"Estimated cost", costUnknown:"Shown after generating",
+    generateBtn:"Generate Numbers", generating:"Generating…",
+    loginRequired:"You need to log in first.",
+    doneMsg:(n,cost,balance)=> `${n} generated · ${cost.toLocaleString()}P charged (balance ${balance.toLocaleString()}P)`,
+    partialMsg:(n,req)=> `⚠ Only ${n} combinations matched your conditions, fewer than the ${req} requested. (Set "Fill Shortfall Randomly" to Y to always get exactly ${req}.)`,
+    emptyMsg:"No combinations matched your conditions. Try relaxing them, or set Fill Shortfall Randomly to Y.",
+    insufficientPoints:(shortfall)=> `Not enough points (short by ${shortfall.toLocaleString()}P). Please recharge and try again.`,
+    genericError:"An error occurred while generating numbers.",
+    selectAll:"Select all", saveToSignature:"Save to My Signature",
+    pickCollectionPlaceholder:"Choose a collection", newCollectionOption:"+ Create new collection",
+    newCollectionPlaceholder:"New collection name", createAndSave:"Save",
+    noSelection:"Select combinations to save first (if none selected, all will be saved).",
+    confirmNewCollection:(name)=> `Creating a new collection "${name}" costs 500P. Continue?`,
+    saveSuccess:(n)=> `Saved ${n} combination(s) to My Signature.`,
+    saveFail:"Failed to save.",
+    overlapLabel:"Prev. overlap",
+    helpCards:[
+      ["Strategy Name","A name for this strategy (also used in the exported Excel/PDF filename)."],
+      ["Odd–Even Ratio","How many of the main numbers should be odd. Any = no restriction."],
+      ["Top Frequency Pool","Looks at the top N most frequently drawn numbers within your chosen round range. E.g. 20 → the 1st–20th most frequent numbers."],
+      ["Use Top Numbers","How many numbers in each combination must come from the Top Frequency Pool. E.g. Pool 20, Use 3 → exactly 3 of the 20."],
+      ["Required Numbers","Numbers that must appear in every generated combination. Comma-separated, e.g. 3, 11, 27"],
+      ["Excluded Numbers","Numbers that will never appear. E.g. 1, 2, 3"],
+      ["Last Digits / Last-Digit Rule","The last digit of a number (e.g. 3's last digit is 3, as is 13, 23...). 'Include' requires at least one match; 'Exclude' forbids them."],
+      ["Sum Min / Max","Allowed range for the sum of the main numbers. Leave blank for no limit on that side."],
+      ["Start / End Round","The historical round range used for frequency analysis (Top Frequency Pool). Blank = use all available data."],
+      ["Consecutive Limit","The longest run of consecutive numbers allowed. E.g. 2 → 10,11 is fine but 10,11,12 is not."],
+      ["Previous Draw Preference","Sort results by how many numbers overlap with the most recent draw. Fewer / More / Any."],
+      ["Fill Shortfall Randomly","What happens if your conditions can't fill the requested count.\nY: Keeps Required/Excluded Numbers but ignores the other conditions to randomly fill the rest, so you always get exactly the requested count.\nN: Returns only as many as matched your conditions (may be fewer than requested)."],
+      ["Generate Bonus","Whether to also generate a bonus number for games where you pick it yourself (Powerball, Mega Millions, EuroMillions, etc). Not relevant for games where the bonus is drawn automatically from the same pool (e.g. Korea Lotto)."],
+      ["Requested Combinations","How many distinct base combinations to generate. Billing is based on how many are actually delivered."],
+      ["Repeat Count / Repeat Order","How many times each combination is repeated in the displayed list (does not affect cost), and the order (AABBCC: repeat each in place / ABCABC: repeat the whole batch)."],
+    ],
+  },
+  ja: {
+    title:"戦略番号ジェネレーター", helpLink:"条件説明を見る ⓘ", helpModalTitle:"条件説明",
+    anyLabel:"指定なし", includeLabel:"含む", excludeLabel:"除外", fewerLabel:"少ない順", moreLabel:"多い順",
+    yn:{Y:"Y (はい)", N:"N (いいえ)"},
+    f:{
+      oddEven:"奇偶比率", topRange:"上位頻度範囲", topUse:"上位番号使用数", include:"含む番号", exclude:"除外番号",
+      requestedCount:"要求組み合わせ数", lastDigits:"下一桁", lastDigitMode:"下一桁条件", sumMin:"合計最小", sumMax:"合計最大",
+      startRound:"開始回", endRound:"終了回", consecutiveLimit:"連続制限", lastWeekPref:"前回基準",
+      randomInclude:"不足分をランダム補充", bonusInclude:"ボーナス生成", repeatCount:"繰り返し回数", repeatMode:"繰り返し方式",
+    },
+    advancedToggle:"詳細オプションを見る",
+    costLabel:"予想コスト", costUnknown:"生成時に確認",
+    generateBtn:"番号を生成", generating:"生成中…",
+    loginRequired:"ログインが必要です。",
+    doneMsg:(n,cost,balance)=> `${n}個生成完了・${cost.toLocaleString()}P差引(残高${balance.toLocaleString()}P)`,
+    partialMsg:(n,req)=> `⚠ 条件を満たす組み合わせが${n}個しかなく、要求した${req}個より少なくなりました。(不足分をランダム補充=Yにすると常に${req}個ちょうど受け取れます)`,
+    emptyMsg:"条件を満たす組み合わせが見つかりませんでした。条件を緩めるか、不足分をランダム補充をYにしてみてください。",
+    insufficientPoints:(shortfall)=> `ポイントが不足しています(不足:${shortfall.toLocaleString()}P)。チャージ後にもう一度お試しください。`,
+    genericError:"番号生成中にエラーが発生しました。",
+    selectAll:"すべて選択", saveToSignature:"マイシグネチャに保存",
+    pickCollectionPlaceholder:"保存先コレクションを選択", newCollectionOption:"+ 新しいコレクションを作成",
+    newCollectionPlaceholder:"新しいコレクション名", createAndSave:"保存",
+    noSelection:"保存する組み合わせを選択してください(未選択の場合は全件保存されます)。",
+    confirmNewCollection:(name)=> `「${name}」コレクションを新規作成すると500P差し引かれます。続けますか？`,
+    saveSuccess:(n)=> `${n}件をマイシグネチャに保存しました。`,
+    saveFail:"保存に失敗しました。",
+    overlapLabel:"前回重複",
+    helpCards:[
+      ["戦略名","保存・区別用の戦略名です(Excel・PDFのファイル名にも使われます)。"],
+      ["奇偶比率","メイン番号のうち奇数の個数を指定します。指定なしは制限なし。"],
+      ["上位頻度範囲","選択した回数範囲でよく出た番号の上位N個を候補群にします。例:20→出現頻度1〜20位。"],
+      ["上位番号使用数","1組み合わせに上位頻度候補群の番号を正確に何個含めるか指定します。例:上位頻度範囲20、上位番号使用数3→上位20個中ちょうど3個。"],
+      ["含む番号","生成するすべての組み合わせに必ず入る番号です。カンマ区切りで入力。例:3, 11, 27"],
+      ["除外番号","生成する組み合わせで絶対に使わない番号です。例:1, 2, 3"],
+      ["下一桁・下一桁条件","番号の一の位の数字です(例:3の下一桁は3, 13, 23...)。「含む」は指定の下一桁が最低1個必要、「除外」は使わないことを意味します。"],
+      ["合計最小・最大","メイン番号合計の許容範囲です。空欄はその境界を制限しません。"],
+      ["開始回・終了回","頻度分析(上位頻度範囲)に使う過去の回数範囲です。空欄なら保有データ全体を使用します。"],
+      ["連続制限","1組み合わせで許容する最長連続番号の長さです。例:2→10,11は可能ですが10,11,12は不可。"],
+      ["前回基準","直近の当選メイン番号との重複数を基準に並べ替えます。少ない順/多い順/指定なしから選択。"],
+      ["不足分をランダム補充","指定条件だけでは要求数を満たせない場合の処理方法です。\nY:含む番号・除外番号は守りつつ、他の条件は無視してランダムに不足分を補い、要求数ちょうどにします。\nN:補充せず、条件を満たした分だけ(要求数より少ない場合あり)返します。"],
+      ["ボーナス生成","パワーボール・メガミリオンズ・ユーロミリオンズのように利用者が直接ボーナスを選ぶゲームで、ボーナス番号も一緒に生成するかどうかです。同じ抽選機から事後抽選されるボーナス(韓国ロトなど)には関係ありません。"],
+      ["要求組み合わせ数","異なる基本組み合わせをいくつ作るかを指定します。実際の課金はここで実際に作られた個数基準です。"],
+      ["繰り返し回数・繰り返し方式","各組み合わせを結果リストに何回繰り返し表示するか(課金には無関係)、および繰り返し方式(AABBCC:組み合わせごとに連続繰り返し/ABCABC:全体をまとめて繰り返し)です。"],
+    ],
+  },
+};
+function sgT(){ return SG_I18N[currentLang] || SG_I18N.ko; }
+
+function sgWidgetHtml(gameId){
+  const spec = GAME_SPECS[gameId];
+  if (!spec) return '';
+  const t = sgT();
+  const oddOptions = Array.from({length:spec.main+1},(_,i)=>`<option value="${i}">${i}:${spec.main-i}</option>`).join('');
+  const bonusFieldHtml = spec.bonus > 0 ? `
+        <div class="sg-field"><label>${t.f.bonusInclude}</label>
+          <select id="sg_bonusInclude_${gameId}"><option value="Y">${t.yn.Y}</option><option value="N">${t.yn.N}</option></select>
+        </div>` : '';
+  return `
+  <div class="sg-wrap" id="sgWrap_${gameId}">
+    <div class="sg-title-row">
+      <div class="sg-title">🎯 ${t.title}</div>
+      <button class="sg-help-link" type="button" onclick="sgOpenHelp()">${t.helpLink}</button>
+    </div>
+    <div class="sg-grid">
+      <div class="sg-field"><label>${t.f.oddEven}</label>
+        <select id="sg_oddEven_${gameId}"><option value="any">${t.anyLabel}</option>${oddOptions}</select>
+      </div>
+      <div class="sg-field"><label>${t.f.topRange}</label><input type="number" id="sg_topRange_${gameId}" min="0" placeholder="20"></div>
+      <div class="sg-field"><label>${t.f.topUse}</label><input type="number" id="sg_topUse_${gameId}" min="0" placeholder="3"></div>
+      <div class="sg-field"><label>${t.f.include}</label><input type="text" id="sg_include_${gameId}" placeholder="3, 11, 27"></div>
+      <div class="sg-field"><label>${t.f.exclude}</label><input type="text" id="sg_exclude_${gameId}" placeholder="1, 2, 3"></div>
+      <div class="sg-field"><label>${t.f.requestedCount}</label><input type="number" id="sg_requestedCount_${gameId}" min="1" max="1000" value="10" onchange="sgUpdateCostPreview('${gameId}')"></div>
+    </div>
+    <button class="sg-advanced-toggle" type="button" onclick="sgToggleAdvanced('${gameId}')">${t.advancedToggle} ▾</button>
+    <div class="sg-advanced" id="sgAdvanced_${gameId}">
+      <div class="sg-grid">
+        <div class="sg-field"><label>${t.f.lastDigits}</label><input type="text" id="sg_lastDigits_${gameId}" placeholder="3, 7"></div>
+        <div class="sg-field"><label>${t.f.lastDigitMode}</label>
+          <select id="sg_lastDigitMode_${gameId}"><option value="any">${t.anyLabel}</option><option value="include">${t.includeLabel}</option><option value="exclude">${t.excludeLabel}</option></select>
+        </div>
+        <div class="sg-field"><label>${t.f.sumMin}</label><input type="number" id="sg_sumMin_${gameId}"></div>
+        <div class="sg-field"><label>${t.f.sumMax}</label><input type="number" id="sg_sumMax_${gameId}"></div>
+        <div class="sg-field"><label>${t.f.startRound}</label><input type="number" id="sg_startRound_${gameId}"></div>
+        <div class="sg-field"><label>${t.f.endRound}</label><input type="number" id="sg_endRound_${gameId}"></div>
+        <div class="sg-field"><label>${t.f.consecutiveLimit}</label><input type="number" id="sg_consecutiveLimit_${gameId}"></div>
+        <div class="sg-field"><label>${t.f.lastWeekPref}</label>
+          <select id="sg_lastWeekPref_${gameId}"><option value="any">${t.anyLabel}</option><option value="fewer">${t.fewerLabel}</option><option value="more">${t.moreLabel}</option></select>
+        </div>
+        <div class="sg-field"><label>${t.f.randomInclude}</label>
+          <select id="sg_randomInclude_${gameId}"><option value="Y">${t.yn.Y}</option><option value="N">${t.yn.N}</option></select>
+        </div>
+        ${bonusFieldHtml}
+        <div class="sg-field"><label>${t.f.repeatCount}</label><input type="number" id="sg_repeatCount_${gameId}" min="1" value="1"></div>
+        <div class="sg-field"><label>${t.f.repeatMode}</label>
+          <select id="sg_repeatMode_${gameId}"><option value="AABBCC">AABBCC</option><option value="ABCABC">ABCABC</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="sg-cost-row">
+      <span>${t.costLabel}</span>
+      <b id="sgCostPreview_${gameId}">${t.costUnknown}</b>
+    </div>
+    <button class="sg-generate-btn" id="sgGenBtn_${gameId}" type="button" onclick="sgGenerate('${gameId}')">${t.generateBtn}</button>
+    <div class="sg-status" id="sgStatus_${gameId}"></div>
+
+    <div class="sg-results" id="sgResultsWrap_${gameId}">
+      <div class="sg-results-toolbar">
+        <label><input type="checkbox" id="sgCheckAll_${gameId}" onchange="sgToggleAll('${gameId}')"> ${t.selectAll}</label>
+        <div class="sg-results-actions">
+          <button class="sg-btn-sm" type="button" onclick="sgExportPdf('${gameId}')">📄 PDF</button>
+          <button class="sg-btn-sm" type="button" onclick="sgExportExcel('${gameId}')">📊 Excel</button>
+          <button class="sg-btn-sm primary" type="button" onclick="sgOpenSignaturePicker('${gameId}')">⭐ ${t.saveToSignature}</button>
+        </div>
+      </div>
+      <div class="sg-sig-picker" id="sgSigPicker_${gameId}">
+        <select id="sgSigSelect_${gameId}"><option value="">${t.pickCollectionPlaceholder}</option><option value="__new__">${t.newCollectionOption}</option></select>
+        <div class="sg-sig-new-row" id="sgSigNewRow_${gameId}" style="display:none;">
+          <input type="text" id="sgSigNewName_${gameId}" placeholder="${t.newCollectionPlaceholder}">
+        </div>
+        <button class="sg-btn-sm primary" type="button" style="margin-top:8px; width:100%;" onclick="sgSaveSelected('${gameId}')">${t.createAndSave}</button>
+      </div>
+      <div class="sg-result-list" id="sgResultList_${gameId}"></div>
+    </div>
+  </div>`;
+}
+
+function sgToggleAdvanced(gameId){
+  document.getElementById('sgAdvanced_' + gameId).classList.toggle('open');
+}
+
+async function sgUpdateCostPreview(gameId){
+  const t = sgT();
+  const el = document.getElementById('sgCostPreview_' + gameId);
+  if (!el) return;
+  if (sgPerComboCost === null) {
+    try {
+      const { data } = await sgSb.from('point_costs').select('cost_points').eq('action_key', 'strategy_generate').eq('active', true).maybeSingle();
+      sgPerComboCost = data ? Number(data.cost_points) : null;
+    } catch (e) { sgPerComboCost = null; }
+  }
+  const countInput = document.getElementById('sg_requestedCount_' + gameId);
+  const n = countInput ? (parseInt(countInput.value, 10) || 0) : 0;
+  if (sgPerComboCost === null) { el.textContent = t.costUnknown; return; }
+  el.textContent = sgPerComboCost.toLocaleString() + 'P × ' + n + ' = ' + (sgPerComboCost * n).toLocaleString() + 'P';
+}
+
+function sgParseNums(text){
+  return (text || '').split(/[,\s]+/).map(s => parseInt(s, 10)).filter(n => !isNaN(n));
+}
+
+function sgCollectSettings(gameId){
+  const v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const oddEven = v('sg_oddEven_' + gameId);
+  const lastDigitMode = v('sg_lastDigitMode_' + gameId) || 'any';
+  const lastWeekPref = v('sg_lastWeekPref_' + gameId) || 'any';
+  const spec = GAME_SPECS[gameId];
+  return {
+    oddCount: oddEven === 'any' || oddEven === '' ? null : parseInt(oddEven, 10),
+    topRange: parseInt(v('sg_topRange_' + gameId), 10) || null,
+    topUse: v('sg_topUse_' + gameId) === '' ? null : parseInt(v('sg_topUse_' + gameId), 10),
+    include: sgParseNums(v('sg_include_' + gameId)),
+    exclude: sgParseNums(v('sg_exclude_' + gameId)),
+    lastDigits: sgParseNums(v('sg_lastDigits_' + gameId)),
+    lastDigitMode,
+    sumMin: v('sg_sumMin_' + gameId) === '' ? null : parseInt(v('sg_sumMin_' + gameId), 10),
+    sumMax: v('sg_sumMax_' + gameId) === '' ? null : parseInt(v('sg_sumMax_' + gameId), 10),
+    startRound: v('sg_startRound_' + gameId) === '' ? null : parseInt(v('sg_startRound_' + gameId), 10),
+    endRound: v('sg_endRound_' + gameId) === '' ? null : parseInt(v('sg_endRound_' + gameId), 10),
+    bonusInclude: spec.bonus > 0 ? (v('sg_bonusInclude_' + gameId) || 'Y') === 'Y' : false,
+    consecutiveLimit: v('sg_consecutiveLimit_' + gameId) === '' ? null : parseInt(v('sg_consecutiveLimit_' + gameId), 10),
+    lastWeekPref,
+    randomInclude: (v('sg_randomInclude_' + gameId) || 'Y') === 'Y',
+    requestedCount: parseInt(v('sg_requestedCount_' + gameId), 10) || 10,
+    repeatCount: parseInt(v('sg_repeatCount_' + gameId), 10) || 1,
+    repeatMode: v('sg_repeatMode_' + gameId) || 'AABBCC',
+  };
+}
+
+async function sgGenerate(gameId){
+  const t = sgT();
+  const statusEl = document.getElementById('sgStatus_' + gameId);
+  const btn = document.getElementById('sgGenBtn_' + gameId);
+  await sgRefreshToken();
+  if (!sgAccessToken) {
+    statusEl.className = 'sg-status err';
+    statusEl.textContent = t.loginRequired;
+    setTimeout(() => { window.location.href = 'paperlotto_login_mockup.html'; }, 900);
+    return;
+  }
+  const settings = sgCollectSettings(gameId);
+  btn.disabled = true;
+  statusEl.className = 'sg-status';
+  statusEl.textContent = t.generating;
+  try {
+    const resp = await fetch(SG_GENERATE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sgAccessToken },
+      body: JSON.stringify({ gameId, settings }),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      if (data.error === 'INSUFFICIENT_POINTS') {
+        statusEl.className = 'sg-status err';
+        statusEl.textContent = t.insufficientPoints(data.shortfall || 0);
+      } else {
+        statusEl.className = 'sg-status err';
+        statusEl.textContent = data.error || t.genericError;
+      }
+      return;
+    }
+    if (!data.combos || data.combos.length === 0) {
+      statusEl.className = 'sg-status err';
+      statusEl.textContent = data.note || t.emptyMsg;
+      document.getElementById('sgResultsWrap_' + gameId).classList.remove('open');
+      return;
+    }
+    sgState[gameId] = { combos: data.combos, selected: new Set() };
+    sgRenderResults(gameId);
+    statusEl.className = 'sg-status ok';
+    statusEl.textContent = data.partial
+      ? t.partialMsg(data.deliveredCount, data.requestedCount)
+      : t.doneMsg(data.deliveredCount, data.charged, data.balance);
+  } catch (e) {
+    statusEl.className = 'sg-status err';
+    statusEl.textContent = t.genericError;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function sgRenderResults(gameId){
+  const t = sgT();
+  const state = sgState[gameId];
+  const wrap = document.getElementById('sgResultsWrap_' + gameId);
+  const list = document.getElementById('sgResultList_' + gameId);
+  wrap.classList.add('open');
+  list.innerHTML = state.combos.map((c, i) => {
+    const mainPips = c.main.map(n => `<span class="sg-pip">${String(n).padStart(2,'0')}</span>`).join('');
+    const bonusPips = (c.bonus || []).map(n => `<span class="sg-pip bonus">${String(n).padStart(2,'0')}</span>`).join('');
+    return `<div class="sg-result-row">
+      <input type="checkbox" class="sg-result-check" data-idx="${i}" onchange="sgToggleOne('${gameId}', ${i}, this.checked)">
+      <span class="sg-result-no">#${i+1}</span>
+      <span class="sg-result-main">${mainPips}${bonusPips}</span>
+      <span class="sg-result-overlap">${t.overlapLabel} ${c.overlap}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('sgCheckAll_' + gameId).checked = false;
+  document.getElementById('sgSigPicker_' + gameId).classList.remove('open');
+}
+
+function sgToggleAll(gameId){
+  const checked = document.getElementById('sgCheckAll_' + gameId).checked;
+  const state = sgState[gameId];
+  state.selected = checked ? new Set(state.combos.map((_, i) => i)) : new Set();
+  document.querySelectorAll('#sgResultList_' + gameId + ' .sg-result-check').forEach(cb => { cb.checked = checked; });
+}
+
+function sgToggleOne(gameId, idx, checked){
+  const state = sgState[gameId];
+  if (checked) state.selected.add(idx); else state.selected.delete(idx);
+}
+
+function sgGetSelectedCombos(gameId){
+  const state = sgState[gameId];
+  if (!state) return [];
+  if (state.selected.size === 0) return state.combos; // 선택 안 하면 전체
+  return state.combos.filter((_, i) => state.selected.has(i));
+}
+
+function sgExportPdf(gameId){
+  const combos = sgGetSelectedCombos(gameId);
+  if (!combos.length) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const gameName = (I18N[currentLang].names[gameId] || {}).name || gameId;
+  doc.setFontSize(14);
+  doc.text('PaperLotto Strategy Numbers - ' + gameName, 14, 16);
+  const rows = combos.map((c, i) => [
+    String(i + 1),
+    c.main.map(n => String(n).padStart(2, '0')).join(' '),
+    (c.bonus && c.bonus.length) ? c.bonus.map(n => String(n).padStart(2, '0')).join(' ') : '-',
+    String(c.overlap),
+  ]);
+  doc.autoTable({
+    head: [['No', 'Main Numbers', 'Bonus', 'Prev. Overlap']],
+    body: rows, startY: 22, styles: { fontSize: 9 },
+  });
+  doc.save(gameId + '_strategy_numbers.pdf');
+}
+
+function sgExportExcel(gameId){
+  const combos = sgGetSelectedCombos(gameId);
+  if (!combos.length) return;
+  const rows = combos.map((c, i) => ({
+    No: i + 1,
+    MainNumbers: c.main.join(' '),
+    Bonus: (c.bonus || []).join(' '),
+    PreviousDrawOverlap: c.overlap,
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Strategy Numbers');
+  XLSX.writeFile(wb, gameId + '_strategy_numbers.xlsx');
+}
+
+async function sgOpenSignaturePicker(gameId){
+  const t = sgT();
+  await sgRefreshToken();
+  if (!sgAccessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
+  const picker = document.getElementById('sgSigPicker_' + gameId);
+  picker.classList.add('open');
+  const select = document.getElementById('sgSigSelect_' + gameId);
+  select.innerHTML = `<option value="">${t.pickCollectionPlaceholder}</option><option value="__new__">${t.newCollectionOption}</option>`;
+  select.onchange = () => {
+    document.getElementById('sgSigNewRow_' + gameId).style.display = select.value === '__new__' ? 'flex' : 'none';
+  };
+  try {
+    const resp = await fetch(SG_SIGNATURE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sgAccessToken },
+      body: JSON.stringify({ action: 'list_collections' }),
+    });
+    const data = await resp.json().catch(() => ({}));
+    (data.collections || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = String(c.id);
+      opt.textContent = c.name + ' (' + c.entry_count + ')';
+      select.appendChild(opt);
+    });
+  } catch (e) { /* 목록 조회 실패는 조용히 무시 — 새 컬렉션 만들기는 여전히 가능 */ }
+}
+
+async function sgSaveSelected(gameId){
+  const t = sgT();
+  const statusEl = document.getElementById('sgStatus_' + gameId);
+  await sgRefreshToken();
+  if (!sgAccessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
+
+  const combos = sgGetSelectedCombos(gameId);
+  if (!combos.length) { statusEl.className = 'sg-status err'; statusEl.textContent = t.noSelection; return; }
+
+  const select = document.getElementById('sgSigSelect_' + gameId);
+  let collectionId = select.value;
+
+  if (collectionId === '__new__' || collectionId === '') {
+    const name = (document.getElementById('sgSigNewName_' + gameId).value || '').trim();
+    if (!name) { statusEl.className = 'sg-status err'; statusEl.textContent = t.noSelection; return; }
+    if (!confirm(t.confirmNewCollection(name))) return;
+    try {
+      const resp = await fetch(SG_SIGNATURE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sgAccessToken },
+        body: JSON.stringify({ action: 'create_collection', name }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || !data.collection) {
+        statusEl.className = 'sg-status err';
+        statusEl.textContent = data.error === 'INSUFFICIENT_POINTS' ? t.insufficientPoints(data.shortfall || 0) : (data.error || t.saveFail);
+        return;
+      }
+      collectionId = data.collection.id;
+    } catch (e) {
+      statusEl.className = 'sg-status err'; statusEl.textContent = t.saveFail; return;
+    }
+  }
+
+  let savedCount = 0;
+  for (const c of combos) {
+    try {
+      const resp = await fetch(SG_SIGNATURE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sgAccessToken },
+        body: JSON.stringify({
+          action: 'add_manual', collection_id: collectionId, game_id: gameId,
+          main_numbers: c.main, bonus_numbers: c.bonus || [],
+          memo: 'strategy-generator',
+        }),
+      });
+      if (resp.ok) savedCount++;
+    } catch (e) { /* 개별 실패는 건너뛰고 계속 진행 */ }
+  }
+  statusEl.className = savedCount > 0 ? 'sg-status ok' : 'sg-status err';
+  statusEl.textContent = savedCount > 0 ? t.saveSuccess(savedCount) : t.saveFail;
+  document.getElementById('sgSigPicker_' + gameId).classList.remove('open');
+}
+
+function sgOpenHelp(){
+  const t = sgT();
+  const modal = document.getElementById('sgHelpModal');
+  document.getElementById('sgHelpModalTitle').textContent = t.helpModalTitle;
+  document.getElementById('sgHelpModalBody').innerHTML = t.helpCards.map(([title, body]) =>
+    `<div class="sg-help-card"><div class="hc-title">${title}</div><div class="hc-body">${body}</div></div>`
+  ).join('');
+  modal.classList.add('open');
+}
+function sgCloseHelp(){
+  document.getElementById('sgHelpModal').classList.remove('open');
+}
+
+// URL의 ?open=game_id 를 보고 해당 게임 카드를 자동으로 펼치고 스크롤 (게임 상세페이지 배너 링크용)
+function sgHandleOpenParam(){
+  const params = new URLSearchParams(location.search);
+  const openId = params.get('open');
+  if (!openId || !GAMES.some(g => g.id === openId)) return;
+  openCards.add(openId);
+  currentRegion = 'all';
+  render();
+  setTimeout(() => {
+    const card = document.querySelector('.game-card[data-id="' + openId + '"]');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 150);
+}
+
 // 첫 번째 게임은 기본으로 펼쳐서 보여줌
 render();
+sgHandleOpenParam();
 </script>
+<div class="sg-help-modal" id="sgHelpModal">
+  <div class="sg-help-panel">
+    <button class="sg-help-close" type="button" onclick="sgCloseHelp()">✕</button>
+    <h3 id="sgHelpModalTitle">조건 설명</h3>
+    <div id="sgHelpModalBody"></div>
+  </div>
+</div>
 <script src="auth-widget.js"></script>
 </body>
 </html>
