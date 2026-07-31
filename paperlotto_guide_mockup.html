@@ -1190,11 +1190,22 @@ async function sgGenerate(gameId){
       return;
     }
     sgState[gameId] = { combos: data.combos, selected: new Set() };
-    sgRenderResults(gameId);
+    sgRenderResults(gameId); // 완료 메시지 조립에서 문제가 생기더라도 결과 화면은 먼저 정상 표시되도록 이 줄을 try 안 앞쪽에 둠
+    const delivered = data.deliveredCount ?? data.combos.length;
+    const requested = data.requestedCount ?? delivered;
+    const charged = data.charged ?? 0;
+    const balance = data.balance ?? null;
     statusEl.className = 'sg-status ok';
-    statusEl.textContent = data.partial
-      ? t.partialMsg(data.deliveredCount, data.requestedCount)
-      : t.doneMsg(data.deliveredCount, data.charged, data.balance);
+    try {
+      statusEl.textContent = data.partial
+        ? t.partialMsg(delivered, requested)
+        : (balance !== null ? t.doneMsg(delivered, charged, balance) : `${delivered} · ${charged}P`);
+    } catch (msgErr) {
+      // 메시지 조립 자체에서 오류가 나더라도(예: 응답 필드 누락) 이미 결과는 화면에 떠 있으니
+      // 사용자에게 혼란을 주는 "오류" 문구 대신 최소한의 완료 안내만 보여준다.
+      statusEl.textContent = `${delivered} generated`;
+      console.error('[sgGenerate] 완료 메시지 조립 오류(결과 자체는 정상):', msgErr);
+    }
   } catch (e) {
     statusEl.className = 'sg-status err';
     statusEl.textContent = t.genericError;
