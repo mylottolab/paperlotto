@@ -627,7 +627,7 @@ const I18N = {
   },
 };
 
-let currentLang = 'ko';
+let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
 let currentRegion = 'all';
 const openCards = new Set();
 
@@ -702,6 +702,7 @@ function applyStaticI18n(){
 function render(){
   document.documentElement.lang = currentLang; // auth-widget.js가 언어 변경을 감지하도록
   applyStaticI18n();
+  document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active', b.dataset.lang===currentLang));
   renderRegionFilter();
   renderGuideList();
   if (typeof renderTicker === 'function') renderTicker();
@@ -710,7 +711,7 @@ function render(){
 document.querySelectorAll('.lang-toggle button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     currentLang = btn.dataset.lang;
-    document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.toggle('active', b===btn));
+    localStorage.setItem('paperlotto_lang', currentLang);
     render();
   });
 });
