@@ -117,6 +117,7 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
 }
 .sg-advanced{ display:none; }
 .sg-advanced.open{ display:block; }
+.sg-round-hint{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; line-height:1.6; }
 .sg-cost-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:10px 14px; background:var(--paper-2); border-radius:8px; font-size:12.5px; }
 .sg-cost-row b{ color:var(--gold-dark, #8a5b1c); font-family:'IBM Plex Mono',monospace; }
 .sg-generate-btn{
@@ -850,6 +851,10 @@ const SG_I18N = {
     saveSuccess:(n)=> `${n}개를 마이시그니처에 저장했습니다.`,
     saveFail:"저장에 실패했습니다.",
     overlapLabel:"직전겹침",
+    overlapNote:"※ 직전겹침 = 가장 최근 추첨된 실제 당첨번호와 몇 개가 겹치는지를 나타내는 참고용 숫자입니다. 당첨 여부나 확률과는 무관하며, 통계적 흥미를 위한 표시일 뿐입니다.",
+    roundHintLoading:"보유 데이터 확인 중…",
+    roundHint:(latest, suggested)=> `현재 보유 데이터: 1~${latest}회차. 시작회차·종료회차를 비워두면 전체 데이터를 사용합니다. 전체보다는 최근 500회 정도(예: 시작회차 ${suggested})가 최근 흐름을 더 잘 반영해서 적당해요.`,
+    roundHintFail:"보유 데이터 회차 정보를 불러오지 못했습니다. 비워두면 전체 데이터를 사용합니다.",
     helpCards:[
       ["전략명","저장/구분용 전략 이름입니다 (엑셀·PDF 파일명에도 쓰입니다)."],
       ["홀짝비율","메인번호 중 홀수 개수를 지정합니다. 무관은 제한 없음."],
@@ -895,6 +900,10 @@ const SG_I18N = {
     saveSuccess:(n)=> `Saved ${n} combination(s) to My Signature.`,
     saveFail:"Failed to save.",
     overlapLabel:"Prev. overlap",
+    overlapNote:"※ Prev. overlap = how many numbers match the most recently drawn winning numbers. It's for reference/statistical interest only and has no bearing on odds or winning.",
+    roundHintLoading:"Checking available data…",
+    roundHint:(latest, suggested)=> `Data available: rounds 1–${latest}. Leave Start/End Round blank to use all data. Rather than the full history, the most recent ~500 rounds (e.g. start round ${suggested}) usually better reflects recent trends.`,
+    roundHintFail:"Couldn't load the available round range. Leave blank to use all data.",
     helpCards:[
       ["Strategy Name","A name for this strategy (also used in the exported Excel/PDF filename)."],
       ["Odd–Even Ratio","How many of the main numbers should be odd. Any = no restriction."],
@@ -940,6 +949,10 @@ const SG_I18N = {
     saveSuccess:(n)=> `${n}件をマイシグネチャに保存しました。`,
     saveFail:"保存に失敗しました。",
     overlapLabel:"前回重複",
+    overlapNote:"※前回重複＝直近の実際の当選番号と何個一致するかを示す参考用の数字です。当選可否や確率とは無関係で、統計的な興味のための表示です。",
+    roundHintLoading:"保有データを確認中…",
+    roundHint:(latest, suggested)=> `保有データ:1〜${latest}回。開始回・終了回を空欄にすると全データを使用します。全体よりも直近500回程度(例:開始回${suggested})の方が最近の傾向をより反映しやすく適しています。`,
+    roundHintFail:"保有データの回数情報を取得できませんでした。空欄にすると全データを使用します。",
     helpCards:[
       ["戦略名","保存・区別用の戦略名です(Excel・PDFのファイル名にも使われます)。"],
       ["奇偶比率","メイン番号のうち奇数の個数を指定します。指定なしは制限なし。"],
@@ -995,8 +1008,9 @@ function sgWidgetHtml(gameId){
         </div>
         <div class="sg-field"><label>${t.f.sumMin}</label><input type="number" id="sg_sumMin_${gameId}"></div>
         <div class="sg-field"><label>${t.f.sumMax}</label><input type="number" id="sg_sumMax_${gameId}"></div>
-        <div class="sg-field"><label>${t.f.startRound}</label><input type="number" id="sg_startRound_${gameId}"></div>
-        <div class="sg-field"><label>${t.f.endRound}</label><input type="number" id="sg_endRound_${gameId}"></div>
+        <div class="sg-field"><label>${t.f.startRound}</label><input type="number" id="sg_startRound_${gameId}" placeholder="…"></div>
+        <div class="sg-field"><label>${t.f.endRound}</label><input type="number" id="sg_endRound_${gameId}" placeholder="…"></div>
+        <div class="sg-round-hint" id="sgRoundHint_${gameId}" style="grid-column:1/-1;">${t.roundHintLoading}</div>
         <div class="sg-field"><label>${t.f.consecutiveLimit}</label><input type="number" id="sg_consecutiveLimit_${gameId}"></div>
         <div class="sg-field"><label>${t.f.lastWeekPref}</label>
           <select id="sg_lastWeekPref_${gameId}"><option value="any">${t.anyLabel}</option><option value="fewer">${t.fewerLabel}</option><option value="more">${t.moreLabel}</option></select>
@@ -1039,8 +1053,54 @@ function sgWidgetHtml(gameId){
   </div>`;
 }
 
+const sgLatestRoundCache = {}; // gameId -> round_no (한 번 조회하면 캐시)
+
 function sgToggleAdvanced(gameId){
-  document.getElementById('sgAdvanced_' + gameId).classList.toggle('open');
+  const advEl = document.getElementById('sgAdvanced_' + gameId);
+  const wasOpen = advEl.classList.contains('open');
+  advEl.classList.toggle('open');
+  if (!wasOpen) sgLoadRoundHint(gameId); // 처음 펼칠 때만 조회 (그 다음은 캐시된 값 재사용)
+}
+
+async function sgLoadRoundHint(gameId){
+  const t = sgT();
+  const hintEl = document.getElementById('sgRoundHint_' + gameId);
+  if (!hintEl) return;
+  if (sgLatestRoundCache[gameId] !== undefined) {
+    sgRenderRoundHint(gameId);
+    return;
+  }
+  hintEl.textContent = t.roundHintLoading;
+  try {
+    const { data, error } = await sgSb
+      .from('draw_results')
+      .select('round_no')
+      .eq('game_id', gameId)
+      .order('round_no', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    sgLatestRoundCache[gameId] = (!error && data) ? data.round_no : null;
+  } catch (e) {
+    sgLatestRoundCache[gameId] = null;
+  }
+  sgRenderRoundHint(gameId);
+}
+
+function sgRenderRoundHint(gameId){
+  const t = sgT();
+  const hintEl = document.getElementById('sgRoundHint_' + gameId);
+  if (!hintEl) return;
+  const latest = sgLatestRoundCache[gameId];
+  if (!latest) {
+    hintEl.textContent = t.roundHintFail;
+    return;
+  }
+  const suggestedStart = Math.max(1, latest - 500);
+  hintEl.textContent = t.roundHint(latest, suggestedStart);
+  const endInput = document.getElementById('sg_endRound_' + gameId);
+  const startInput = document.getElementById('sg_startRound_' + gameId);
+  if (endInput) endInput.placeholder = String(latest);
+  if (startInput) startInput.placeholder = String(suggestedStart);
 }
 
 async function sgUpdateCostPreview(gameId){
@@ -1183,11 +1243,14 @@ function sgGetSelectedCombos(gameId){
 }
 
 function sgExportPdf(gameId){
+  const t = sgT();
   const combos = sgGetSelectedCombos(gameId);
   if (!combos.length) return;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  const gameName = (I18N[currentLang].names[gameId] || {}).name || gameId;
+  // 주의: jsPDF 기본 폰트는 한글/일본어를 지원하지 않아 깨져서 출력되므로(예: "파워볼"→깨진 문자),
+  // 별도 CJK 폰트를 심지 않는 한 PDF 제목은 항상 영어 게임명을 사용한다.
+  const gameName = (I18N.en.names[gameId] || {}).name || gameId;
   doc.setFontSize(14);
   doc.text('PaperLotto Strategy Numbers - ' + gameName, 14, 16);
   const rows = combos.map((c, i) => [
@@ -1200,10 +1263,16 @@ function sgExportPdf(gameId){
     head: [['No', 'Main Numbers', 'Bonus', 'Prev. Overlap']],
     body: rows, startY: 22, styles: { fontSize: 9 },
   });
+  // "Prev. Overlap"이 무슨 뜻인지 각주로 설명 (PDF도 영어로 — 한글 각주는 위와 같은 이유로 깨짐)
+  const noteY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 22) + 8;
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text('* Prev. Overlap: how many numbers match the most recently drawn winning numbers. Reference only — unrelated to odds or winning.', 14, noteY, { maxWidth: 180 });
   doc.save(gameId + '_strategy_numbers.pdf');
 }
 
 function sgExportExcel(gameId){
+  const t = sgT();
   const combos = sgGetSelectedCombos(gameId);
   if (!combos.length) return;
   const rows = combos.map((c, i) => ({
@@ -1213,6 +1282,8 @@ function sgExportExcel(gameId){
     PreviousDrawOverlap: c.overlap,
   }));
   const ws = XLSX.utils.json_to_sheet(rows);
+  // 마지막에 빈 줄 + "직전겹침"이 무슨 뜻인지 설명 각주를 추가 (엑셀은 UTF-8 텍스트라 한글이 안 깨짐)
+  XLSX.utils.sheet_add_aoa(ws, [[], [t.overlapNote]], { origin: -1 });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Strategy Numbers');
   XLSX.writeFile(wb, gameId + '_strategy_numbers.xlsx');
