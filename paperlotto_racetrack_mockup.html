@@ -109,6 +109,9 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 .horse-name .no{ color:var(--ink-dim); font-weight:400; font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-right:4px; }
 
 .grade-dist{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-dim); white-space:nowrap; }
+.grade-dist .gd-tier1{ color:#b8862e; font-weight:800; font-size:13px; }
+.grade-dist .gd-tier2{ color:#c2854f; font-weight:700; }
+.grade-dist .gd-tier3{ color:#8a6a3d; font-weight:700; }
 .win-rate{ font-weight:700; color:var(--ok); }
 
 .detail-btn{
@@ -583,7 +586,15 @@ async function placeBet(horseNo, horseName){
 function gradeDistText(hist){
   const spec = gameSpec();
   const parts = [];
-  for (let g = 1; g <= spec.maxGrade; g++) parts.push(hist[String(g)] || 0);
+  for (let g = 1; g <= spec.maxGrade; g++) {
+    const v = hist[String(g)] || 0;
+    if (g <= 3 && v > 0) {
+      const cls = g === 1 ? 'gd-tier1' : g === 2 ? 'gd-tier2' : 'gd-tier3';
+      parts.push(`<span class="${cls}">${v}</span>`);
+    } else {
+      parts.push(String(v));
+    }
+  }
   return parts.join(' / ');
 }
 
