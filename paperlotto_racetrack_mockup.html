@@ -605,6 +605,7 @@ async function placeBet(horseNo, horseName){
     statusEl.textContent = '✓ ' + okMsg;
     showBetMsg(okMsg, true);
     myBetsByHorse[horseNo] = (myBetsByHorse[horseNo] || 0) + units;
+    if (window.refreshAuthBalance) window.refreshAuthBalance();
     renderTable();
   } catch (e) {
     statusEl.className = 'bet-row-status err';
@@ -792,6 +793,7 @@ async function rtRequestRecommend(horseNo, horseName){
     statusEl.className = 'rt-status ok';
     statusEl.textContent = tt.recommendDone(data.deliveredCount, data.charged, data.balance);
     rtLastRecommend = { combos: data.combos, gameId: currentGame, horseName };
+    if (window.refreshAuthBalance) window.refreshAuthBalance();
     document.getElementById('rtRecResults').innerHTML = `
       <div class="rt-recommend-row">
         <button class="rt-btn-sm" type="button" onclick="rtExportRecommendPdf()">📄 PDF</button>
