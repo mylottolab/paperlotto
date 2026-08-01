@@ -115,6 +115,30 @@
     }
   }
 
+  // 다른 페이지의 스크립트(베팅, 추천번호 구매 등 포인트를 차감하는 동작 직후)에서
+  // window.refreshAuthBalance() 를 호출하면, 전체 위젯을 다시 그리지 않고 포인트 숫자만
+  // 서버에서 다시 조회해서 갱신합니다. (전체 render()는 로그아웃 버튼 리스너를 매번 새로
+  // 붙이는 등 무거우므로, 잔액만 가벼운게 다시 읽어오는 전용 함수를 따로 둠)
+  window.refreshAuthBalance = async function () {
+    const el = document.getElementById('authWidget');
+    if (!el) return;
+    const pointsEl = el.querySelector('.auth-points');
+    if (!pointsEl) return; // 로그인 안 된 상태(로그인 버튼만 있음)면 갱신할 게 없음
+    if (!window.supabase) await loadSupabaseScript();
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    try {
+      const res = await fetch(BALANCE_FN_URL, { headers: { Authorization: `Bearer ${session.access_token}` } });
+      if (res.ok) {
+        const balance = await res.json();
+        pointsEl.innerHTML = `🪙 <b>${fmtPoints(balance.total)}</b>P`;
+      }
+    } catch (err) {
+      console.error('[auth-widget] refreshAuthBalance 실패', err);
+    }
+  };
+
   function loadSupabaseScript() {
     return new Promise((resolve) => {
       const s = document.createElement('script');
