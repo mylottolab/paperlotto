@@ -109,9 +109,9 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 .horse-name .no{ color:var(--ink-dim); font-weight:400; font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-right:4px; }
 
 .grade-dist{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-dim); white-space:nowrap; }
-.grade-dist .gd-tier1{ color:#b8862e; font-weight:800; font-size:13px; }
-.grade-dist .gd-tier2{ color:#c2854f; font-weight:700; }
-.grade-dist .gd-tier3{ color:#8a6a3d; font-weight:700; }
+.grade-dist .gd-tier1{ color:#c0392b; font-weight:800; font-size:14.5px; }
+.grade-dist .gd-tier2{ color:#1d4fd8; font-weight:800; font-size:13px; }
+.grade-dist .gd-tier3{ color:#8a6a3d; font-weight:700; font-size:12px; }
 .win-rate{ font-weight:700; color:var(--ok); }
 
 .detail-btn{
@@ -132,6 +132,11 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 .race-banner.closed{ background:var(--paper-2); color:var(--ink-dim); }
 .bet-cell{ display:flex; align-items:center; gap:6px; }
 .bet-cell input{ width:52px; padding:6px 7px; border-radius:6px; border:1px solid rgba(28,33,48,0.2); font-family:'IBM Plex Mono',monospace; font-size:12px; }
+.bet-cell input.invalid{ border:2px solid #c0392b; background:#fdecea; }
+.bet-row-status{ font-size:10.5px; margin-top:3px; min-height:13px; }
+.bet-row-status.ok{ color:var(--ok); font-weight:700; }
+.bet-row-status.err{ color:#c0392b; font-weight:700; }
+.bet-row-status.pending{ color:var(--ink-dim); }
 .bet-btn{
   font-size:11.5px; padding:6px 12px; border-radius:7px; border:none; background:var(--gold); color:var(--ink);
   cursor:pointer; font-family:inherit; font-weight:700; white-space:nowrap;
@@ -330,6 +335,7 @@ const I18N = {
     recommendFail:"추천번호 생성에 실패했습니다.",
     recommendDisclaimer:"※ 경마로직과 같은 로직으로 산출한 참고번호입니다. 실제 이 말이 경주에 들고 나가는 번호와는 다릅니다.",
     generating:"생성 중…",
+    invalidUnits:"1~100 사이 숫자만 가능", betting:"처리 중…",
     typeStrategy:"전략중시형", typeLoyal:"일편단심형", typeRandom:"Que será, será형",
     detailBtn:"상세전략", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"홀짝비율", condConsec:"연속제한", condSumMin:"번호합 최소", condSumMax:"번호합 최대", condTopRange:"상위빈도범위", condTopUse:"상위번호사용",
@@ -356,6 +362,7 @@ const I18N = {
     recommendFail:"Failed to generate recommended numbers.",
     recommendDisclaimer:"* Reference numbers generated using the same logic as the World Jackpot Racetrack. These differ from the numbers this horse actually races with.",
     generating:"Generating…",
+    invalidUnits:"Enter a number between 1 and 100", betting:"Processing…",
     typeStrategy:"Strategy-driven", typeLoyal:"Loyal/Fixed", typeRandom:"Que será, será",
     detailBtn:"Detail", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"Odd:Even", condConsec:"Consecutive Limit", condSumMin:"Sum Min", condSumMax:"Sum Max", condTopRange:"Top Frequency Pool", condTopUse:"Top Numbers Used",
@@ -382,6 +389,7 @@ const I18N = {
     recommendFail:"参考番号の生成に失敗しました。",
     recommendDisclaimer:"※競馬ロジックと同じロジックで算出した参考番号です。実際にこの馬がレースで使う番号とは異なります。",
     generating:"生成中…",
+    invalidUnits:"1〜100の数字のみ入力可能", betting:"処理中…",
     typeStrategy:"戦略重視型", typeLoyal:"一途型", typeRandom:"Que será, será型",
     detailBtn:"詳細", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"奇偶比率", condConsec:"連続制限", condSumMin:"番号合計最小", condSumMax:"番号合計最大", condTopRange:"上位頻度範囲", condTopUse:"上位番号使用数",
@@ -548,16 +556,31 @@ function showBetMsg(text, ok){
   setTimeout(() => { el.classList.remove('show'); }, 3200);
 }
 
+function rtValidateUnitsInput(el){
+  const v = parseInt(el.value, 10);
+  const invalid = !v || v < 1 || v > 100;
+  el.classList.toggle('invalid', invalid);
+  return !invalid;
+}
+
 async function placeBet(horseNo, horseName){
   const tt = t();
+  const statusEl = document.getElementById('betStatus_' + horseNo);
   await refreshToken();
   if (!sbAccessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
   if (!currentRace) { showBetMsg(tt.raceClosed, false); return; }
 
   const input = document.getElementById('betUnits_' + horseNo);
-  const units = Math.max(1, Math.min(100, parseInt(input.value, 10) || 1));
+  if (!rtValidateUnitsInput(input)) {
+    statusEl.className = 'bet-row-status err';
+    statusEl.textContent = tt.invalidUnits;
+    return; // 조용히 100으로 잘라서 보내는 대신, 사용자가 직접 고치게 함
+  }
+  const units = parseInt(input.value, 10);
   const btn = document.getElementById('betBtn_' + horseNo);
   btn.disabled = true;
+  statusEl.className = 'bet-row-status pending';
+  statusEl.textContent = tt.betting;
 
   try {
     const resp = await fetch(RACE_PLACE_BET_URL, {
@@ -567,16 +590,25 @@ async function placeBet(horseNo, horseName){
     });
     const data = await resp.json();
     if (!resp.ok) {
-      if (data.error === 'INSUFFICIENT_POINTS') showBetMsg(tt.insufficientPoints(data.shortfall || 0), false);
-      else if (data.error === 'UNIT_CAP_EXCEEDED') showBetMsg(tt.unitCapExceeded(data.alreadyUnits || 0), false);
-      else if (data.error === 'RACE_NOT_OPEN') showBetMsg(tt.raceNotOpen, false);
-      else showBetMsg(data.message || data.error || tt.betFail, false);
+      let msg;
+      if (data.error === 'INSUFFICIENT_POINTS') msg = tt.insufficientPoints(data.shortfall || 0);
+      else if (data.error === 'UNIT_CAP_EXCEEDED') msg = tt.unitCapExceeded(data.alreadyUnits || 0);
+      else if (data.error === 'RACE_NOT_OPEN') msg = tt.raceNotOpen;
+      else msg = data.message || data.error || tt.betFail;
+      statusEl.className = 'bet-row-status err';
+      statusEl.textContent = msg;
+      showBetMsg(msg, false);
       return;
     }
-    showBetMsg(tt.betPlaced(units, horseName), true);
+    const okMsg = tt.betPlaced(units, horseName);
+    statusEl.className = 'bet-row-status ok';
+    statusEl.textContent = '✓ ' + okMsg;
+    showBetMsg(okMsg, true);
     myBetsByHorse[horseNo] = (myBetsByHorse[horseNo] || 0) + units;
     renderTable();
   } catch (e) {
+    statusEl.className = 'bet-row-status err';
+    statusEl.textContent = tt.betFail;
     showBetMsg(tt.betFail, false);
   } finally {
     btn.disabled = false;
@@ -618,9 +650,10 @@ function renderTable(){
       const canBet = !!currentRace;
       const betCell = canBet
         ? `<div class="bet-cell">
-             <input type="number" id="betUnits_${r.horse_no}" min="1" max="100" value="1">
+             <input type="number" id="betUnits_${r.horse_no}" min="1" max="100" value="1" oninput="rtValidateUnitsInput(this)">
              <button class="bet-btn" id="betBtn_${r.horse_no}" type="button" onclick="placeBet(${r.horse_no}, ${JSON.stringify(r.name)})">${tt.betBtn}</button>
            </div>
+           <div class="bet-row-status" id="betStatus_${r.horse_no}"></div>
            ${myUnits > 0 ? `<div class="my-bet-tag">${tt.myBet(myUnits)}</div>` : ''}`
         : '–';
       return `<tr>
@@ -710,7 +743,17 @@ async function rtLoadCurrentRaceNumbers(horseNo){
   if (listEl.dataset.loaded === '1') { listEl.style.display = listEl.style.display === 'none' ? 'block' : 'none'; return; }
   btn.textContent = tt.loading;
   const { data, error } = await sb.from('race_entries').select('combos').eq('race_id', currentRace.id).eq('horse_no', horseNo).maybeSingle();
-  if (error || !data) { listEl.innerHTML = `<div class="rt-status err">${tt.loadError}</div>`; btn.textContent = tt.viewNumbers; return; }
+  if (error) {
+    console.error('[rtLoadCurrentRaceNumbers] race_entries 조회 오류:', error);
+    listEl.innerHTML = `<div class="rt-status err">${tt.loadError} (${error.message || error.code || 'unknown'})</div>`;
+    btn.textContent = tt.viewNumbers;
+    return;
+  }
+  if (!data) {
+    listEl.innerHTML = `<div class="rt-status err">${tt.loadError} (no row for race_id=${currentRace.id}, horse_no=${horseNo})</div>`;
+    btn.textContent = tt.viewNumbers;
+    return;
+  }
   const combos = data.combos || [];
   listEl.innerHTML = `<div class="rt-numbers-list">` + combos.map((c,i) => {
     const mainPips = c.main.map(n => `<span class="rt-pip">${String(n).padStart(2,'0')}</span>`).join('');
