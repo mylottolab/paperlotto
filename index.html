@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PaperLotto — Global Lottery Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -177,6 +178,41 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
   font-size:13.5px; padding:13px 24px; border-radius:9px; white-space:nowrap;
 }
 .wf-hub-btn:hover{ background:var(--gold-bright); }
+
+/* ── 경마장 배너 ── */
+.rt-banner{ position:relative; margin-top:60px; min-height:520px; overflow:hidden; border-top:1px solid var(--board-line); border-bottom:1px solid var(--board-line); }
+.rt-banner-svg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.rt-banner-overlay{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:70px 24px 60px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:26px; }
+.rt-banner-head .rt-eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; letter-spacing:2px; color:var(--gold-bright); margin-bottom:14px; }
+.rt-banner-head h2{ font-size:clamp(26px,4.2vw,40px); font-weight:600; color:var(--text-hi); text-shadow:0 2px 20px rgba(0,0,0,0.6); }
+.rt-banner-head p{ margin-top:12px; color:var(--text-mid); font-size:14.5px; max-width:600px; margin-left:auto; margin-right:auto; text-shadow:0 2px 12px rgba(0,0,0,0.6); }
+.rt-jackpot-panel{
+  background:linear-gradient(135deg, var(--gold-bright), var(--gold)); color:var(--ink);
+  border-radius:14px; padding:16px 28px; max-width:560px;
+  box-shadow:0 0 0 1px rgba(255,255,255,0.15), 0 12px 40px -10px rgba(224,170,78,0.55);
+  animation: rtGlowPulse 2.6s ease-in-out infinite;
+}
+@keyframes rtGlowPulse{
+  0%,100%{ box-shadow:0 0 0 1px rgba(255,255,255,0.15), 0 12px 40px -10px rgba(224,170,78,0.55); }
+  50%{ box-shadow:0 0 0 1px rgba(255,255,255,0.3), 0 16px 55px -6px rgba(224,170,78,0.85); }
+}
+.rt-jackpot-label{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:1px; opacity:0.75; margin-bottom:4px; }
+.rt-jackpot-msg{ font-size:14px; font-weight:700; line-height:1.5; }
+.rt-btn-grid{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; max-width:760px; }
+.rt-btn{
+  display:inline-flex; align-items:center; gap:6px; padding:11px 20px; border-radius:24px;
+  border:1px solid rgba(167,173,199,0.35); color:var(--text-hi); text-decoration:none;
+  font-size:13px; font-weight:600; background:rgba(12,16,32,0.55); backdrop-filter:blur(3px);
+}
+.rt-btn:hover{ border-color:var(--gold-bright); color:var(--gold-bright); }
+.rt-btn-primary{ background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:700; }
+.rt-btn-primary:hover{ background:var(--gold-bright); color:var(--ink); }
+@media (max-width:640px){
+  .rt-banner{ min-height:420px; }
+  .rt-banner-overlay{ padding:50px 18px 40px; gap:18px; }
+  .rt-jackpot-panel{ padding:13px 18px; }
+  .rt-btn{ padding:9px 16px; font-size:12px; }
+}
 @media (max-width:640px){
   .wf-hub-banner{ padding:22px; text-align:center; justify-content:center; }
   .wf-hub-btn{ width:100%; text-align:center; }
@@ -441,6 +477,84 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <a href="paperlotto_winning_files_mockup.html" class="wf-hub-btn" data-i18n="wfBannerBtn">다운로드 목록 보기 →</a>
   </div>
 
+  <section class="rt-banner" id="rtBanner">
+    <svg class="rt-banner-svg" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="rtGlow1" cx="50%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#2a2350" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#0c1020" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="rtTrackFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8a5b1c"/>
+          <stop offset="100%" stop-color="#6b4515"/>
+        </linearGradient>
+        <linearGradient id="rtFieldFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#16321f"/>
+          <stop offset="100%" stop-color="#0f2417"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="1200" height="420" fill="var(--board)"/>
+      <rect x="0" y="0" width="1200" height="420" fill="url(#rtGlow1)"/>
+
+      <!-- 관중석 실루엣 -->
+      <g opacity="0.5" fill="var(--board-2)">
+        <rect x="40" y="55" width="240" height="46" rx="4"/>
+        <rect x="300" y="45" width="260" height="56" rx="4"/>
+        <rect x="900" y="45" width="260" height="56" rx="4"/>
+        <rect x="920" y="55" width="240" height="46" rx="4"/>
+      </g>
+      <g opacity="0.35" fill="var(--gold)">
+        <circle cx="70" cy="60" r="2.4"/><circle cx="110" cy="55" r="2.4"/><circle cx="150" cy="58" r="2.4"/>
+        <circle cx="1050" cy="55" r="2.4"/><circle cx="1090" cy="58" r="2.4"/><circle cx="1130" cy="55" r="2.4"/>
+      </g>
+
+      <!-- 트랙(타원형) -->
+      <ellipse cx="600" cy="270" rx="560" ry="130" fill="url(#rtTrackFill)"/>
+      <ellipse cx="600" cy="270" rx="380" ry="80" fill="url(#rtFieldFill)"/>
+      <ellipse cx="600" cy="270" rx="560" ry="130" fill="none" stroke="var(--gold-bright)" stroke-opacity="0.35" stroke-width="2"/>
+      <ellipse cx="600" cy="270" rx="470" ry="105" fill="none" stroke="var(--gold-bright)" stroke-opacity="0.22" stroke-width="1.5" stroke-dasharray="2 10"/>
+      <ellipse cx="600" cy="270" rx="380" ry="80" fill="none" stroke="var(--gold-bright)" stroke-opacity="0.3" stroke-width="2"/>
+
+      <!-- 결승선 -->
+      <g transform="translate(600,140)">
+        <rect x="-9" y="0" width="18" height="115" fill="#fff" opacity="0.9"/>
+        <rect x="-9" y="0" width="18" height="14" fill="#1c2130"/>
+        <rect x="-9" y="28" width="18" height="14" fill="#1c2130"/>
+        <rect x="-9" y="56" width="18" height="14" fill="#1c2130"/>
+        <rect x="-9" y="84" width="18" height="14" fill="#1c2130"/>
+      </g>
+
+      <!-- 말 실루엣들 (트랙 위 서로 다른 위치) -->
+      <g fill="var(--gold-bright)">
+        <g transform="translate(430,320) scale(1.05)"><path d="M0 10c2-6 8-9 14-8 3-8 10-13 17-12 2-5 8-8 13-6 5 2 6 8 4 12 5 1 9 5 9 10 0 4-3 7-7 8l2 9-6 1-2-8-9 1v8l-6 0-1-9c-7-1-13-4-17-9-6 1-13-2-17-7z" opacity="0.92"/></g>
+        <g transform="translate(760,300) scale(0.92) scale(-1,1) translate(-40,0)"><path d="M0 10c2-6 8-9 14-8 3-8 10-13 17-12 2-5 8-8 13-6 5 2 6 8 4 12 5 1 9 5 9 10 0 4-3 7-7 8l2 9-6 1-2-8-9 1v8l-6 0-1-9c-7-1-13-4-17-9-6 1-13-2-17-7z" opacity="0.75"/></g>
+        <g transform="translate(230,265) scale(0.8)"><path d="M0 10c2-6 8-9 14-8 3-8 10-13 17-12 2-5 8-8 13-6 5 2 6 8 4 12 5 1 9 5 9 10 0 4-3 7-7 8l2 9-6 1-2-8-9 1v8l-6 0-1-9c-7-1-13-4-17-9-6 1-13-2-17-7z" opacity="0.6"/></g>
+        <g transform="translate(940,250) scale(0.7) scale(-1,1) translate(-40,0)"><path d="M0 10c2-6 8-9 14-8 3-8 10-13 17-12 2-5 8-8 13-6 5 2 6 8 4 12 5 1 9 5 9 10 0 4-3 7-7 8l2 9-6 1-2-8-9 1v8l-6 0-1-9c-7-1-13-4-17-9-6 1-13-2-17-7z" opacity="0.5"/></g>
+      </g>
+    </svg>
+
+    <div class="rt-banner-overlay">
+      <div class="rt-banner-head">
+        <div class="rt-eyebrow">🏇 WORLD JACKPOT RACETRACK</div>
+        <h2 data-i18n="rtBannerTitle">100마리의 전략, 매 회차 새로운 경주</h2>
+        <p data-i18n="rtBannerSub">12개국 복권 결과를 두고 100가지 전략이 겨루는 페이퍼 경마. 포인트로 베팅하고, 정산은 100% 자동입니다.</p>
+      </div>
+
+      <div class="rt-jackpot-panel" id="rtJackpotPanel">
+        <div class="rt-jackpot-label" data-i18n="rtJackpotLabel">최근 주요 소식</div>
+        <div class="rt-jackpot-msg" id="rtJackpotMsg" data-i18n="rtJackpotDefault">첫 정산을 기다리는 중입니다 — 다음 잭팟의 주인공은 당신일 수도 있어요.</div>
+      </div>
+
+      <div class="rt-btn-grid">
+        <a href="paperlotto_racetrack_mockup.html" class="rt-btn rt-btn-primary" data-i18n="rtBtnEnter">🏇 경마장 입장하기</a>
+        <a href="paperlotto_my_bets.html" class="rt-btn" data-i18n="rtBtnMyBets">내 베팅현황</a>
+        <a href="paperlotto_racetrack_mockup.html#rt-howto" class="rt-btn" data-i18n="rtBtnHowTo">경마장 이용법</a>
+        <a href="paperlotto_racetrack_mockup.html#rt-recommend-guide" class="rt-btn" data-i18n="rtBtnRecGuide">추천번호 받기 안내</a>
+        <a href="paperlotto_game_rules_mockup.html" class="rt-btn" data-i18n="rtBtnRules">게임 규칙</a>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer>
@@ -483,6 +597,10 @@ const i18n = {
     wfBannerTitle:"역대 당첨번호, 데이터로 받아보세요",
     wfBannerDesc:"12개국 복권 전체 회차의 당첨번호를 CSV 파일로 다운로드할 수 있습니다. (다운로드당 2,500P, 24시간 이내 재다운로드 무료)",
     wfBannerBtn:"다운로드 목록 보기 →",
+    rtBannerTitle:"100마리의 전략, 매 회차 새로운 경주",
+    rtBannerSub:"12개국 복권 결과를 두고 100가지 전략이 겨루는 페이퍼 경마. 포인트로 베팅하고, 정산은 100% 자동입니다.",
+    rtJackpotLabel:"최근 주요 소식", rtJackpotDefault:"첫 정산을 기다리는 중입니다 — 다음 잭팟의 주인공은 당신일 수도 있어요.",
+    rtBtnEnter:"🏇 경마장 입장하기", rtBtnMyBets:"내 베팅현황", rtBtnHowTo:"경마장 이용법", rtBtnRecGuide:"추천번호 받기 안내", rtBtnRules:"게임 규칙",
     prBannerTitle:"이미 추첨 끝난 회차, 내 번호였다면?",
     prBannerDesc:"과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.",
     prBannerBtn:"과거 회차 도전하기 →",
@@ -507,6 +625,10 @@ const i18n = {
     wfBannerTitle:"Get historical winning numbers, as data",
     wfBannerDesc:"Download the full winning-number history for all 12 lotteries as a CSV file. (2,500P per download, free re-download within 24h)",
     wfBannerBtn:"View download list →",
+    rtBannerTitle:"100 Strategies. A Brand New Race Every Round.",
+    rtBannerSub:"A paper horse race where 100 strategies compete against 12 countries' lottery results. Bet with points — settlement is 100% automatic.",
+    rtJackpotLabel:"Latest Highlight", rtJackpotDefault:"Waiting for the first settlement — the next jackpot winner could be you.",
+    rtBtnEnter:"🏇 Enter the Racetrack", rtBtnMyBets:"My Betting Status", rtBtnHowTo:"How the Racetrack Works", rtBtnRecGuide:"Recommended Numbers Guide", rtBtnRules:"Game Rules",
     prBannerTitle:"Wonder if your numbers would've won a past draw?",
     prBannerDesc:"Pick a past round and register your numbers — get graded instantly.",
     prBannerBtn:"Try a past round →",
@@ -531,6 +653,10 @@ const i18n = {
     wfBannerTitle:"歴代当選番号を、データで受け取る",
     wfBannerDesc:"12カ国の宝くじ全回の当選番号をCSVファイルでダウンロードできます。（1回2,500P、24時間以内の再ダウンロードは無料）",
     wfBannerBtn:"ダウンロード一覧を見る →",
+    rtBannerTitle:"100頭の戦略、毎回新しいレース",
+    rtBannerSub:"12か国の宝くじ結果をめぐって100の戦略が競うペーパー競馬。ポイントでベットし、精算は100%自動です。",
+    rtJackpotLabel:"最新のハイライト", rtJackpotDefault:"最初の精算を待っています — 次のジャックポットの主人公はあなたかもしれません。",
+    rtBtnEnter:"🏇 競馬場に入場", rtBtnMyBets:"マイベット状況", rtBtnHowTo:"競馬場の使い方", rtBtnRecGuide:"参考番号ガイド", rtBtnRules:"ゲームルール",
     prBannerTitle:"すでに抽選が終わった回、自分の番号だったら？",
     prBannerDesc:"過去の回を選んで番号を登録すると、登録後すぐに結果を確認できます。",
     prBannerBtn:"過去回にチャレンジ →",
@@ -563,11 +689,76 @@ function applyLang(lang){
   });
   renderCards();
   renderTicker();
+  renderJackpotPanel();
 }
 
 document.querySelectorAll('.lang-toggle button').forEach(btn => {
   btn.addEventListener('click', () => applyLang(btn.dataset.lang));
 });
+
+// ─── 경마장 배너 — 최근 정산된 경주 중 "진짜 1등급(잭팟)"이 나온 게 있으면 그 소식을 보여줌 ───
+// (race_bets는 본인 것만 조회 가능하므로, 누가 얼마 땄는지가 아니라 "어느 게임의 어느 말이
+//  1등급을 기록했는지"를 race_entries(공개 조회 가능)에서 가져와 보여준다)
+const RT_SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const RT_SUPABASE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const RT_GAME_NAMES = {
+  kr_lotto645:{ko:'한국 로또 6/45',en:'Korea Lotto 6/45',ja:'韓国ロト6/45'},
+  us_powerball:{ko:'미국 파워볼',en:'US Powerball',ja:'米国パワーボール'},
+  us_megamillions:{ko:'미국 메가밀리언스',en:'Mega Millions',ja:'メガミリオンズ'},
+  eu_euromillions:{ko:'유로밀리언스',en:'EuroMillions',ja:'ユーロミリオンズ'},
+  jp_miniloto:{ko:'일본 미니로또',en:'Japan Mini Loto',ja:'ミニロト'},
+  jp_loto7:{ko:'일본 로또7',en:'Japan Loto 7',ja:'ロト7'},
+  jp_loto6:{ko:'일본 로또6',en:'Japan Loto 6',ja:'ロト6'},
+  ca_lottomax:{ko:'캐나다 로또맥스',en:'Canada Lotto Max',ja:'ロトマックス'},
+  ca_lotto649:{ko:'캐나다 로또649',en:'Canada Lotto 6/49',ja:'カナダロト6/49'},
+  au_powerball:{ko:'호주 파워볼',en:'Australia Powerball',ja:'豪パワーボール'},
+  au_ozlotto:{ko:'호주 오즈로또',en:'Oz Lotto',ja:'オズロト'},
+  au_tattslotto:{ko:'호주 새터데이로또',en:'Saturday Lotto',ja:'サタデーロト'},
+};
+let rtJackpotData = null; // {gameId, roundNo, horseName} 또는 null(아직 없음)
+let rtJackpotFetched = false;
+
+async function fetchRtJackpotHighlight(){
+  try {
+    if (!window.supabase) return;
+    const sb = window.supabase.createClient(RT_SUPABASE_URL, RT_SUPABASE_KEY);
+    const { data: races } = await sb
+      .from('races').select('id, game_id, round_no').eq('status', 'settled')
+      .order('settled_at', { ascending: false }).limit(8);
+    if (!races || races.length === 0) { rtJackpotFetched = true; return; }
+
+    for (const race of races) {
+      const { data: winner } = await sb
+        .from('race_entries').select('horse_no, best_grade')
+        .eq('race_id', race.id).eq('rank', 1).maybeSingle();
+      if (winner && winner.best_grade === 1) {
+        const { data: horse } = await sb
+          .from('race_horses').select('name').eq('game_id', race.game_id).eq('horse_no', winner.horse_no).maybeSingle();
+        rtJackpotData = { gameId: race.game_id, roundNo: race.round_no, horseName: horse ? horse.name : ('#' + winner.horse_no) };
+        break;
+      }
+    }
+  } catch (e) {
+    console.error('[rtJackpot] 조회 실패:', e);
+  } finally {
+    rtJackpotFetched = true;
+    renderJackpotPanel();
+  }
+}
+
+function renderJackpotPanel(){
+  const el = document.getElementById('rtJackpotMsg');
+  if (!el || !rtJackpotFetched || !rtJackpotData) return; // 데이터 없으면 기존 data-i18n 기본문구 그대로 둠
+  const gm = RT_GAME_NAMES[rtJackpotData.gameId];
+  const gameName = gm ? gm[currentLang] : rtJackpotData.gameId;
+  const msg = currentLang === 'ko'
+    ? `🎉 ${gameName} ${rtJackpotData.roundNo}회차에서 "${rtJackpotData.horseName}"이(가) 1등급을 기록했습니다!`
+    : currentLang === 'ja'
+    ? `🎉 ${gameName} 第${rtJackpotData.roundNo}回で「${rtJackpotData.horseName}」が1等級を記録しました！`
+    : `🎉 "${rtJackpotData.horseName}" hit Tier 1 in ${gameName} Round ${rtJackpotData.roundNo}!`;
+  el.textContent = msg;
+}
+fetchRtJackpotHighlight();
 
 // ─── 다음 추첨 시각 계산 (데모용: 방문자 로컬 시간 20:00 기준, 실제 서비스에서는 국가별 타임존 반영 필요) ───
 // 특정 타임존의 로컬 날짜/시각(YYYY-MM-DD, hour, minute)을 정확한 UTC Date로 변환
