@@ -114,6 +114,30 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 }
 .detail-btn:hover{ border-color:var(--gold); color:#8a5b1c; }
 
+/* ── 베팅 ── */
+.race-banner{
+  max-width:1180px; margin:0 auto 18px; padding:16px 22px; border-radius:12px;
+  background:linear-gradient(135deg, var(--gold-bright), var(--gold)); color:var(--ink);
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.race-banner .rb-title{ font-family:'Fraunces',serif; font-size:15px; font-weight:700; }
+.race-banner .rb-sub{ font-size:12px; opacity:0.85; }
+.race-banner .rb-countdown{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:15px; }
+.race-banner.closed{ background:var(--paper-2); color:var(--ink-dim); }
+.bet-cell{ display:flex; align-items:center; gap:6px; }
+.bet-cell input{ width:52px; padding:6px 7px; border-radius:6px; border:1px solid rgba(28,33,48,0.2); font-family:'IBM Plex Mono',monospace; font-size:12px; }
+.bet-btn{
+  font-size:11.5px; padding:6px 12px; border-radius:7px; border:none; background:var(--gold); color:var(--ink);
+  cursor:pointer; font-family:inherit; font-weight:700; white-space:nowrap;
+}
+.bet-btn:hover{ background:var(--gold-bright); }
+.bet-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+.my-bet-tag{ font-size:10.5px; color:var(--ok); font-weight:700; margin-top:2px; }
+.bet-msg{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:300; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; display:none; }
+.bet-msg.show{ display:block; }
+.bet-msg.ok{ background:var(--ok); color:#fff; }
+.bet-msg.err{ background:#b23b3b; color:#fff; }
+
 .empty-note{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:50px 0; }
 
 .footer-disclaimer{ max-width:1180px; margin:0 auto 50px; padding:0 24px; font-size:12px; color:var(--text-dim); line-height:1.7; }
@@ -178,6 +202,8 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 
 <div class="game-tabs" id="gameTabs"></div>
 
+<div class="race-banner" id="raceBanner" style="display:none;"></div>
+
 <div class="board-wrap">
   <div class="board-toolbar">
     <div>
@@ -203,6 +229,7 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
           <th data-sort="win_rate" data-i18n="thWinRate">당첨율</th>
           <th data-i18n="thGradeDist">등급분포</th>
           <th data-i18n="thDetail">상세전략</th>
+          <th data-i18n="thBet">베팅</th>
         </tr>
       </thead>
       <tbody id="boardBody"></tbody>
@@ -223,10 +250,23 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
   </div>
 </div>
 
+<div class="bet-msg" id="betMsg"></div>
+
 <script>
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const RACE_PLACE_BET_URL = SUPABASE_URL + "/functions/v1/race-place-bet";
+let sbAccessToken = null;
+let currentRace = null;      // 현재 게임의 베팅오픈 경주 (없으면 null)
+let myBetsByHorse = {};      // horse_no -> 이번 경주에 내가 이미 건 누적 구좌수
+let raceCountdownTimer = null;
+
+async function refreshToken(){
+  const { data: { session } } = await sb.auth.getSession();
+  sbAccessToken = session ? session.access_token : null;
+  return sbAccessToken;
+}
 
 // 게임별 규격/등급수 (generate-strategy-numbers, race-advance와 동일하게 유지)
 const GAMES = [
@@ -252,7 +292,13 @@ const I18N = {
     footerNote:"본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다. World Jackpot Racetrack의 베팅은 실제 화폐가 아닌 포인트로만 이루어지며, 실제 현금으로 환급되지 않습니다.",
     filterLabel:"구분", filterAll:"전체 (100필)", filterStrategy:"전략중시형 (68)", filterLoyal:"일편단심형 (16)", filterRandom:"Que será, será형 (16)",
     loading:"불러오는 중…", noData:"이 게임은 아직 정산된 경주가 없습니다. 첫 경주가 끝나면 순위가 채워집니다.", loadError:"불러오는 중 오류가 발생했습니다.",
-    thRank:"순위", thType:"전략기준", thName:"전략명 (Horse Name)", thRaces:"출전횟수", thWinCount:"당첨건수", thWinRate:"당첨율", thGradeDist:"등급분포", thDetail:"상세전략",
+    thRank:"순위", thType:"전략기준", thName:"전략명 (Horse Name)", thRaces:"출전횟수", thWinCount:"당첨건수", thWinRate:"당첨율", thGradeDist:"등급분포", thDetail:"상세전략", thBet:"베팅",
+    betBtn:"베팅", betPlaced:(units,horse)=>`${horse}에 ${units}구좌 베팅 완료!`, betFail:"베팅에 실패했습니다.",
+    loginRequired:"베팅하려면 로그인이 필요합니다.", betUnitPrice:"1구좌 = 100P (최대 100구좌)",
+    myBet:(units)=>`내 베팅: ${units}구좌`, insufficientPoints:(shortfall)=>`포인트가 부족합니다 (부족: ${shortfall.toLocaleString()}P).`,
+    unitCapExceeded:(already)=>`이 말에는 이미 ${already}구좌를 베팅하셨습니다 (최대 100구좌).`,
+    raceOpen:(round)=>`🏇 현재 베팅 가능 · ${round}회차`, raceClosed:"현재 베팅 가능한 경주가 없습니다 (정산 중이거나 다음 경주 준비 중).",
+    bettingCloseIn:"베팅마감까지", raceNotOpen:"이 경주는 베팅이 마감됐습니다.",
     typeStrategy:"전략중시형", typeLoyal:"일편단심형", typeRandom:"Que será, será형",
     detailBtn:"상세전략", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"홀짝비율", condConsec:"연속제한", condSumMin:"번호합 최소", condSumMax:"번호합 최대", condTopRange:"상위빈도범위", condTopUse:"상위번호사용",
@@ -266,7 +312,13 @@ const I18N = {
     footerNote:"This content is provided for informational and statistical simulation purposes only. PaperLotto does not sell lottery tickets and does not pay out any prizes. Betting on World Jackpot Racetrack uses points only, not real currency, and cannot be cashed out.",
     filterLabel:"Type", filterAll:"All (100 horses)", filterStrategy:"Strategy-driven (68)", filterLoyal:"Loyal / Fixed (16)", filterRandom:"Que será, será (16)",
     loading:"Loading…", noData:"No settled races yet for this game. Rankings will populate after the first race.", loadError:"An error occurred while loading.",
-    thRank:"Rank", thType:"Type", thName:"Strategy (Horse Name)", thRaces:"Races Run", thWinCount:"Win Count", thWinRate:"Win Rate", thGradeDist:"Grade Breakdown", thDetail:"Detail",
+    thRank:"Rank", thType:"Type", thName:"Strategy (Horse Name)", thRaces:"Races Run", thWinCount:"Win Count", thWinRate:"Win Rate", thGradeDist:"Grade Breakdown", thDetail:"Detail", thBet:"Bet",
+    betBtn:"Bet", betPlaced:(units,horse)=>`Placed ${units} unit(s) on ${horse}!`, betFail:"Bet failed.",
+    loginRequired:"You need to log in to place a bet.", betUnitPrice:"1 unit = 100P (max 100 units)",
+    myBet:(units)=>`My bet: ${units} unit(s)`, insufficientPoints:(shortfall)=>`Not enough points (short by ${shortfall.toLocaleString()}P).`,
+    unitCapExceeded:(already)=>`You've already bet ${already} units on this horse (max 100).`,
+    raceOpen:(round)=>`🏇 Betting Open · Round ${round}`, raceClosed:"No race is currently open for betting (settling or preparing the next race).",
+    bettingCloseIn:"Betting closes in", raceNotOpen:"Betting for this race has closed.",
     typeStrategy:"Strategy-driven", typeLoyal:"Loyal/Fixed", typeRandom:"Que será, será",
     detailBtn:"Detail", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"Odd:Even", condConsec:"Consecutive Limit", condSumMin:"Sum Min", condSumMax:"Sum Max", condTopRange:"Top Frequency Pool", condTopUse:"Top Numbers Used",
@@ -280,7 +332,13 @@ const I18N = {
     footerNote:"本コンテンツは情報提供および統計的シミュレーション目的でのみ提供されます。PaperLottoは宝くじを販売せず、いかなる形でも賞金を支払いません。World Jackpot Racetrackのベットは実際の通貨ではなくポイントのみで行われ、現金化はできません。",
     filterLabel:"区分", filterAll:"すべて(100頭)", filterStrategy:"戦略重視型(68)", filterLoyal:"一途型(16)", filterRandom:"Que será, será型(16)",
     loading:"読み込み中…", noData:"このゲームはまだ精算されたレースがありません。最初のレース終了後にランキングが表示されます。", loadError:"読み込み中にエラーが発生しました。",
-    thRank:"順位", thType:"戦略基準", thName:"戦略名(Horse Name)", thRaces:"出走回数", thWinCount:"当選件数", thWinRate:"当選率", thGradeDist:"等級分布", thDetail:"詳細戦略",
+    thRank:"順位", thType:"戦略基準", thName:"戦略名(Horse Name)", thRaces:"出走回数", thWinCount:"当選件数", thWinRate:"当選率", thGradeDist:"等級分布", thDetail:"詳細戦略", thBet:"ベット",
+    betBtn:"ベット", betPlaced:(units,horse)=>`${horse}に${units}口ベットしました！`, betFail:"ベットに失敗しました。",
+    loginRequired:"ベットするにはログインが必要です。", betUnitPrice:"1口=100P(最大100口)",
+    myBet:(units)=>`自分のベット: ${units}口`, insufficientPoints:(shortfall)=>`ポイントが不足しています(不足:${shortfall.toLocaleString()}P)。`,
+    unitCapExceeded:(already)=>`この馬にはすでに${already}口ベット済みです(最大100口)。`,
+    raceOpen:(round)=>`🏇 ベット受付中・第${round}回`, raceClosed:"現在ベット可能なレースがありません(精算中または次のレース準備中)。",
+    bettingCloseIn:"ベット締切まで", raceNotOpen:"このレースはベットが締め切られました。",
     typeStrategy:"戦略重視型", typeLoyal:"一途型", typeRandom:"Que será, será型",
     detailBtn:"詳細", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"奇偶比率", condConsec:"連続制限", condSumMin:"番号合計最小", condSumMax:"番号合計最大", condTopRange:"上位頻度範囲", condTopUse:"上位番号使用数",
@@ -322,6 +380,8 @@ async function loadBoard(){
   const bodyEl = document.getElementById('boardBody');
   statusEl.textContent = t().loading;
   bodyEl.innerHTML = '';
+
+  await loadRace(); // 현재 게임의 베팅오픈 경주 + 내 베팅 내역
 
   try {
     const [{ data: horses, error: hErr }, { data: stats, error: sErr }] = await Promise.all([
@@ -374,6 +434,101 @@ function sortedFilteredRows(){
 
 function gameSpec(){ return GAMES.find(g => g.id === currentGame); }
 
+async function loadRace(){
+  await refreshToken();
+  const { data: race } = await sb
+    .from('races').select('*').eq('game_id', currentGame).eq('status', 'betting_open')
+    .order('round_no', { ascending: false }).limit(1).maybeSingle();
+  currentRace = race || null;
+
+  myBetsByHorse = {};
+  if (currentRace && sbAccessToken) {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      const { data: bets } = await sb.from('race_bets').select('horse_no, units')
+        .eq('race_id', currentRace.id).eq('user_id', user.id).in('status', ['placed','won','lost']);
+      (bets || []).forEach(b => { myBetsByHorse[b.horse_no] = (myBetsByHorse[b.horse_no] || 0) + b.units; });
+    }
+  }
+  renderRaceBanner();
+}
+
+function renderRaceBanner(){
+  const tt = t();
+  const el = document.getElementById('raceBanner');
+  if (raceCountdownTimer) { clearInterval(raceCountdownTimer); raceCountdownTimer = null; }
+
+  if (!currentRace) {
+    el.style.display = 'flex';
+    el.className = 'race-banner closed';
+    el.innerHTML = `<div class="rb-title">${tt.raceClosed}</div>`;
+    return;
+  }
+  el.style.display = 'flex';
+  el.className = 'race-banner';
+  el.innerHTML = `
+    <div>
+      <div class="rb-title">${tt.raceOpen(currentRace.round_no)}</div>
+      <div class="rb-sub">${tt.betUnitPrice}</div>
+    </div>
+    <div class="rb-countdown" id="rbCountdown">--:--:--</div>`;
+
+  const closeAt = new Date(currentRace.betting_close_at);
+  const tick = () => {
+    const diff = closeAt - new Date();
+    const cdEl = document.getElementById('rbCountdown');
+    if (!cdEl) { clearInterval(raceCountdownTimer); return; }
+    if (diff <= 0) { cdEl.textContent = t().raceNotOpen; clearInterval(raceCountdownTimer); return; }
+    const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+    cdEl.textContent = (d > 0 ? d + 'd ' : '') + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  };
+  tick();
+  raceCountdownTimer = setInterval(tick, 1000);
+}
+
+function showBetMsg(text, ok){
+  const el = document.getElementById('betMsg');
+  el.textContent = text;
+  el.className = 'bet-msg show ' + (ok ? 'ok' : 'err');
+  setTimeout(() => { el.classList.remove('show'); }, 3200);
+}
+
+async function placeBet(horseNo, horseName){
+  const tt = t();
+  await refreshToken();
+  if (!sbAccessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
+  if (!currentRace) { showBetMsg(tt.raceClosed, false); return; }
+
+  const input = document.getElementById('betUnits_' + horseNo);
+  const units = Math.max(1, Math.min(100, parseInt(input.value, 10) || 1));
+  const btn = document.getElementById('betBtn_' + horseNo);
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(RACE_PLACE_BET_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sbAccessToken },
+      body: JSON.stringify({ raceId: currentRace.id, horseNo, units }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      if (data.error === 'INSUFFICIENT_POINTS') showBetMsg(tt.insufficientPoints(data.shortfall || 0), false);
+      else if (data.error === 'UNIT_CAP_EXCEEDED') showBetMsg(tt.unitCapExceeded(data.alreadyUnits || 0), false);
+      else if (data.error === 'RACE_NOT_OPEN') showBetMsg(tt.raceNotOpen, false);
+      else showBetMsg(data.message || data.error || tt.betFail, false);
+      return;
+    }
+    showBetMsg(tt.betPlaced(units, horseName), true);
+    myBetsByHorse[horseNo] = (myBetsByHorse[horseNo] || 0) + units;
+    renderTable();
+  } catch (e) {
+    showBetMsg(tt.betFail, false);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function gradeDistText(hist){
   const spec = gameSpec();
   const parts = [];
@@ -393,10 +548,19 @@ function renderTable(){
   const rows = sortedFilteredRows();
   const bodyEl = document.getElementById('boardBody');
   if (rows.length === 0) {
-    bodyEl.innerHTML = `<tr><td colspan="8" class="empty-note">${tt.noData}</td></tr>`;
+    bodyEl.innerHTML = `<tr><td colspan="9" class="empty-note">${tt.noData}</td></tr>`;
   } else {
     bodyEl.innerHTML = rows.map(r => {
       const rankCls = r.rank <= 3 ? `rank-${r.rank}` : 'rank-etc';
+      const myUnits = myBetsByHorse[r.horse_no] || 0;
+      const canBet = !!currentRace;
+      const betCell = canBet
+        ? `<div class="bet-cell">
+             <input type="number" id="betUnits_${r.horse_no}" min="1" max="100" value="1">
+             <button class="bet-btn" id="betBtn_${r.horse_no}" type="button" onclick="placeBet(${r.horse_no}, ${JSON.stringify(r.name)})">${tt.betBtn}</button>
+           </div>
+           ${myUnits > 0 ? `<div class="my-bet-tag">${tt.myBet(myUnits)}</div>` : ''}`
+        : '–';
       return `<tr>
         <td><span class="rank-pill ${rankCls}">${r.rank}</span></td>
         <td>${typeBadge(r.horse_type)}</td>
@@ -406,6 +570,7 @@ function renderTable(){
         <td class="mono win-rate">${(r.win_rate*100).toFixed(2)}%</td>
         <td class="grade-dist">${gradeDistText(r.grade_histogram)}</td>
         <td><button class="detail-btn" type="button" onclick="rtOpenModal(${r.horse_no})">${tt.detailBtn}</button></td>
+        <td>${betCell}</td>
       </tr>`;
     }).join('');
   }
