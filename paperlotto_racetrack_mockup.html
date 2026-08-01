@@ -446,9 +446,20 @@ async function loadBoard(){
       };
     });
 
-    // "순위" 기본값: 당첨율 높은 순 (races_run=0인 말들은 뒤로)
-    horseRows.forEach(r => { r._rankScore = r.races_run > 0 ? r.win_rate : -1; });
-    horseRows.sort((a,b) => b._rankScore - a._rankScore);
+    // "순위" 결정: 당첨율(%)이 아니라 "1등 개수 → 같으면 2등 개수 → ... → 같으면 말번호" 순으로 비교.
+    // 예: 1등을 1번이라도 한 말이, 2등 이하만 수백 번 한 말보다 항상 위에 옵니다.
+    const spec = gameSpec();
+    horseRows.sort((a, b) => {
+      if (a.races_run === 0 && b.races_run === 0) return a.horse_no - b.horse_no;
+      if (a.races_run === 0) return 1;
+      if (b.races_run === 0) return -1;
+      for (let g = 1; g <= spec.maxGrade; g++) {
+        const av = a.grade_histogram[String(g)] || 0;
+        const bv = b.grade_histogram[String(g)] || 0;
+        if (av !== bv) return bv - av; // 그 등급을 더 많이 받은 쪽이 우선
+      }
+      return a.horse_no - b.horse_no;
+    });
     horseRows.forEach((r,i) => { r.rank = i+1; });
 
     renderTable();
