@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Jackpot Racetrack — PaperLotto</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --kr:#c8203a; --jp:#2a3a7a; --us:#2c4fa3; --ca:#d8232a; --au:#1f7a6e; --eu:#2451c4;
+  --ok:#1f7a4f;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi);
+  font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;
+  word-break:keep-all; overflow-wrap:break-word;
+  background-image:linear-gradient(var(--board-line) 1px, transparent 1px), linear-gradient(90deg, var(--board-line) 1px, transparent 1px);
+  background-size:64px 64px; background-color:var(--board);
+}
+h1,h2,h3{ font-family:'Fraunces',serif; margin:0; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--gold-bright); outline-offset:3px; border-radius:4px; }
+
+.site-sticky-top{ position:sticky; top:0; z-index:20; }
+header{
+  position:relative; display:flex; align-items:center; justify-content:space-between;
+  padding:20px 32px; border-bottom:1px solid var(--board-line);
+  background:rgba(12,16,32,0.9); backdrop-filter:blur(6px); flex-wrap:wrap; gap:12px;
+}
+.ticker-wrap{ position:relative; z-index:2; border-bottom:1px solid var(--board-line); background:var(--board-2); overflow:hidden; padding:9px 0; }
+.ticker-label{ position:absolute; left:0; top:0; bottom:0; z-index:2; display:flex; align-items:center; gap:8px; padding:0 16px 0 32px; background:linear-gradient(90deg, var(--board-2) 60%, transparent); }
+.ticker-label .dot{ width:7px; height:7px; border-radius:50%; background:#e3574a; animation:tpulse 1.6s ease-in-out infinite; }
+@keyframes tpulse{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+.ticker-label span{ font-size:11px; letter-spacing:1.4px; color:var(--text-dim); font-weight:600; }
+.ticker-track{ display:flex; gap:0; width:max-content; animation:tickerScroll 52s linear infinite; padding-left:190px; }
+@keyframes tickerScroll{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.ticker-item{ display:flex; align-items:baseline; gap:9px; padding:0 26px; border-right:1px solid var(--board-line); white-space:nowrap; font-size:13px; }
+.ticker-item .flag{ width:8px; height:8px; border-radius:2px; }
+.ticker-item .name{ color:var(--text-mid); }
+.ticker-item .odds{ color:var(--text-dim); font-size:11.5px; }
+.ticker-item .cd{ color:var(--gold-bright); font-weight:600; letter-spacing:0.3px; }
+@media (prefers-reduced-motion: reduce){ .ticker-track{ animation:none; } }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
+.brand-mark{ width:34px; height:34px; border-radius:7px; background:linear-gradient(135deg, var(--gold-bright), var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-family:'Fraunces',serif; font-weight:700; font-size:17px; transform:rotate(-4deg); }
+.brand-name{ font-size:20px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav{ display:flex; align-items:center; gap:22px; font-size:14px; color:var(--text-mid); flex-wrap:wrap; }
+nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 14px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:var(--ink); }
+
+.page-head{ max-width:1180px; margin:36px auto 0; padding:0 24px; }
+.page-eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:1.6px; color:var(--gold-bright); }
+.page-title{ font-size:clamp(26px,4vw,36px); font-weight:600; margin-top:10px; }
+.page-sub{ color:var(--text-mid); font-size:14.5px; margin-top:10px; max-width:720px; line-height:1.7; }
+
+.game-tabs{ max-width:1180px; margin:26px auto 0; padding:0 24px; display:flex; gap:8px; flex-wrap:wrap; }
+.game-tab{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); font-size:12.5px; font-family:'Inter',sans-serif; padding:7px 14px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.game-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:600; }
+
+.board-wrap{ max-width:1180px; margin:22px auto 60px; padding:0 24px; }
+.board-toolbar{ display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+.board-toolbar label{ font-size:12px; color:var(--text-dim); margin-right:6px; }
+.board-toolbar select{
+  background:var(--board-2); color:var(--text-hi); border:1px solid var(--board-line); border-radius:8px;
+  padding:7px 10px; font-size:12.5px; font-family:'Inter',sans-serif;
+}
+.board-status{ font-size:12px; color:var(--text-dim); margin-left:auto; }
+
+.board-table-wrap{ background:var(--paper); color:var(--ink); border-radius:14px; overflow-x:auto; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); }
+table.board{ width:100%; border-collapse:collapse; font-size:13px; min-width:920px; }
+table.board th{
+  text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.03em;
+  color:var(--ink-dim); font-weight:700; padding:12px 10px; border-bottom:2px solid rgba(28,33,48,0.15);
+  background:var(--paper-2); position:sticky; top:0; cursor:pointer; white-space:nowrap;
+}
+table.board th:hover{ color:var(--gold-dark,#8a5b1c); }
+table.board th.sorted::after{ content:' ▾'; color:var(--gold); }
+table.board th.sorted.asc::after{ content:' ▴'; }
+table.board td{ padding:11px 10px; border-bottom:1px solid rgba(28,33,48,0.08); vertical-align:middle; }
+table.board tr:last-child td{ border-bottom:none; }
+table.board tr:hover td{ background:rgba(184,134,46,0.06); }
+
+.rank-pill{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; font-size:11px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+.rank-1{ background:var(--gold); color:#1a1404; }
+.rank-2{ background:#b9bccb; color:#1a1404; }
+.rank-3{ background:#c2854f; color:#1a1404; }
+.rank-etc{ background:rgba(28,33,48,0.08); color:var(--ink-dim); }
+
+.type-badge{ font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:10px; white-space:nowrap; }
+.type-strategy{ background:rgba(31,122,79,0.14); color:var(--ok); }
+.type-loyal{ background:rgba(184,134,46,0.14); color:#8a5b1c; }
+.type-random{ background:rgba(43,79,163,0.14); color:#2c4fa3; }
+
+.horse-name{ font-weight:700; }
+.horse-name .no{ color:var(--ink-dim); font-weight:400; font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-right:4px; }
+
+.grade-dist{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-dim); white-space:nowrap; }
+.win-rate{ font-weight:700; color:var(--ok); }
+
+.detail-btn{
+  font-size:11.5px; padding:5px 11px; border-radius:7px; border:1px solid rgba(28,33,48,0.2);
+  background:#fff; color:var(--ink); cursor:pointer; font-family:inherit; font-weight:600; white-space:nowrap;
+}
+.detail-btn:hover{ border-color:var(--gold); color:#8a5b1c; }
+
+.empty-note{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:50px 0; }
+
+.footer-disclaimer{ max-width:1180px; margin:0 auto 50px; padding:0 24px; font-size:12px; color:var(--text-dim); line-height:1.7; }
+
+/* ── 상세전략 모달 ── */
+.rt-modal{ display:none; position:fixed; inset:0; z-index:200; background:rgba(12,16,32,0.72); align-items:center; justify-content:center; padding:20px; }
+.rt-modal.open{ display:flex; }
+.rt-modal-panel{ background:var(--paper); color:var(--ink); border-radius:14px; max-width:520px; width:100%; max-height:82vh; overflow-y:auto; padding:26px 28px; }
+.rt-modal-close{ float:right; background:none; border:none; font-size:20px; cursor:pointer; color:var(--ink-dim); }
+.rt-modal-title{ font-family:'Fraunces',serif; font-size:19px; margin-bottom:2px; }
+.rt-modal-sub{ font-size:12px; color:var(--ink-dim); margin-bottom:16px; }
+.rt-cond-row{ display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(28,33,48,0.08); font-size:13px; }
+.rt-cond-row:last-child{ border-bottom:none; }
+.rt-cond-row .k{ color:var(--ink-dim); }
+.rt-cond-row .v{ font-weight:600; font-family:'IBM Plex Mono',monospace; }
+
+@media (max-width:640px){
+  header{ padding:16px 18px; }
+  nav{ gap:14px; font-size:13px; order:3; width:100%; justify-content:space-between; }
+  .ticker-label{ padding:0 10px 0 16px; }
+  .ticker-label span{ font-size:10px; }
+  .ticker-item{ padding:0 16px; font-size:11.5px; }
+  table.board{ font-size:11.5px; min-width:760px; }
+  table.board th, table.board td{ padding:9px 7px; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-sticky-top">
+<header>
+  <a class="brand" href="paperlotto_hub_mockup.html" aria-label="PaperLotto — 홈으로">
+    <div class="brand-mark">P</div>
+    <div><div class="brand-name">Paper<em>Lotto</em></div></div>
+  </a>
+  <nav>
+    <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
+    <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
+    <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지사항</a>
+    <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용설명</a>
+    <div id="authWidget"></div>
+    <div class="lang-toggle">
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+  </nav>
+</header>
+
+<div class="ticker-wrap">
+  <div class="ticker-label"><span class="dot"></span><span data-i18n="liveBoard">LIVE BOARD</span></div>
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+</div>
+
+<div class="page-head">
+  <div class="page-eyebrow">🏇 WORLD JACKPOT RACETRACK</div>
+  <h1 class="page-title" data-i18n="pageTitle">100마리의 전략, 하나의 우승마</h1>
+  <p class="page-sub" data-i18n="pageSub">게임마다 100마리(전략중시형 68 · 일편단심형 16 · Que será, será형 16)가 매 회차 경주를 펼칩니다. 아래 표에서 각 말의 그동안의 성적을 보고, 어떤 말에 베팅할지 골라보세요.</p>
+</div>
+
+<div class="game-tabs" id="gameTabs"></div>
+
+<div class="board-wrap">
+  <div class="board-toolbar">
+    <div>
+      <label data-i18n="filterLabel">구분</label>
+      <select id="typeFilter">
+        <option value="all" data-i18n="filterAll">전체 (100필)</option>
+        <option value="strategy" data-i18n="filterStrategy">전략중시형 (68)</option>
+        <option value="loyal" data-i18n="filterLoyal">일편단심형 (16)</option>
+        <option value="random" data-i18n="filterRandom">Que será, será형 (16)</option>
+      </select>
+    </div>
+    <div class="board-status" id="boardStatus" data-i18n="loading">불러오는 중…</div>
+  </div>
+  <div class="board-table-wrap">
+    <table class="board" id="boardTable">
+      <thead>
+        <tr>
+          <th data-sort="rank" data-i18n="thRank">순위</th>
+          <th data-i18n="thType">전략기준</th>
+          <th data-sort="name" data-i18n="thName">전략명 (Horse Name)</th>
+          <th data-sort="races_run" data-i18n="thRaces">출전횟수</th>
+          <th data-sort="win_count" data-i18n="thWinCount">당첨건수</th>
+          <th data-sort="win_rate" data-i18n="thWinRate">당첨율</th>
+          <th data-i18n="thGradeDist">등급분포</th>
+          <th data-i18n="thDetail">상세전략</th>
+        </tr>
+      </thead>
+      <tbody id="boardBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer-disclaimer" data-i18n="footerNote">
+  본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다. World Jackpot Racetrack의 베팅은 실제 화폐가 아닌 포인트로만 이루어지며, 실제 현금으로 환급되지 않습니다.
+</div>
+
+<div class="rt-modal" id="rtModal">
+  <div class="rt-modal-panel">
+    <button class="rt-modal-close" type="button" onclick="rtCloseModal()">✕</button>
+    <div class="rt-modal-title" id="rtModalTitle"></div>
+    <div class="rt-modal-sub" id="rtModalSub"></div>
+    <div id="rtModalBody"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// 게임별 규격/등급수 (generate-strategy-numbers, race-advance와 동일하게 유지)
+const GAMES = [
+  { id:'kr_lotto645',     flag:'🇰🇷', nameKo:'한국 로또 6/45',   nameEn:'Korea Lotto 6/45',   nameJa:'韓国ロト6/45',    maxGrade:5 },
+  { id:'us_powerball',    flag:'🇺🇸', nameKo:'미국 파워볼',      nameEn:'US Powerball',       nameJa:'米国パワーボール', maxGrade:9 },
+  { id:'us_megamillions', flag:'🇺🇸', nameKo:'미국 메가밀리언스', nameEn:'Mega Millions',      nameJa:'メガミリオンズ',   maxGrade:9 },
+  { id:'eu_euromillions', flag:'🇪🇺', nameKo:'유로밀리언스',      nameEn:'EuroMillions',       nameJa:'ユーロミリオンズ', maxGrade:13 },
+  { id:'jp_miniloto',     flag:'🇯🇵', nameKo:'일본 미니로또',     nameEn:'Japan Mini Loto',    nameJa:'ミニロト',        maxGrade:4 },
+  { id:'jp_loto7',        flag:'🇯🇵', nameKo:'일본 로또7',       nameEn:'Japan Loto 7',       nameJa:'ロト7',          maxGrade:6 },
+  { id:'jp_loto6',        flag:'🇯🇵', nameKo:'일본 로또6',       nameEn:'Japan Loto 6',       nameJa:'ロト6',          maxGrade:5 },
+  { id:'ca_lottomax',     flag:'🇨🇦', nameKo:'캐나다 로또맥스',   nameEn:'Canada Lotto Max',   nameJa:'ロトマックス',     maxGrade:9 },
+  { id:'ca_lotto649',     flag:'🇨🇦', nameKo:'캐나다 로또649',   nameEn:'Canada Lotto 6/49',  nameJa:'カナダロト6/49',   maxGrade:7 },
+  { id:'au_powerball',    flag:'🇦🇺', nameKo:'호주 파워볼',      nameEn:'Australia Powerball', nameJa:'豪パワーボール',  maxGrade:9 },
+  { id:'au_ozlotto',      flag:'🇦🇺', nameKo:'호주 오즈로또',     nameEn:'Oz Lotto',           nameJa:'オズロト',        maxGrade:7 },
+  { id:'au_tattslotto',   flag:'🇦🇺', nameKo:'호주 새터데이로또', nameEn:'Saturday Lotto',     nameJa:'サタデーロト',     maxGrade:6 },
+];
+
+const I18N = {
+  ko: {
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드", navNotice:"공지사항", navBoardGuide:"사용설명", liveBoard:"LIVE BOARD",
+    pageTitle:"100마리의 전략, 하나의 우승마",
+    pageSub:"게임마다 100마리(전략중시형 68 · 일편단심형 16 · Que será, será형 16)가 매 회차 경주를 펼칩니다. 아래 표에서 각 말의 그동안의 성적을 보고, 어떤 말에 베팅할지 골라보세요.",
+    footerNote:"본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다. World Jackpot Racetrack의 베팅은 실제 화폐가 아닌 포인트로만 이루어지며, 실제 현금으로 환급되지 않습니다.",
+    filterLabel:"구분", filterAll:"전체 (100필)", filterStrategy:"전략중시형 (68)", filterLoyal:"일편단심형 (16)", filterRandom:"Que será, será형 (16)",
+    loading:"불러오는 중…", noData:"이 게임은 아직 정산된 경주가 없습니다. 첫 경주가 끝나면 순위가 채워집니다.", loadError:"불러오는 중 오류가 발생했습니다.",
+    thRank:"순위", thType:"전략기준", thName:"전략명 (Horse Name)", thRaces:"출전횟수", thWinCount:"당첨건수", thWinRate:"당첨율", thGradeDist:"등급분포", thDetail:"상세전략",
+    typeStrategy:"전략중시형", typeLoyal:"일편단심형", typeRandom:"Que será, será형",
+    detailBtn:"상세전략", modalSubHorse:(no)=>`Horse #${no}`,
+    condOddEven:"홀짝비율", condConsec:"연속제한", condSumMin:"번호합 최소", condSumMax:"번호합 최대", condTopRange:"상위빈도범위", condTopUse:"상위번호사용",
+    condBonus:"보너스포함", condFixed:"평생 고정 조합 (매 회차 동일 번호 재사용)", condRandom:"매 회차 완전 무작위 생성 (조건 없음)",
+    statusLine:(n)=>`${n}마리 표시 중`,
+  },
+  en: {
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navNotice:"Notices", navBoardGuide:"How It Works", liveBoard:"LIVE BOARD",
+    pageTitle:"100 Strategies, One Winning Horse",
+    pageSub:"Each game runs a race of 100 horses every round (68 strategy-driven, 16 loyal/fixed, 16 fully random). Check each horse's track record below before deciding where to place your bet.",
+    footerNote:"This content is provided for informational and statistical simulation purposes only. PaperLotto does not sell lottery tickets and does not pay out any prizes. Betting on World Jackpot Racetrack uses points only, not real currency, and cannot be cashed out.",
+    filterLabel:"Type", filterAll:"All (100 horses)", filterStrategy:"Strategy-driven (68)", filterLoyal:"Loyal / Fixed (16)", filterRandom:"Que será, será (16)",
+    loading:"Loading…", noData:"No settled races yet for this game. Rankings will populate after the first race.", loadError:"An error occurred while loading.",
+    thRank:"Rank", thType:"Type", thName:"Strategy (Horse Name)", thRaces:"Races Run", thWinCount:"Win Count", thWinRate:"Win Rate", thGradeDist:"Grade Breakdown", thDetail:"Detail",
+    typeStrategy:"Strategy-driven", typeLoyal:"Loyal/Fixed", typeRandom:"Que será, será",
+    detailBtn:"Detail", modalSubHorse:(no)=>`Horse #${no}`,
+    condOddEven:"Odd:Even", condConsec:"Consecutive Limit", condSumMin:"Sum Min", condSumMax:"Sum Max", condTopRange:"Top Frequency Pool", condTopUse:"Top Numbers Used",
+    condBonus:"Generates Bonus", condFixed:"Fixed combos for life (same numbers reused every round)", condRandom:"Fully random every round (no conditions)",
+    statusLine:(n)=>`Showing ${n} horses`,
+  },
+  ja: {
+    navGames:"すべてのゲーム", navMyEntries:"マイ登録番号", navGuide:"戦略ガイド", navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
+    pageTitle:"100頭の戦略、1頭の勝ち馬",
+    pageSub:"各ゲームで毎回100頭(戦略重視型68・一途型16・Que será, será型16)がレースを繰り広げます。以下の表で各馬のこれまでの成績を見て、どの馬に賭けるか選んでみましょう。",
+    footerNote:"本コンテンツは情報提供および統計的シミュレーション目的でのみ提供されます。PaperLottoは宝くじを販売せず、いかなる形でも賞金を支払いません。World Jackpot Racetrackのベットは実際の通貨ではなくポイントのみで行われ、現金化はできません。",
+    filterLabel:"区分", filterAll:"すべて(100頭)", filterStrategy:"戦略重視型(68)", filterLoyal:"一途型(16)", filterRandom:"Que será, será型(16)",
+    loading:"読み込み中…", noData:"このゲームはまだ精算されたレースがありません。最初のレース終了後にランキングが表示されます。", loadError:"読み込み中にエラーが発生しました。",
+    thRank:"順位", thType:"戦略基準", thName:"戦略名(Horse Name)", thRaces:"出走回数", thWinCount:"当選件数", thWinRate:"当選率", thGradeDist:"等級分布", thDetail:"詳細戦略",
+    typeStrategy:"戦略重視型", typeLoyal:"一途型", typeRandom:"Que será, será型",
+    detailBtn:"詳細", modalSubHorse:(no)=>`Horse #${no}`,
+    condOddEven:"奇偶比率", condConsec:"連続制限", condSumMin:"番号合計最小", condSumMax:"番号合計最大", condTopRange:"上位頻度範囲", condTopUse:"上位番号使用数",
+    condBonus:"ボーナス生成", condFixed:"生涯固定の組み合わせ(毎回同じ番号を再使用)", condRandom:"毎回完全ランダム生成(条件なし)",
+    statusLine:(n)=>`${n}頭を表示中`,
+  },
+};
+let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
+let currentGame = GAMES[0].id;
+let currentTypeFilter = 'all';
+let sortKey = 'rank';
+let sortDir = 'asc';
+let horseRows = []; // 현재 게임의 100마리 (race_horses + race_horse_stats 병합)
+
+function t(){ return I18N[currentLang]; }
+function nameKey(){ return currentLang === 'ko' ? 'nameKo' : currentLang === 'ja' ? 'nameJa' : 'nameEn'; }
+
+function renderGameTabs(){
+  const wrap = document.getElementById('gameTabs');
+  wrap.innerHTML = GAMES.map(g =>
+    `<button class="game-tab${g.id===currentGame?' active':''}" data-game="${g.id}" type="button">${g.flag} ${g[nameKey()]}</button>`
+  ).join('');
+  wrap.querySelectorAll('.game-tab').forEach(btn => {
+    btn.addEventListener('click', () => { currentGame = btn.dataset.game; loadBoard(); });
+  });
+}
+
+function applyStaticI18n(){
+  const tt = t();
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (typeof tt[key] === 'string') el.textContent = tt[key];
+  });
+}
+
+async function loadBoard(){
+  renderGameTabs();
+  const statusEl = document.getElementById('boardStatus');
+  const bodyEl = document.getElementById('boardBody');
+  statusEl.textContent = t().loading;
+  bodyEl.innerHTML = '';
+
+  try {
+    const [{ data: horses, error: hErr }, { data: stats, error: sErr }] = await Promise.all([
+      sb.from('race_horses').select('*').eq('game_id', currentGame).order('horse_no'),
+      sb.from('race_horse_stats').select('*').eq('game_id', currentGame),
+    ]);
+    if (hErr) throw hErr;
+    if (sErr) throw sErr;
+
+    const statsByHorse = {};
+    (stats || []).forEach(s => { statsByHorse[s.horse_no] = s; });
+
+    horseRows = (horses || []).map(h => {
+      const s = statsByHorse[h.horse_no] || { races_run:0, place1_count:0, place2_count:0, place3_count:0, win_count:0, grade_histogram:{} };
+      const totalCombos = (s.races_run || 0) * 100;
+      return {
+        horse_no: h.horse_no, name: h.name, horse_type: h.horse_type, condition: h.condition,
+        races_run: s.races_run || 0, win_count: s.win_count || 0,
+        win_rate: totalCombos > 0 ? (s.win_count || 0) / totalCombos : 0,
+        place1_count: s.place1_count || 0, place2_count: s.place2_count || 0, place3_count: s.place3_count || 0,
+        grade_histogram: s.grade_histogram || {},
+      };
+    });
+
+    // "순위" 기본값: 당첨율 높은 순 (races_run=0인 말들은 뒤로)
+    horseRows.forEach(r => { r._rankScore = r.races_run > 0 ? r.win_rate : -1; });
+    horseRows.sort((a,b) => b._rankScore - a._rankScore);
+    horseRows.forEach((r,i) => { r.rank = i+1; });
+
+    renderTable();
+    const anyRaced = horseRows.some(r => r.races_run > 0);
+    statusEl.textContent = anyRaced ? t().statusLine(horseRows.length) : t().noData;
+  } catch (e) {
+    console.error(e);
+    statusEl.textContent = t().loadError;
+  }
+}
+
+function sortedFilteredRows(){
+  let rows = horseRows.filter(r => currentTypeFilter === 'all' || r.horse_type === currentTypeFilter);
+  const dir = sortDir === 'asc' ? 1 : -1;
+  rows = [...rows].sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (av === undefined) av = 0; if (bv === undefined) bv = 0;
+    if (typeof av === 'string') return av.localeCompare(bv) * dir;
+    return (av - bv) * dir;
+  });
+  return rows;
+}
+
+function gameSpec(){ return GAMES.find(g => g.id === currentGame); }
+
+function gradeDistText(hist){
+  const spec = gameSpec();
+  const parts = [];
+  for (let g = 1; g <= spec.maxGrade; g++) parts.push(hist[String(g)] || 0);
+  return parts.join(' / ');
+}
+
+function typeBadge(type){
+  const tt = t();
+  const cls = type === 'strategy' ? 'type-strategy' : type === 'loyal' ? 'type-loyal' : 'type-random';
+  const label = type === 'strategy' ? tt.typeStrategy : type === 'loyal' ? tt.typeLoyal : tt.typeRandom;
+  return `<span class="type-badge ${cls}">${label}</span>`;
+}
+
+function renderTable(){
+  const tt = t();
+  const rows = sortedFilteredRows();
+  const bodyEl = document.getElementById('boardBody');
+  if (rows.length === 0) {
+    bodyEl.innerHTML = `<tr><td colspan="8" class="empty-note">${tt.noData}</td></tr>`;
+  } else {
+    bodyEl.innerHTML = rows.map(r => {
+      const rankCls = r.rank <= 3 ? `rank-${r.rank}` : 'rank-etc';
+      return `<tr>
+        <td><span class="rank-pill ${rankCls}">${r.rank}</span></td>
+        <td>${typeBadge(r.horse_type)}</td>
+        <td class="horse-name"><span class="no">#${r.horse_no}</span>${r.name}</td>
+        <td class="mono">${r.races_run.toLocaleString()}</td>
+        <td class="mono">${r.win_count.toLocaleString()}</td>
+        <td class="mono win-rate">${(r.win_rate*100).toFixed(2)}%</td>
+        <td class="grade-dist">${gradeDistText(r.grade_histogram)}</td>
+        <td><button class="detail-btn" type="button" onclick="rtOpenModal(${r.horse_no})">${tt.detailBtn}</button></td>
+      </tr>`;
+    }).join('');
+  }
+  document.querySelectorAll('table.board th[data-sort]').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.sort === sortKey);
+    th.classList.toggle('asc', th.dataset.sort === sortKey && sortDir === 'asc');
+  });
+}
+
+document.querySelectorAll('table.board th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    else { sortKey = key; sortDir = key === 'rank' ? 'asc' : 'desc'; }
+    renderTable();
+  });
+});
+document.getElementById('typeFilter').addEventListener('change', (e) => {
+  currentTypeFilter = e.target.value; renderTable();
+});
+
+function rtOpenModal(horseNo){
+  const tt = t();
+  const h = horseRows.find(r => r.horse_no === horseNo);
+  if (!h) return;
+  document.getElementById('rtModalTitle').textContent = h.name;
+  document.getElementById('rtModalSub').textContent = tt.modalSubHorse(h.horse_no) + ' · ' + (h.horse_type === 'strategy' ? tt.typeStrategy : h.horse_type === 'loyal' ? tt.typeLoyal : tt.typeRandom);
+  const body = document.getElementById('rtModalBody');
+  if (h.horse_type === 'loyal') {
+    body.innerHTML = `<div class="rt-cond-row"><span class="k">${tt.condFixed}</span></div>`;
+  } else if (h.horse_type === 'random') {
+    body.innerHTML = `<div class="rt-cond-row"><span class="k">${tt.condRandom}</span></div>`;
+  } else {
+    const c = h.condition || {};
+    const rows = [
+      [tt.condOddEven, c.oddEven],
+      [tt.condConsec, c.consecutiveLimit],
+      [tt.condSumMin, c.sumMin],
+      [tt.condSumMax, c.sumMax],
+      [tt.condTopRange, c.topRange],
+      [tt.condTopUse, c.topUse],
+      [tt.condBonus, c.bonusInclude ? 'Y' : 'N'],
+    ];
+    body.innerHTML = rows.map(([k,v]) => `<div class="rt-cond-row"><span class="k">${k}</span><span class="v">${v ?? '-'}</span></div>`).join('');
+  }
+  document.getElementById('rtModal').classList.add('open');
+}
+function rtCloseModal(){ document.getElementById('rtModal').classList.remove('open'); }
+
+function applyLang(lang){
+  currentLang = I18N[lang] ? lang : 'ko';
+  localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  applyStaticI18n();
+  document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('active', b.dataset.lang === currentLang));
+  document.getElementById('typeFilter').value = currentTypeFilter;
+  loadBoard();
+  if (typeof renderTicker === 'function') renderTicker();
+}
+document.querySelectorAll('.lang-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+});
+
+// ─── 상단 LIVE 티커 (헤더 고정용, 페이지 자체 데이터와는 별개의 독립 데이터) ───
+const TICKER_GAMES = [
+  { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
+  { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:20, drawMinute:45, tz:'Europe/Paris' },
+  { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
+  { id:'ca_lottomax', accent:'ca', nameKo:'로또맥스', nameEn:'Lotto Max', nameJa:'ロトマックス', odds:'33,446,140', days:[2,5], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'ca_lotto649', accent:'ca', nameKo:'로또 6/49', nameEn:'Lotto 6/49', nameJa:'ロト 6/49', odds:'13,983,816', days:[3,6], drawHour:22, drawMinute:30, tz:'America/Toronto' },
+  { id:'au_powerball', accent:'au', nameKo:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', odds:'134,490,400', days:[4], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_ozlotto', accent:'au', nameKo:'오즈로또', nameEn:'Oz Lotto', nameJa:'オズロト', odds:'62,891,499', days:[2], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'au_tattslotto', accent:'au', nameKo:'새터데이로또', nameEn:'Saturday Lotto', nameJa:'サタデーロト', odds:'8,145,060', days:[6], drawHour:20, drawMinute:30, tz:'Australia/Sydney' },
+  { id:'kr_lotto645', accent:'kr', nameKo:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', odds:'8,145,060', days:[6], drawHour:20, drawMinute:35, tz:'Asia/Seoul' },
+];
+const TICKER_WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+function tkZonedTimeToUtc(dateStr, hour, minute, timeZone){
+  const naiveUtc = new Date(`${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);
+  const tzDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone }));
+  const utcDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const offset = utcDate.getTime() - tzDate.getTime();
+  return new Date(naiveUtc.getTime() + offset);
+}
+function tkNextDrawDate(days, hour, minute, timeZone){
+  const now = new Date();
+  let best = null;
+  for (let addDays = 0; addDays < 8; addDays++){
+    const candidate = new Date(now.getTime() + addDays * 86400000);
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(candidate);
+    const wd = TICKER_WEEKDAY_NUM[wdName];
+    if (!days.includes(wd)) continue;
+    const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone }).format(candidate);
+    const drawUtc = tkZonedTimeToUtc(dateStr, hour, minute, timeZone);
+    if (drawUtc > now && (!best || drawUtc < best)) best = drawUtc;
+  }
+  return best;
+}
+function tkFmtCountdown(target){
+  const dayLabel = currentLang === 'ko' ? '일' : currentLang === 'ja' ? '日' : 'd';
+  const hourLabel = currentLang === 'ko' ? '시간' : currentLang === 'ja' ? '時間' : 'h';
+  const diff = Math.max(0, target - new Date());
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return d > 0 ? `${d}${dayLabel} ${h}${hourLabel}` : `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+TICKER_GAMES.forEach(g => { g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz); });
+function renderTicker(){
+  const nk = currentLang === 'ko' ? 'nameKo' : currentLang === 'ja' ? 'nameJa' : 'nameEn';
+  const items = TICKER_GAMES.map(g => `
+    <div class="ticker-item">
+      <span class="flag" style="background:var(--${g.accent})"></span>
+      <span class="name">${g[nk] || g.nameEn}</span>
+      <span class="odds mono">1/${g.odds}</span>
+      <span class="cd mono" data-tcd="${g.id}">${tkFmtCountdown(g.next)}</span>
+    </div>`).join('');
+  const track = document.getElementById('tickerTrack');
+  if (track) track.innerHTML = items + items;
+}
+setInterval(() => {
+  document.querySelectorAll('[data-tcd]').forEach(el => {
+    const g = TICKER_GAMES.find(x => x.id === el.dataset.tcd);
+    if (!g) return;
+    if (new Date() >= g.next) g.next = tkNextDrawDate(g.days, g.drawHour, g.drawMinute, g.tz);
+    el.textContent = tkFmtCountdown(g.next);
+  });
+}, 1000);
+
+applyLang(currentLang);
+</script>
+
+<script src="auth-widget.js"></script>
+</body>
+</html>
