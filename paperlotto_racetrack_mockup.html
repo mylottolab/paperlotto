@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Jackpot Racetrack — PaperLotto</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -154,6 +157,24 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 .rt-cond-row .k{ color:var(--ink-dim); }
 .rt-cond-row .v{ font-weight:600; font-family:'IBM Plex Mono',monospace; }
 
+.rt-section{ margin-top:18px; padding-top:16px; border-top:1px dashed rgba(28,33,48,0.18); }
+.rt-section-title{ font-size:13.5px; font-weight:700; margin-bottom:8px; }
+.rt-numbers-list{ max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; margin-bottom:8px; }
+.rt-numbers-row{ display:flex; align-items:center; gap:6px; font-size:11.5px; }
+.rt-numbers-row .rn-no{ width:26px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
+.rt-pip{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; background:rgba(28,33,48,0.07); color:var(--ink); flex-shrink:0; }
+.rt-pip.bonus{ background:var(--gold); color:var(--ink); }
+.rt-toggle-btn{ font-size:12px; color:var(--gold); background:none; border:none; text-decoration:underline; cursor:pointer; padding:0; font-family:inherit; }
+.rt-recommend-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+.rt-recommend-row input{ width:70px; padding:7px 9px; border-radius:7px; border:1px solid rgba(28,33,48,0.2); font-family:'IBM Plex Mono',monospace; font-size:12.5px; }
+.rt-btn-sm{ font-size:11.5px; padding:7px 13px; border-radius:7px; border:1px solid rgba(28,33,48,0.2); background:#fff; color:var(--ink); cursor:pointer; font-family:inherit; font-weight:600; }
+.rt-btn-sm.primary{ background:var(--gold); border-color:var(--gold); color:var(--ink); }
+.rt-btn-sm:disabled{ opacity:0.5; cursor:not-allowed; }
+.rt-disclaimer{ font-size:11px; color:var(--ink-dim); font-style:italic; margin-top:8px; line-height:1.6; }
+.rt-status{ font-size:12px; margin-top:6px; }
+.rt-status.err{ color:#b23b3b; }
+.rt-status.ok{ color:var(--ok); }
+
 @media (max-width:640px){
   header{ padding:16px 18px; }
   nav{ gap:14px; font-size:13px; order:3; width:100%; justify-content:space-between; }
@@ -257,6 +278,7 @@ const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const RACE_PLACE_BET_URL = SUPABASE_URL + "/functions/v1/race-place-bet";
+const RACE_RECOMMEND_URL = SUPABASE_URL + "/functions/v1/race-recommend-numbers";
 let sbAccessToken = null;
 let currentRace = null;      // 현재 게임의 베팅오픈 경주 (없으면 null)
 let myBetsByHorse = {};      // horse_no -> 이번 경주에 내가 이미 건 누적 구좌수
@@ -299,6 +321,12 @@ const I18N = {
     unitCapExceeded:(already)=>`이 말에는 이미 ${already}구좌를 베팅하셨습니다 (최대 100구좌).`,
     raceOpen:(round)=>`🏇 현재 베팅 가능 · ${round}회차`, raceClosed:"현재 베팅 가능한 경주가 없습니다 (정산 중이거나 다음 경주 준비 중).",
     bettingCloseIn:"베팅마감까지", raceNotOpen:"이 경주는 베팅이 마감됐습니다.",
+    currentRaceNumbersTitle:"이번 회차 실제 번호", viewNumbers:"번호 보기", hideNumbers:"번호 숨기기",
+    recommendTitle:"이 말의 로직으로 추천번호 받기", recommendBtn:"생성하기 (조합당 별도 과금)",
+    recommendDone:(n,cost,balance)=>`${n}개 생성 완료 · ${cost.toLocaleString()}P 차감 (잔액 ${balance.toLocaleString()}P)`,
+    recommendFail:"추천번호 생성에 실패했습니다.",
+    recommendDisclaimer:"※ 경마로직과 같은 로직으로 산출한 참고번호입니다. 실제 이 말이 경주에 들고 나가는 번호와는 다릅니다.",
+    generating:"생성 중…",
     typeStrategy:"전략중시형", typeLoyal:"일편단심형", typeRandom:"Que será, será형",
     detailBtn:"상세전략", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"홀짝비율", condConsec:"연속제한", condSumMin:"번호합 최소", condSumMax:"번호합 최대", condTopRange:"상위빈도범위", condTopUse:"상위번호사용",
@@ -319,6 +347,12 @@ const I18N = {
     unitCapExceeded:(already)=>`You've already bet ${already} units on this horse (max 100).`,
     raceOpen:(round)=>`🏇 Betting Open · Round ${round}`, raceClosed:"No race is currently open for betting (settling or preparing the next race).",
     bettingCloseIn:"Betting closes in", raceNotOpen:"Betting for this race has closed.",
+    currentRaceNumbersTitle:"This Round's Actual Numbers", viewNumbers:"View Numbers", hideNumbers:"Hide Numbers",
+    recommendTitle:"Get Recommended Numbers Using This Horse's Logic", recommendBtn:"Generate (charged per combination)",
+    recommendDone:(n,cost,balance)=>`${n} generated · ${cost.toLocaleString()}P charged (balance ${balance.toLocaleString()}P)`,
+    recommendFail:"Failed to generate recommended numbers.",
+    recommendDisclaimer:"* Reference numbers generated using the same logic as the World Jackpot Racetrack. These differ from the numbers this horse actually races with.",
+    generating:"Generating…",
     typeStrategy:"Strategy-driven", typeLoyal:"Loyal/Fixed", typeRandom:"Que será, será",
     detailBtn:"Detail", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"Odd:Even", condConsec:"Consecutive Limit", condSumMin:"Sum Min", condSumMax:"Sum Max", condTopRange:"Top Frequency Pool", condTopUse:"Top Numbers Used",
@@ -339,6 +373,12 @@ const I18N = {
     unitCapExceeded:(already)=>`この馬にはすでに${already}口ベット済みです(最大100口)。`,
     raceOpen:(round)=>`🏇 ベット受付中・第${round}回`, raceClosed:"現在ベット可能なレースがありません(精算中または次のレース準備中)。",
     bettingCloseIn:"ベット締切まで", raceNotOpen:"このレースはベットが締め切られました。",
+    currentRaceNumbersTitle:"今回の実際の番号", viewNumbers:"番号を見る", hideNumbers:"番号を隠す",
+    recommendTitle:"この馬のロジックで参考番号を受け取る", recommendBtn:"生成する(組み合わせごとに課金)",
+    recommendDone:(n,cost,balance)=>`${n}個生成完了・${cost.toLocaleString()}P差引(残高${balance.toLocaleString()}P)`,
+    recommendFail:"参考番号の生成に失敗しました。",
+    recommendDisclaimer:"※競馬ロジックと同じロジックで算出した参考番号です。実際にこの馬がレースで使う番号とは異なります。",
+    generating:"生成中…",
     typeStrategy:"戦略重視型", typeLoyal:"一途型", typeRandom:"Que será, será型",
     detailBtn:"詳細", modalSubHorse:(no)=>`Horse #${no}`,
     condOddEven:"奇偶比率", condConsec:"連続制限", condSumMin:"番号合計最小", condSumMax:"番号合計最大", condTopRange:"上位頻度範囲", condTopUse:"上位番号使用数",
@@ -599,10 +639,11 @@ function rtOpenModal(horseNo){
   document.getElementById('rtModalTitle').textContent = h.name;
   document.getElementById('rtModalSub').textContent = tt.modalSubHorse(h.horse_no) + ' · ' + (h.horse_type === 'strategy' ? tt.typeStrategy : h.horse_type === 'loyal' ? tt.typeLoyal : tt.typeRandom);
   const body = document.getElementById('rtModalBody');
+  let condHtml;
   if (h.horse_type === 'loyal') {
-    body.innerHTML = `<div class="rt-cond-row"><span class="k">${tt.condFixed}</span></div>`;
+    condHtml = `<div class="rt-cond-row"><span class="k">${tt.condFixed}</span></div>`;
   } else if (h.horse_type === 'random') {
-    body.innerHTML = `<div class="rt-cond-row"><span class="k">${tt.condRandom}</span></div>`;
+    condHtml = `<div class="rt-cond-row"><span class="k">${tt.condRandom}</span></div>`;
   } else {
     const c = h.condition || {};
     const rows = [
@@ -614,10 +655,116 @@ function rtOpenModal(horseNo){
       [tt.condTopUse, c.topUse],
       [tt.condBonus, c.bonusInclude ? 'Y' : 'N'],
     ];
-    body.innerHTML = rows.map(([k,v]) => `<div class="rt-cond-row"><span class="k">${k}</span><span class="v">${v ?? '-'}</span></div>`).join('');
+    condHtml = rows.map(([k,v]) => `<div class="rt-cond-row"><span class="k">${k}</span><span class="v">${v ?? '-'}</span></div>`).join('');
   }
+
+  const currentRaceSection = currentRace ? `
+    <div class="rt-section">
+      <div class="rt-section-title">${tt.currentRaceNumbersTitle}</div>
+      <button class="rt-toggle-btn" type="button" onclick="rtLoadCurrentRaceNumbers(${horseNo})" id="rtRaceNumBtn">${tt.viewNumbers}</button>
+      <div id="rtRaceNumList"></div>
+    </div>` : '';
+
+  const recommendSection = `
+    <div class="rt-section">
+      <div class="rt-section-title">${tt.recommendTitle}</div>
+      <div class="rt-recommend-row">
+        <input type="number" id="rtRecCount" min="1" max="500" value="10">
+        <button class="rt-btn-sm primary" type="button" id="rtRecBtn" onclick="rtRequestRecommend(${horseNo}, ${JSON.stringify(h.name)})">${tt.recommendBtn}</button>
+      </div>
+      <div class="rt-status" id="rtRecStatus"></div>
+      <div id="rtRecResults"></div>
+      <div class="rt-disclaimer">${tt.recommendDisclaimer}</div>
+    </div>`;
+
+  body.innerHTML = condHtml + currentRaceSection + recommendSection;
   document.getElementById('rtModal').classList.add('open');
 }
+
+async function rtLoadCurrentRaceNumbers(horseNo){
+  const tt = t();
+  const listEl = document.getElementById('rtRaceNumList');
+  const btn = document.getElementById('rtRaceNumBtn');
+  if (listEl.dataset.loaded === '1') { listEl.style.display = listEl.style.display === 'none' ? 'block' : 'none'; return; }
+  btn.textContent = tt.loading;
+  const { data, error } = await sb.from('race_entries').select('combos').eq('race_id', currentRace.id).eq('horse_no', horseNo).maybeSingle();
+  if (error || !data) { listEl.innerHTML = `<div class="rt-status err">${tt.loadError}</div>`; btn.textContent = tt.viewNumbers; return; }
+  const combos = data.combos || [];
+  listEl.innerHTML = `<div class="rt-numbers-list">` + combos.map((c,i) => {
+    const mainPips = c.main.map(n => `<span class="rt-pip">${String(n).padStart(2,'0')}</span>`).join('');
+    const bonusPips = (c.bonus||[]).map(n => `<span class="rt-pip bonus">${String(n).padStart(2,'0')}</span>`).join('');
+    return `<div class="rt-numbers-row"><span class="rn-no">#${i+1}</span>${mainPips}${bonusPips}</div>`;
+  }).join('') + `</div>`;
+  listEl.dataset.loaded = '1';
+  btn.textContent = tt.hideNumbers;
+}
+
+async function rtRequestRecommend(horseNo, horseName){
+  const tt = t();
+  await refreshToken();
+  if (!sbAccessToken) { window.location.href = 'paperlotto_login_mockup.html'; return; }
+
+  const countInput = document.getElementById('rtRecCount');
+  const requestedCount = Math.max(1, Math.min(500, parseInt(countInput.value, 10) || 10));
+  const statusEl = document.getElementById('rtRecStatus');
+  const btn = document.getElementById('rtRecBtn');
+  btn.disabled = true;
+  statusEl.className = 'rt-status';
+  statusEl.textContent = tt.generating;
+
+  try {
+    const resp = await fetch(RACE_RECOMMEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sbAccessToken },
+      body: JSON.stringify({ gameId: currentGame, horseNo, requestedCount }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      statusEl.className = 'rt-status err';
+      statusEl.textContent = data.error === 'INSUFFICIENT_POINTS' ? tt.insufficientPoints(data.shortfall || 0) : (data.error || tt.recommendFail);
+      return;
+    }
+    statusEl.className = 'rt-status ok';
+    statusEl.textContent = tt.recommendDone(data.deliveredCount, data.charged, data.balance);
+    rtLastRecommend = { combos: data.combos, gameId: currentGame, horseName };
+    document.getElementById('rtRecResults').innerHTML = `
+      <div class="rt-recommend-row">
+        <button class="rt-btn-sm" type="button" onclick="rtExportRecommendPdf()">📄 PDF</button>
+        <button class="rt-btn-sm" type="button" onclick="rtExportRecommendExcel()">📊 Excel</button>
+      </div>`;
+  } catch (e) {
+    statusEl.className = 'rt-status err';
+    statusEl.textContent = tt.recommendFail;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+let rtLastRecommend = null;
+function rtExportRecommendPdf(){
+  if (!rtLastRecommend) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(13);
+  doc.text('PaperLotto Recommended Numbers - ' + rtLastRecommend.horseName, 14, 16);
+  const rows = rtLastRecommend.combos.map((c,i) => [String(i+1), c.main.map(n=>String(n).padStart(2,'0')).join(' '), (c.bonus&&c.bonus.length)?c.bonus.map(n=>String(n).padStart(2,'0')).join(' '):'-']);
+  doc.autoTable({ head: [['No','Main Numbers','Bonus']], body: rows, startY: 22, styles: { fontSize: 9 } });
+  const noteY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 22) + 8;
+  doc.setFontSize(8); doc.setTextColor(120);
+  doc.text('* Reference numbers generated using the same logic as the World Jackpot Racetrack.', 14, noteY, { maxWidth: 180 });
+  doc.save(rtLastRecommend.gameId + '_recommended_numbers.pdf');
+}
+function rtExportRecommendExcel(){
+  if (!rtLastRecommend) return;
+  const tt = t();
+  const rows = rtLastRecommend.combos.map((c,i) => ({ No:i+1, MainNumbers:c.main.join(' '), Bonus:(c.bonus||[]).join(' ') }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.sheet_add_aoa(ws, [[], [tt.recommendDisclaimer]], { origin: -1 });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Recommended Numbers');
+  XLSX.writeFile(wb, rtLastRecommend.gameId + '_recommended_numbers.xlsx');
+}
+
 function rtCloseModal(){ document.getElementById('rtModal').classList.remove('open'); }
 
 function applyLang(lang){
