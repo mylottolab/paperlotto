@@ -68,6 +68,24 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
 .page-sub{ color:var(--text-mid); font-size:14.5px; margin-top:10px; max-width:720px; line-height:1.7; }
 
 .game-tabs{ max-width:1180px; margin:26px auto 0; padding:0 24px; display:flex; gap:8px; flex-wrap:wrap; }
+
+.info-section-wrap{ max-width:1180px; margin:22px auto 0; padding:0 24px; display:flex; flex-direction:column; gap:10px; }
+.info-section{ background:var(--paper); color:var(--ink); border-radius:12px; overflow:hidden; scroll-margin-top:100px; }
+.info-toggle{
+  width:100%; display:flex; align-items:center; justify-content:space-between; background:none; border:none;
+  padding:15px 18px; font-family:'Fraunces',serif; font-size:14.5px; font-weight:700; color:var(--ink); cursor:pointer;
+}
+.info-toggle-icon{ font-family:'IBM Plex Mono',monospace; color:var(--gold); font-weight:700; }
+.info-section.open .info-toggle-icon{ transform:rotate(45deg); }
+.info-body{ display:none; padding:0 18px 18px; font-size:13px; line-height:1.75; color:var(--ink-dim); }
+.info-section.open .info-body{ display:block; }
+.info-body p{ margin:0 0 12px; }
+.info-body p:last-child{ margin-bottom:0; }
+.info-body b{ color:#8a5b1c; }
+[data-lang-content]{ display:none; }
+html[lang="ko"] [data-lang-content="ko"]{ display:block; }
+html[lang="en"] [data-lang-content="en"]{ display:block; }
+html[lang="ja"] [data-lang-content="ja"]{ display:block; }
 .game-tab{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); font-size:12.5px; font-family:'Inter',sans-serif; padding:7px 14px; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:6px; }
 .game-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); font-weight:600; }
 
@@ -230,6 +248,56 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
   <p class="page-sub" data-i18n="pageSub">게임마다 100마리(전략중시형 68 · 일편단심형 16 · Que será, será형 16)가 매 회차 경주를 펼칩니다. 아래 표에서 각 말의 그동안의 성적을 보고, 어떤 말에 베팅할지 골라보세요.</p>
 </div>
 
+<div class="info-section-wrap">
+  <div class="info-section" id="rt-howto">
+    <button class="info-toggle" type="button" onclick="rtToggleInfo('rt-howto')">
+      <span data-i18n="howtoTitle">📖 경마장 이용법</span><span class="info-toggle-icon">+</span>
+    </button>
+    <div class="info-body">
+      <div data-lang-content="ko">
+        <p><b>말의 3가지 성향</b> — 전략중시형(68마리, 조건 기반 매 회차 재생성) · 일편단심형(16마리, 최초 1회 생성 후 평생 동일 번호) · Que será, será형(16마리, 매 회차 완전 무작위)</p>
+        <p><b>순위 결정</b> — 각 말이 그 회차에 들고 나온 100개 조합 중 가장 좋은 등수가 그 말의 성적입니다. 1등 개수가 같으면 2등 개수, 그래도 같으면 3등 개수 순으로 비교합니다.</p>
+        <p><b>베팅</b> — 1구좌 = 100P, 말 1마리당 최대 100구좌(=1만P)까지 누적 베팅 가능합니다. 베팅마감시각(그 회차 추첨시각)까지만 베팅할 수 있습니다.</p>
+        <p><b>배당</b> — 전체 베팅금의 80%가 상금입니다(1등마 배팅자 50%, 2등마 20%, 3등마 10%를 각각 그 등수에 걸린 구좌수로 나눠서 지급). 아무도 안 건 등수가 있으면, 그 몫은 경주 전체 참가자에게 베팅 비율대로 자동 환원됩니다. 정산은 100% 자동이며, 당첨 시 포인트가 즉시 지급됩니다.</p>
+      </div>
+      <div data-lang-content="en">
+        <p><b>Three horse types</b> — Strategy-driven (68, condition-based, regenerated every round) · Loyal/Fixed (16, generated once and reused forever) · Que será, será (16, fully random every round)</p>
+        <p><b>Ranking</b> — A horse's result for a round is the best tier achieved among its 100 combinations. Ties are broken by count of Tier-1 finishes, then Tier-2, then Tier-3.</p>
+        <p><b>Betting</b> — 1 unit = 100P, up to 100 units (10,000P) per horse per race. Betting closes at that round's draw time.</p>
+        <p><b>Payouts</b> — 80% of the total pool is paid out (50% to 1st-place bettors, 20% to 2nd, 10% to 3rd, split by units). If no one bet on a winning tier, that share is automatically refunded proportionally to everyone in the race. Settlement is fully automatic and points are credited instantly.</p>
+      </div>
+      <div data-lang-content="ja">
+        <p><b>馬の3つのタイプ</b> — 戦略重視型(68頭、条件に基づき毎回再生成)・一途型(16頭、最初の1回だけ生成しその後は生涯同じ番号)・Que será, será型(16頭、毎回完全ランダム)</p>
+        <p><b>順位決定</b> — 各馬がその回に持ち出した100個の組み合わせのうち最も良い等級がその馬の成績です。1等の数が同じなら2等の数、それも同じなら3等の数で比較します。</p>
+        <p><b>ベット</b> — 1口=100P、馬1頭につき最大100口(=1万P)まで累積ベット可能です。ベット締切(その回の抽選時刻)まで受け付けます。</p>
+        <p><b>配当</b> — 全ベット額の80%が賞金です(1着馬のベット者に50%、2着馬に20%、3着馬に10%をそれぞれ口数で按分)。誰もベットしなかった等級があれば、その分はレース全体の参加者にベット比率に応じて自動的に還元されます。精算は完全自動で、当選時はポイントが即座に付与されます。</p>
+      </div>
+    </div>
+  </div>
+  <div class="info-section" id="rt-recommend-guide">
+    <button class="info-toggle" type="button" onclick="rtToggleInfo('rt-recommend-guide')">
+      <span data-i18n="recGuideTitle">🎯 추천번호 받기 안내</span><span class="info-toggle-icon">+</span>
+    </button>
+    <div class="info-body">
+      <div data-lang-content="ko">
+        <p>각 말의 "상세전략" 화면에서 <b>"이 말의 로직으로 추천번호 받기"</b>를 이용할 수 있습니다. 그 말이 실제로 경주에 들고 나가는 번호 그 자체가 아니라, <b>같은 로직으로 새로 생성한 별개의 참고번호</b>입니다.</p>
+        <p>전략중시형 말은 그 말의 조건(홀짝비율·번호합·상위빈도 등)대로, 일편단심형·Que será, será형 말은 원래 방식 그대로 무작위로 생성됩니다.</p>
+        <p>조합당 포인트가 차감되며, 원하는 개수만큼 한 번에 받아서 PDF/엑셀로 다운로드할 수 있습니다. 다운로드 파일에는 "경마로직과 같은 로직으로 산출한 참고번호입니다"라는 안내 문구가 항상 함께 표시됩니다.</p>
+      </div>
+      <div data-lang-content="en">
+        <p>From any horse's "Detail" screen, you can use <b>"Get Recommended Numbers Using This Horse's Logic."</b> These are not the exact numbers that horse actually races with — they're <b>freshly generated reference numbers using the same logic</b>.</p>
+        <p>For strategy-driven horses, numbers follow that horse's own conditions (odd/even ratio, number sum, top frequency, etc). For Loyal/Fixed and Que será, será horses, numbers are generated randomly, the same way those horses originally were.</p>
+        <p>Points are charged per combination. You can request as many as you like at once and download them as PDF/Excel. Every download includes the note: "Reference numbers generated using the same logic as the World Jackpot Racetrack."</p>
+      </div>
+      <div data-lang-content="ja">
+        <p>各馬の「詳細」画面から<b>「この馬のロジックで参考番号を受け取る」</b>を利用できます。その馬が実際にレースで使う番号そのものではなく、<b>同じロジックで新たに生成した別の参考番号</b>です。</p>
+        <p>戦略重視型の馬はその馬の条件(奇偶比率・番号合計・上位頻度など)通りに、一途型・Que será, será型の馬は元々の方式通りランダムに生成されます。</p>
+        <p>組み合わせごとにポイントが差し引かれ、希望する数だけ一度に受け取ってPDF/Excelでダウンロードできます。ダウンロードファイルには「競馬ロジックと同じロジックで算出した参考番号です」という案内文が必ず表示されます。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="game-tabs" id="gameTabs"></div>
 
 <div class="race-banner" id="raceBanner" style="display:none;"></div>
@@ -318,6 +386,7 @@ const GAMES = [
 const I18N = {
   ko: {
     navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드", navMyBets:"내 베팅현황", navNotice:"공지", navBoardGuide:"사용법", liveBoard:"LIVE BOARD",
+    howtoTitle:"📖 경마장 이용법", recGuideTitle:"🎯 추천번호 받기 안내",
     pageTitle:"100마리의 전략, 하나의 우승마",
     pageSub:"게임마다 100마리(전략중시형 68 · 일편단심형 16 · Que será, será형 16)가 매 회차 경주를 펼칩니다. 아래 표에서 각 말의 그동안의 성적을 보고, 어떤 말에 베팅할지 골라보세요.",
     footerNote:"본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다. World Jackpot Racetrack의 베팅은 실제 화폐가 아닌 포인트로만 이루어지며, 실제 현금으로 환급되지 않습니다.",
@@ -345,6 +414,7 @@ const I18N = {
   },
   en: {
     navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navMyBets:"My Bets", navNotice:"Notice", navBoardGuide:"How", liveBoard:"LIVE BOARD",
+    howtoTitle:"📖 How the Racetrack Works", recGuideTitle:"🎯 Recommended Numbers Guide",
     pageTitle:"100 Strategies, One Winning Horse",
     pageSub:"Each game runs a race of 100 horses every round (68 strategy-driven, 16 loyal/fixed, 16 fully random). Check each horse's track record below before deciding where to place your bet.",
     footerNote:"This content is provided for informational and statistical simulation purposes only. PaperLotto does not sell lottery tickets and does not pay out any prizes. Betting on World Jackpot Racetrack uses points only, not real currency, and cannot be cashed out.",
@@ -372,6 +442,7 @@ const I18N = {
   },
   ja: {
     navGames:"すべてのゲーム", navMyEntries:"マイ登録番号", navGuide:"戦略ガイド", navMyBets:"マイベット", navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
+    howtoTitle:"📖 競馬場の使い方", recGuideTitle:"🎯 参考番号ガイド",
     pageTitle:"100頭の戦略、1頭の勝ち馬",
     pageSub:"各ゲームで毎回100頭(戦略重視型68・一途型16・Que será, será型16)がレースを繰り広げます。以下の表で各馬のこれまでの成績を見て、どの馬に賭けるか選んでみましょう。",
     footerNote:"本コンテンツは情報提供および統計的シミュレーション目的でのみ提供されます。PaperLottoは宝くじを販売せず、いかなる形でも賞金を支払いません。World Jackpot Racetrackのベットは実際の通貨ではなくポイントのみで行われ、現金化はできません。",
@@ -422,7 +493,7 @@ function applyStaticI18n(){
   const tt = t();
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
-    if (typeof tt[key] === 'string') el.textContent = tt[key];
+    if (typeof tt[key] === 'string') el.innerHTML = tt[key];
   });
 }
 
@@ -834,6 +905,23 @@ function rtExportRecommendExcel(){
 }
 
 function rtCloseModal(){ document.getElementById('rtModal').classList.remove('open'); }
+
+function rtToggleInfo(id){
+  document.getElementById(id).classList.toggle('open');
+}
+
+// 다른 페이지(메인 배너 등)에서 #rt-howto 또는 #rt-recommend-guide로 들어오면 자동으로 펼치고 스크롤
+function rtHandleHashOpen(){
+  const hash = location.hash.replace('#', '');
+  if (hash === 'rt-howto' || hash === 'rt-recommend-guide') {
+    const el = document.getElementById(hash);
+    if (el) {
+      el.classList.add('open');
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    }
+  }
+}
+rtHandleHashOpen();
 
 function applyLang(lang){
   currentLang = I18N[lang] ? lang : 'ko';
