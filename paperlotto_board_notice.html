@@ -112,8 +112,9 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
     <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
     <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
     <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
-    <a href="paperlotto_board_notice.html" data-i18n="navNotice" style="color:var(--gold-bright);">공지사항</a>
-    <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용설명</a>
+    <a href="paperlotto_racetrack_mockup.html" data-i18n="navRacetrack">경마장</a>
+    <a href="paperlotto_board_notice.html" data-i18n="navNotice" style="color:var(--gold-bright);">공지</a>
+    <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용법</a>
     <div id="authWidget"></div>
     <div class="lang-toggle">
       <button data-lang="ko" class="active" type="button">KR</button>
@@ -156,7 +157,7 @@ const BOARD_TYPE = 'notice';
 const i18n = {
   ko: {
     navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드",
-    navNotice:"공지사항", navBoardGuide:"사용설명", liveBoard:"LIVE BOARD",
+    navRacetrack:"경마장", navNotice:"공지", navBoardGuide:"사용법", liveBoard:"LIVE BOARD",
     pageTitle:"공지사항", pageSub:"PaperLotto의 새로운 소식과 안내사항을 전해드립니다.",
     tabNotice:"공지사항", tabGuideBoard:"사용설명",
     loading:"불러오는 중…", empty:"등록된 공지사항이 없습니다.", pinLabel:"고정",
@@ -165,7 +166,7 @@ const i18n = {
   },
   en: {
     navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide",
-    navNotice:"Notices", navBoardGuide:"How It Works", liveBoard:"LIVE BOARD",
+    navRacetrack:"Racetrack", navNotice:"Notice", navBoardGuide:"How", liveBoard:"LIVE BOARD",
     pageTitle:"Notices", pageSub:"The latest news and announcements from PaperLotto.",
     tabNotice:"Notices", tabGuideBoard:"How to Use",
     loading:"Loading…", empty:"No notices yet.", pinLabel:"Pinned",
@@ -174,7 +175,7 @@ const i18n = {
   },
   ja: {
     navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド",
-    navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
+    navRacetrack:"競馬場", navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
     pageTitle:"お知らせ", pageSub:"PaperLottoの最新情報やご案内をお届けします。",
     tabNotice:"お知らせ", tabGuideBoard:"使い方",
     loading:"読み込み中…", empty:"お知らせはまだありません。", pinLabel:"固定",
@@ -270,7 +271,7 @@ async function loadPosts(){
 const TICKER_GAMES = [
   { id:'us_powerball', accent:'us', nameKo:'파워볼', nameEn:'Powerball', nameJa:'パワーボール', odds:'292,201,338', days:[1,3,6], drawHour:22, drawMinute:59, tz:'America/New_York' },
   { id:'us_megamillions', accent:'us', nameKo:'메가밀리언스', nameEn:'Mega Millions', nameJa:'メガミリオンズ', odds:'290,472,336', days:[2,5], drawHour:23, drawMinute:0, tz:'America/New_York' },
-  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:21, drawMinute:0, tz:'Europe/Paris' },
+  { id:'eu_euromillions', accent:'eu', nameKo:'유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', odds:'139,838,160', days:[2,5], drawHour:20, drawMinute:45, tz:'Europe/Paris' },
   { id:'jp_miniloto', accent:'jp', nameKo:'미니로또', nameEn:'Mini Loto', nameJa:'ミニロト', odds:'169,911', days:[2], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto7', accent:'jp', nameKo:'로또7', nameEn:'Loto 7', nameJa:'ロト7', odds:'10,295,472', days:[5], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },
   { id:'jp_loto6', accent:'jp', nameKo:'로또6', nameEn:'Loto 6', nameJa:'ロト6', odds:'6,096,454', days:[1,4], drawHour:18, drawMinute:45, tz:'Asia/Tokyo' },

@@ -206,8 +206,9 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
     <a href="paperlotto_hub_mockup.html" data-i18n="navGames">전체 게임</a>
     <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
     <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
-    <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지사항</a>
-    <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용설명</a>
+    <a href="paperlotto_my_bets.html" data-i18n="navMyBets">내 베팅현황</a>
+    <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지</a>
+    <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용법</a>
     <div id="authWidget"></div>
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
@@ -316,7 +317,7 @@ const GAMES = [
 
 const I18N = {
   ko: {
-    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드", navNotice:"공지사항", navBoardGuide:"사용설명", liveBoard:"LIVE BOARD",
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드", navMyBets:"내 베팅현황", navNotice:"공지", navBoardGuide:"사용법", liveBoard:"LIVE BOARD",
     pageTitle:"100마리의 전략, 하나의 우승마",
     pageSub:"게임마다 100마리(전략중시형 68 · 일편단심형 16 · Que será, será형 16)가 매 회차 경주를 펼칩니다. 아래 표에서 각 말의 그동안의 성적을 보고, 어떤 말에 베팅할지 골라보세요.",
     footerNote:"본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다. World Jackpot Racetrack의 베팅은 실제 화폐가 아닌 포인트로만 이루어지며, 실제 현금으로 환급되지 않습니다.",
@@ -343,7 +344,7 @@ const I18N = {
     statusLine:(n)=>`${n}마리 표시 중`,
   },
   en: {
-    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navNotice:"Notices", navBoardGuide:"How It Works", liveBoard:"LIVE BOARD",
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navMyBets:"My Bets", navNotice:"Notice", navBoardGuide:"How", liveBoard:"LIVE BOARD",
     pageTitle:"100 Strategies, One Winning Horse",
     pageSub:"Each game runs a race of 100 horses every round (68 strategy-driven, 16 loyal/fixed, 16 fully random). Check each horse's track record below before deciding where to place your bet.",
     footerNote:"This content is provided for informational and statistical simulation purposes only. PaperLotto does not sell lottery tickets and does not pay out any prizes. Betting on World Jackpot Racetrack uses points only, not real currency, and cannot be cashed out.",
@@ -370,7 +371,7 @@ const I18N = {
     statusLine:(n)=>`Showing ${n} horses`,
   },
   ja: {
-    navGames:"すべてのゲーム", navMyEntries:"マイ登録番号", navGuide:"戦略ガイド", navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
+    navGames:"すべてのゲーム", navMyEntries:"マイ登録番号", navGuide:"戦略ガイド", navMyBets:"マイベット", navNotice:"お知らせ", navBoardGuide:"使い方", liveBoard:"LIVE BOARD",
     pageTitle:"100頭の戦略、1頭の勝ち馬",
     pageSub:"各ゲームで毎回100頭(戦略重視型68・一途型16・Que será, será型16)がレースを繰り広げます。以下の表で各馬のこれまでの成績を見て、どの馬に賭けるか選んでみましょう。",
     footerNote:"本コンテンツは情報提供および統計的シミュレーション目的でのみ提供されます。PaperLottoは宝くじを販売せず、いかなる形でも賞金を支払いません。World Jackpot Racetrackのベットは実際の通貨ではなくポイントのみで行われ、現金化はできません。",
