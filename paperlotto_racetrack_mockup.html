@@ -651,7 +651,7 @@ function renderTable(){
       const betCell = canBet
         ? `<div class="bet-cell">
              <input type="number" id="betUnits_${r.horse_no}" min="1" max="100" value="1" oninput="rtValidateUnitsInput(this)">
-             <button class="bet-btn" id="betBtn_${r.horse_no}" type="button" onclick="placeBet(${r.horse_no}, ${JSON.stringify(r.name)})">${tt.betBtn}</button>
+             <button class="bet-btn" id="betBtn_${r.horse_no}" type="button" onclick='placeBet(${r.horse_no}, ${JSON.stringify(r.name)})'>${tt.betBtn}</button>
            </div>
            <div class="bet-row-status" id="betStatus_${r.horse_no}"></div>
            ${myUnits > 0 ? `<div class="my-bet-tag">${tt.myBet(myUnits)}</div>` : ''}`
@@ -725,7 +725,7 @@ function rtOpenModal(horseNo){
       <div class="rt-section-title">${tt.recommendTitle}</div>
       <div class="rt-recommend-row">
         <input type="number" id="rtRecCount" min="1" max="500" value="10">
-        <button class="rt-btn-sm primary" type="button" id="rtRecBtn" onclick="rtRequestRecommend(${horseNo}, ${JSON.stringify(h.name)})">${tt.recommendBtn}</button>
+        <button class="rt-btn-sm primary" type="button" id="rtRecBtn" onclick='rtRequestRecommend(${horseNo}, ${JSON.stringify(h.name)})'>${tt.recommendBtn}</button>
       </div>
       <div class="rt-status" id="rtRecStatus"></div>
       <div id="rtRecResults"></div>
