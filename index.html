@@ -668,14 +668,21 @@ let LAST_DRAWS = {}; // { us_powerball: {round_no, draw_date, main_numbers, bonu
 async function loadLastDraws(){
   try {
     const sb = window.supabase.createClient(DRAW_SUPABASE_URL, DRAW_SUPABASE_KEY);
-    const { data, error } = await sb
-      .from('draw_results')
-      .select('game_id, round_no, draw_date, main_numbers, bonus_numbers')
-      .order('round_no', { ascending: false });
-    if (error) { console.error('[last-draw] load error', error); return; }
-    (data || []).forEach(row => {
-      if (!LAST_DRAWS[row.game_id]) LAST_DRAWS[row.game_id] = row; // 게임별 첫 번째(=최신, round_no desc 정렬) 것만 채택
-    });
+    // 게임마다 round_no 스케일이 완전히 달라서(호주 4700대 vs 한국 1200대 등)
+    // 전체를 한 번에 정렬해서 가져오면 Supabase 기본 응답한도(1000건)에 걸려
+    // 회차숫자가 작은 게임들이 아예 누락된다 — 게임별로 최신 1건씩 개별 요청한다.
+    const ids = GAMES.map(g => g.id);
+    const results = await Promise.all(ids.map(id =>
+      sb.from('draw_results')
+        .select('game_id, round_no, draw_date, main_numbers, bonus_numbers')
+        .eq('game_id', id)
+        .order('round_no', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(r => r.data)
+        .catch(() => null)
+    ));
+    ids.forEach((id, i) => { if (results[i]) LAST_DRAWS[id] = results[i]; });
   } catch(e){ console.error('[last-draw] load error', e); }
 }
 
