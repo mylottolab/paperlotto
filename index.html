@@ -24,6 +24,22 @@
 
   --kr:#c8203a; --jp:#2a3a7a; --us:#2c4fa3; --ca:#d8232a; --au:#1f7a6e; --eu:#2451c4;
 }
+/* ══════════ 주간(라이트) 모드 — 야간은 위 :root 값 그대로 유지, 이 블록만 덮어씀 ══════════ */
+body.light-mode{
+  --board:#f2efe4;
+  --board-2:#e8e2d0;
+  --board-line:#d9d1ba;
+  --paper:#ffffff;
+  --paper-2:#f7f3e8;
+  --ink:#1c2130;
+  --ink-dim:#5b5646;
+  --gold:#a8781f;
+  --gold-bright:#c9932e;
+  --text-hi:#1c2130;
+  --text-mid:#4c5372;
+  --text-dim:#7a7f9a;
+}
+body.light-mode::before{ opacity:0.5; }
 *{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{
@@ -88,6 +104,14 @@ nav a:hover{ color:var(--text-hi); }
   padding:6px 14px; cursor:pointer; font-family:'Inter',sans-serif;
 }
 .lang-toggle button.active{ background:var(--gold); color:var(--ink); }
+
+.theme-toggle{
+  border:1px solid var(--board-line); background:transparent; color:var(--text-mid);
+  width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:border-color .15s,color .15s;
+}
+.theme-toggle:hover{ border-color:var(--gold); color:var(--gold-bright); }
 
 /* ══════════════ TICKER BOARD (signature element) ══════════════ */
 .ticker-wrap{
@@ -315,6 +339,17 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
 .meta-value{ font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink); }
 .meta-value.countdown{ color:#8a5b1c; }
 
+.ticket-lastdraw{ margin-top:12px; font-size:11px; color:var(--ink-dim); }
+.ticket-lastdraw .tld-label{ font-size:10px; letter-spacing:.3px; margin-bottom:4px; }
+.ticket-lastdraw .tld-numbers{ display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+.ld-pip{ width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;background:rgba(28,33,48,0.08);color:var(--ink);}
+.ld-pip.bonus{ background:var(--accent,var(--gold)); color:var(--paper); }
+
+.ticket-jackpot{ margin-top:10px; padding:9px 11px; background:rgba(184,134,46,0.1); border-radius:8px; }
+.ticket-jackpot .tj-label{ color:var(--ink-dim); font-size:10px; letter-spacing:.3px; margin-bottom:2px; }
+.ticket-jackpot .tj-value{ font-family:'IBM Plex Mono',monospace; font-weight:700; color:#8a5b1c; font-size:15px; }
+.ticket-jackpot .tj-cash{ font-size:10.5px; color:var(--ink-dim); margin-top:2px; }
+
 .ticket-cta{
   margin-top:16px; display:flex; align-items:center; justify-content:space-between;
   font-size:12.5px; font-weight:600; color:var(--ink);
@@ -367,6 +402,13 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 <meta name="theme-color" content="#0c1020">
 </head>
 <body>
+<script>
+// 야간(기본)은 그대로 유지, 저장된 선택이 'light'일 때만 라이트모드 적용 (자동감지 없음 — 기본은 항상 야간)
+(function(){
+  var saved = localStorage.getItem('paperlotto_theme');
+  if (saved === 'light') document.body.classList.add('light-mode');
+})();
+</script>
 
 <div class="site-sticky-top">
 <header>
@@ -383,6 +425,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <button data-lang="en" class="active" type="button">EN</button>
       <button data-lang="ja" type="button">JA</button>
     </div>
+    <button class="theme-toggle" id="themeToggleBtn" type="button" title="다크/라이트 모드 전환" aria-label="다크/라이트 모드 전환">🌙</button>
     <span class="row-break-1"></span>
     <div id="authSlot1"></div>
     <span class="row-break-2"></span>
@@ -596,6 +639,47 @@ const GAMES = [
 ];
 
 // =====================================================
+// 잭팟(파워볼/메가밀리언스/유로밀리언스) — My Lotto Lab의 공개 API를 그대로 가져다 씀
+// =====================================================
+const JACKPOT_API_BASE = 'https://my-lotto-lab-api.onrender.com';
+const JACKPOT_CODE_BY_GAME = { us_powerball:'POWERBALL', us_megamillions:'MEGAMILLIONS', eu_euromillions:'EUROMILLIONS' };
+const JACKPOT_REFRESH_MS = 5 * 60 * 1000;
+let JACKPOTS = {}; // { us_powerball: {jackpot_estimate, cash_value, next_draw_date, fetched_at}, ... }
+
+function currencySymbolFor(gameId){ return gameId === 'eu_euromillions' ? '€' : '$'; }
+
+async function loadJackpots(){
+  try {
+    const entries = Object.entries(JACKPOT_CODE_BY_GAME);
+    const results = await Promise.all(entries.map(([gameId, code]) =>
+      fetch(JACKPOT_API_BASE + '/api/global/jackpot/' + code).then(r => r.ok ? r.json() : null).catch(() => null)
+    ));
+    entries.forEach(([gameId], i) => { JACKPOTS[gameId] = results[i]; });
+  } catch(e){ console.error('[jackpot] load error', e); }
+}
+
+// =====================================================
+// 최근 추첨일 + 당첨번호 — PaperLotto 자체 draw_results 테이블에서 12개 게임 모두 로드
+// =====================================================
+const DRAW_SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const DRAW_SUPABASE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+let LAST_DRAWS = {}; // { us_powerball: {round_no, draw_date, main_numbers, bonus_numbers}, ... }
+
+async function loadLastDraws(){
+  try {
+    const sb = window.supabase.createClient(DRAW_SUPABASE_URL, DRAW_SUPABASE_KEY);
+    const { data, error } = await sb
+      .from('draw_results')
+      .select('game_id, round_no, draw_date, main_numbers, bonus_numbers')
+      .order('round_no', { ascending: false });
+    if (error) { console.error('[last-draw] load error', error); return; }
+    (data || []).forEach(row => {
+      if (!LAST_DRAWS[row.game_id]) LAST_DRAWS[row.game_id] = row; // 게임별 첫 번째(=최신, round_no desc 정렬) 것만 채택
+    });
+  } catch(e){ console.error('[last-draw] load error', e); }
+}
+
+// =====================================================
 // 다국어(i18n)
 // =====================================================
 const i18n = {
@@ -626,6 +710,7 @@ const i18n = {
     day:"일", hour:"시간",
     gameCount1:"GAME", gameCountN:"GAMES",
     nameKey:"nameKr",
+    lastDrawLabel:"최근 당첨번호", jackpotLabel:"현재 예상 잭팟", cashValueLabel:"현금가치", noDrawYet:"아직 등록된 당첨정보가 없어요",
   },
   en: {
     navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navRacetrack:"Racetrack", navNotice:"Notice", navBoardGuide:"How",
@@ -654,6 +739,7 @@ const i18n = {
     day:"d", hour:"h",
     gameCount1:"GAME", gameCountN:"GAMES",
     nameKey:"nameEn",
+    lastDrawLabel:"Latest Winning Numbers", jackpotLabel:"Current Est. Jackpot", cashValueLabel:"Cash Value", noDrawYet:"No draw result yet",
   },
   ja: {
     navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド", navRacetrack:"競馬場", navNotice:"お知らせ", navBoardGuide:"使い方",
@@ -682,6 +768,7 @@ const i18n = {
     day:"日", hour:"時間",
     gameCount1:"GAME", gameCountN:"GAMES",
     nameKey:"nameJa",
+    lastDrawLabel:"最新当選番号", jackpotLabel:"現在の予想ジャックポット", cashValueLabel:"現金価値", noDrawYet:"まだ当選情報がありません",
   },
 };
 
@@ -821,12 +908,43 @@ function renderCards(){
         `<span class="num-pip">${i+1}</span>`).join('') +
         (g.bonus ? `<span class="ticket-plus">+</span>` + Array.from({length:g.bonus},() => `<span class="num-pip bonus">★</span>`).join('') : '');
       const displayName = g[t.nameKey] || g.nameEn;
+
+      // ── 최근 당첨번호 ──
+      const last = LAST_DRAWS[g.id];
+      let lastDrawHtml = '';
+      if (last) {
+        const ldPips = (last.main_numbers || []).map(n => `<span class="ld-pip">${n}</span>`).join('') +
+          (last.bonus_numbers && last.bonus_numbers.length ? `<span class="ticket-plus">+</span>` + last.bonus_numbers.map(n => `<span class="ld-pip bonus">${n}</span>`).join('') : '');
+        lastDrawHtml = `
+        <div class="ticket-lastdraw" data-lastdraw="${g.id}">
+          <div class="tld-label">${t.lastDrawLabel} · ${last.draw_date || ''}${last.round_no ? (' · #' + last.round_no) : ''}</div>
+          <div class="tld-numbers">${ldPips}</div>
+        </div>`;
+      }
+
+      // ── 잭팟 (파워볼/메가밀리언스/유로밀리언스만) ──
+      const jp = JACKPOTS[g.id];
+      let jackpotHtml = '';
+      if (JACKPOT_CODE_BY_GAME[g.id] && jp && jp.jackpot_estimate) {
+        const sym = currencySymbolFor(g.id);
+        const cashLine = (g.id !== 'eu_euromillions' && jp.cash_value)
+          ? `<div class="tj-cash">${t.cashValueLabel}: ${sym}${Number(jp.cash_value).toLocaleString()}</div>` : '';
+        jackpotHtml = `
+        <div class="ticket-jackpot" data-jackpot="${g.id}">
+          <div class="tj-label">${t.jackpotLabel}</div>
+          <div class="tj-value">${sym}${Number(jp.jackpot_estimate).toLocaleString()}</div>
+          ${cashLine}
+        </div>`;
+      }
+
       return `
       <a class="ticket" style="--accent:var(--${g.accent})" href="${g.detail}" data-id="${g.id}">
         <div class="ticket-top">
           <div class="ticket-country">${g.region.toUpperCase()} · ${g.mainRange}${t.ballDraw}</div>
           <div class="ticket-price">${t.perGame}<br><b>${g.price}</b></div>
         </div>
+        ${lastDrawHtml}
+        ${jackpotHtml}
         <div class="ticket-name">${displayName}</div>
         <div class="ticket-name-en">${g.nameEn}</div>
         <div class="ticket-numbers">${pips}</div>
@@ -870,6 +988,26 @@ setInterval(() => {
 }, 1000);
 
 applyLang(currentLang);
+
+// ─── 잭팟 + 최근당첨번호: 최초 로드 후 카드 다시 그리기, 잭팟은 5분마다 갱신 ───
+Promise.all([loadJackpots(), loadLastDraws()]).then(() => { renderCards(); renderTicker(); });
+setInterval(() => { loadJackpots().then(renderCards); }, JACKPOT_REFRESH_MS);
+
+// ─── 주간/야간 테마 토글 ───────────────────────────────────────────────
+(function(){
+  var btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
+  function syncIcon(){
+    var isLight = document.body.classList.contains('light-mode');
+    btn.textContent = isLight ? '☀️' : '🌙';
+  }
+  btn.addEventListener('click', function(){
+    document.body.classList.toggle('light-mode');
+    localStorage.setItem('paperlotto_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+    syncIcon();
+  });
+  syncIcon();
+})();
 </script>
 
 <script src="auth-widget.js"></script>
