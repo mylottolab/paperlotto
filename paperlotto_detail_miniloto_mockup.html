@@ -204,6 +204,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   .gate-abs{ flex-shrink:1; flex-basis:auto; text-align:left; margin-left:29px; margin-top:2px; white-space:normal; }
 }
 </style>
+<link rel="stylesheet" href="paperlotto_checker.css">
 </head>
 <body>
 
@@ -343,6 +344,14 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <div class="pr-desc" data-i18n="prCardDesc">과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.</div>
     </div>
     <a class="pr-btn" href="paperlotto_past_round_select_mockup.html?game=jp_miniloto" data-i18n="prCardBtn">과거 회차 선택하기 →</a>
+  </div>
+
+  <div class="pr-detail-card" style="display:block;">
+    <div class="pr-info" style="text-align:left;margin-bottom:14px;">
+      <div class="pr-title">🎫 실물 복권 당첨확인</div>
+      <div class="pr-desc">이미 사신 복권이 있나요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 확인해드려요.</div>
+    </div>
+    <div id="checkerMount"></div>
   </div>
 
 </main>
@@ -824,5 +833,7 @@ setInterval(updateGate, 1000);
 </script>
 
 <script src="auth-widget.js"></script>
+<script src="paperlotto_checker.js"></script>
+<script>PLChecker.mount('checkerMount', 'jp_miniloto', { lang: (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'en' : 'kr' });</script>
 </body>
 </html>
