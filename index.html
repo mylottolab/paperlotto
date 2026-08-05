@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="paperlotto_checker.css">
 <style>
 :root{
   --board:#0c1020;
@@ -433,6 +434,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <a href="#board" data-i18n="navGames">전체 게임</a>
       <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
       <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
+      <a href="paperlotto_checker.html" data-i18n="navChecker">당첨확인</a>
       <a href="paperlotto_racetrack_mockup.html" data-i18n="navRacetrack">경마장</a>
     <a href="paperlotto_board_notice.html" data-i18n="navNotice">공지</a>
       <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide">사용법</a>
@@ -691,7 +693,7 @@ async function loadLastDraws(){
 // =====================================================
 const i18n = {
   ko: {
-    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드", navRacetrack:"경마장", navNotice:"공지", navBoardGuide:"사용법",
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navGuide:"전략 가이드", navChecker:"당첨확인", navRacetrack:"경마장", navNotice:"공지", navBoardGuide:"사용법",
     liveBoard:"LIVE BOARD",
     heroTitle:'세계 12개 복권을,<br><span class="accent">실제 돈 없이</span> 종이 위에서 실험하세요',
     heroSub:"한국·미국·일본·캐나다·호주·유럽 — 당신의 전략 번호를 가상으로 등록하고, 실제 추첨 결과와 비교하며 데이터로 검증합니다.",
@@ -720,7 +722,7 @@ const i18n = {
     lastDrawLabel:"최근 당첨번호", jackpotLabel:"현재 예상 잭팟", cashValueLabel:"현금가치", noDrawYet:"아직 등록된 당첨정보가 없어요",
   },
   en: {
-    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navRacetrack:"Racetrack", navNotice:"Notice", navBoardGuide:"How",
+    navGames:"All Games", navMyEntries:"My Entries", navGuide:"Strategy Guide", navChecker:"Check Numbers", navRacetrack:"Racetrack", navNotice:"Notice", navBoardGuide:"How",
     liveBoard:"LIVE BOARD",
     heroTitle:'Try 12 lotteries from around the world<br><span class="accent">with no real money</span>, on paper',
     heroSub:"Korea · US · Japan · Canada · Australia · Europe — register your strategic numbers virtually and validate them against real draw results with data.",
@@ -749,7 +751,7 @@ const i18n = {
     lastDrawLabel:"Latest Winning Numbers", jackpotLabel:"Current Est. Jackpot", cashValueLabel:"Cash Value", noDrawYet:"No draw result yet",
   },
   ja: {
-    navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド", navRacetrack:"競馬場", navNotice:"お知らせ", navBoardGuide:"使い方",
+    navGames:"すべてのゲーム", navMyEntries:"登録した番号", navGuide:"攻略ガイド", navChecker:"当選確認", navRacetrack:"競馬場", navNotice:"お知らせ", navBoardGuide:"使い方",
     liveBoard:"LIVE BOARD",
     heroTitle:'世界12の宝くじを、<br><span class="accent">実際のお金を使わず</span>紙の上で体験',
     heroSub:"韓国・アメリカ・日本・カナダ・オーストラリア・ヨーロッパ — 戦略番号を仮想登録し、実際の抽選結果と比較してデータで検証します。",
@@ -959,6 +961,7 @@ function renderCards(){
           <div><span class="meta-label">${t.tier1Odds}</span><span class="meta-value">1 / ${g.odds}</span></div>
           <div><span class="meta-label">${t.untilNext}</span><span class="meta-value countdown" data-cd="${g.id}">${fmtCountdown(g.next)}</span></div>
         </div>
+        <button class="plck-entry-btn" onclick="event.preventDefault();event.stopPropagation();openChecker('${g.id}')">🎫 당첨확인</button>
         <div class="ticket-cta">${t.registerCta} <span class="arrow">→</span></div>
       </a>`;
     }).join('');
@@ -1049,6 +1052,29 @@ setInterval(() => { loadJackpots().then(renderCards); }, JACKPOT_REFRESH_MS);
   if (mq.addEventListener) mq.addEventListener('change', relocate);
   relocate();
 })();
+</script>
+<div class="plck-modal-overlay" id="plckModalOverlay" onclick="if(event.target===this)closeChecker()">
+  <div class="plck-modal">
+    <div class="plck-modal-head">
+      <h3 id="plckModalTitle">당첨확인</h3>
+      <button class="plck-modal-close" onclick="closeChecker()">✕</button>
+    </div>
+    <div id="checkerMount"></div>
+  </div>
+</div>
+
+<script src="paperlotto_checker.js"></script>
+<script>
+function openChecker(gameId){
+  var meta = PLChecker.GAME_META[gameId];
+  document.getElementById('plckModalTitle').textContent = (meta ? meta.nameKr : '') + ' 당첨확인';
+  document.getElementById('checkerMount').innerHTML = '';
+  document.getElementById('plckModalOverlay').classList.add('show');
+  PLChecker.mount('checkerMount', gameId, { lang: (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'en' : 'kr' });
+}
+function closeChecker(){
+  document.getElementById('plckModalOverlay').classList.remove('show');
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,72 @@
+/* =====================================================
+   PaperLotto — 당첨확인 위젯 공용 스타일 (paperlotto_checker.js와 세트)
+   index.html의 CSS 변수(--paper/--ink/--gold/--board-line 등)를 그대로 이어받아 씁니다.
+   이 스타일이 적용되는 페이지는 반드시 그 :root 변수 세트가 먼저 정의돼 있어야 합니다.
+===================================================== */
+.plck-box{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px; }
+.plck-label{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-dim); letter-spacing:.3px; margin-bottom:6px; }
+.plck-select{
+  width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(28,33,48,0.18);
+  background:var(--paper-2); color:var(--ink); font-family:inherit; font-size:13.5px;
+}
+.plck-loadmore{
+  margin-top:6px; font-size:11.5px; color:var(--gold); font-weight:700; cursor:pointer; text-align:right;
+}
+.plck-loadmore:hover{ text-decoration:underline; }
+.plck-input{
+  width:100%; padding:11px 12px; border-radius:8px; border:1px solid rgba(28,33,48,0.18);
+  background:var(--paper-2); color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:14px;
+  letter-spacing:.5px;
+}
+.plck-input::placeholder{ color:rgba(28,33,48,0.35); font-family:'Inter',sans-serif; letter-spacing:normal; }
+.plck-row{ display:flex; gap:10px; margin-top:16px; }
+.plck-btn{
+  flex:1; padding:12px 14px; border-radius:9px; border:none; font-size:13.5px; font-weight:700;
+  cursor:pointer; font-family:inherit;
+}
+.plck-btn-primary{ background:var(--gold); color:#fff; }
+.plck-btn-primary:hover{ filter:brightness(1.06); }
+.plck-btn-ghost{ background:transparent; border:1px solid rgba(28,33,48,0.2); color:var(--ink-dim); flex:0 0 auto; }
+.plck-btn-ghost:hover{ border-color:var(--gold); color:var(--gold); }
+.plck-result{ display:none; margin-top:16px; padding:14px 16px; border-radius:10px; font-size:13px; line-height:1.6; }
+.plck-result.show{ display:block; }
+.plck-result-warn{ background:rgba(184,134,46,0.1); color:var(--ink-dim); }
+.plck-result-win{ background:rgba(34,150,90,0.1); border:1px solid rgba(34,150,90,0.35); }
+.plck-result-lose{ background:rgba(28,33,48,0.05); border:1px solid rgba(28,33,48,0.12); }
+.plck-drawinfo{ font-size:11.5px; color:var(--ink-dim); margin-bottom:10px; }
+.plck-drawballs{ display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.plck-ball{
+  width:26px; height:26px; border-radius:50%; background:var(--paper); border:1px solid rgba(28,33,48,0.2);
+  display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;
+  font-family:'IBM Plex Mono',monospace; color:var(--ink); flex-shrink:0;
+}
+.plck-ball-bonus{ background:var(--gold); border-color:var(--gold); color:#fff; }
+.plck-plus{ align-self:center; color:var(--ink-dim); font-weight:700; font-size:12px; }
+.plck-grade-win{ font-size:18px; font-weight:800; color:#1d8a52; margin-top:2px; }
+.plck-grade-lose{ font-size:14.5px; font-weight:700; color:var(--ink-dim); margin-top:2px; }
+.plck-grade-sub{ font-size:11.5px; color:var(--ink-dim); margin-top:4px; }
+
+/* 메인페이지 카드용 미니 진입버튼 */
+.plck-entry-btn{
+  display:inline-flex; align-items:center; gap:5px; margin-top:10px; padding:6px 12px;
+  border-radius:999px; background:rgba(184,134,46,0.12); border:1px solid rgba(184,134,46,0.4);
+  color:var(--gold-bright,var(--gold)); font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;
+}
+.plck-entry-btn:hover{ background:rgba(184,134,46,0.2); }
+
+/* 모달 (메인페이지에서 카드별 버튼 눌렀을 때) */
+.plck-modal-overlay{
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:500;
+  align-items:center; justify-content:center; padding:20px;
+}
+.plck-modal-overlay.show{ display:flex; }
+.plck-modal{ background:var(--paper); border-radius:16px; max-width:420px; width:100%; max-height:88vh; overflow-y:auto; padding:0; position:relative; }
+.plck-modal-head{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(28,33,48,0.1); }
+.plck-modal-head h3{ font-size:15px; font-weight:700; color:var(--ink); margin:0; }
+.plck-modal-close{ background:none; border:none; font-size:20px; color:var(--ink-dim); cursor:pointer; line-height:1; padding:4px; }
+.plck-modal .plck-box{ border-radius:0; padding:18px 20px; }
+
+@media (max-width:480px){
+  .plck-row{ flex-wrap:wrap; }
+  .plck-btn-ghost{ flex:1 1 100%; }
+}

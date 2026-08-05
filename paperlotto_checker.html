@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>당첨확인 — PaperLotto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="paperlotto_checker.css">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e; --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+}
+body.light-mode{
+  --board:#f2efe4; --board-2:#e8e2d0; --board-line:#d9d1ba; --paper:#ffffff; --paper-2:#f7f3e8;
+  --ink:#1c2130; --ink-dim:#5b5646; --gold:#a8781f; --gold-bright:#c9932e;
+  --text-hi:#1c2130; --text-mid:#4c5372; --text-dim:#7a7f9a;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+.header{ display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:12px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
+.brand-mark{ width:34px; height:34px; border-radius:9px; background:var(--gold); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Fraunces',serif; }
+.brand-name{ font-size:16px; font-weight:700; }
+.theme-toggle{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px; }
+main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
+.page-title{ font-size:26px; font-weight:700; margin-bottom:6px; }
+.page-sub{ font-size:13px; color:var(--text-dim); margin-bottom:24px; }
+.game-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px; }
+.game-tab-btn{
+  padding:8px 14px; border-radius:999px; border:1px solid var(--board-line); background:var(--board-2);
+  color:var(--text-mid); font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;
+}
+.game-tab-btn.active{ background:var(--gold); border-color:var(--gold); color:#fff; }
+#checkerMount{ min-height:200px; }
+</style>
+</head>
+<body>
+<script>(function(){ if (localStorage.getItem('paperlotto_theme') === 'light') document.body.classList.add('light-mode'); })();</script>
+
+<div class="header">
+  <a class="brand" href="index.html">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">PaperLotto</div>
+  </a>
+  <button class="theme-toggle" id="themeToggleBtn" title="다크/라이트 모드 전환">🌙</button>
+</div>
+
+<main>
+  <div class="page-title">🎟️ 당첨확인</div>
+  <div class="page-sub">실물 복권을 갖고 계신가요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 알려드려요.</div>
+
+  <div class="game-tabs" id="gameTabs"></div>
+  <div id="checkerMount"></div>
+</main>
+
+<script src="paperlotto_checker.js"></script>
+<script>
+var GAME_ORDER = ['kr_lotto645','us_powerball','us_megamillions','eu_euromillions','jp_miniloto','jp_loto7','jp_loto6','ca_lottomax','ca_lotto649','au_powerball','au_ozlotto','au_tattslotto'];
+var currentGame = new URLSearchParams(location.search).get('game') || 'kr_lotto645';
+if (GAME_ORDER.indexOf(currentGame) === -1) currentGame = 'kr_lotto645';
+
+function renderTabs(){
+  document.getElementById('gameTabs').innerHTML = GAME_ORDER.map(function(id){
+    var meta = PLChecker.GAME_META[id];
+    return '<button class="game-tab-btn' + (id === currentGame ? ' active' : '') + '" onclick="selectGame(\'' + id + '\')">' + meta.nameKr + '</button>';
+  }).join('');
+}
+function selectGame(id){
+  currentGame = id;
+  history.replaceState(null, '', '?game=' + id);
+  renderTabs();
+  document.getElementById('checkerMount').innerHTML = '';
+  PLChecker.mount('checkerMount', id, { lang: 'kr' });
+}
+renderTabs();
+selectGame(currentGame);
+
+document.getElementById('themeToggleBtn').addEventListener('click', function(){
+  document.body.classList.toggle('light-mode');
+  localStorage.setItem('paperlotto_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+  this.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+});
+(function(){ var btn=document.getElementById('themeToggleBtn'); btn.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙'; })();
+</script>
+</body>
+</html>
