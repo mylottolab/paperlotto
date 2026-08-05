@@ -78,6 +78,12 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
 .hero-country{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:700; letter-spacing:1.4px; color:var(--ca); }
 .hero-title{ font-size:clamp(30px,4.4vw,42px); font-weight:600; margin-top:8px; line-height:1.1; }
 .hero-title-en{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink-dim); margin-top:6px; }
+.hero-lastdraw{ margin-top:10px; font-size:11px; color:var(--ink-dim); display:none; }
+.hero-lastdraw.show{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.hld-label{ color:var(--ink-dim); margin-right:2px; }
+.hld-ball{ width:24px; height:24px; border-radius:50%; background:rgba(28,33,48,0.07); border:1px solid rgba(28,33,48,0.15); display:inline-flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700; font-family:'IBM Plex Mono',monospace; color:var(--ink); flex-shrink:0; }
+.hld-ball.bonus{ background:var(--gold); border-color:var(--gold); color:#fff; }
+.hld-plus{ color:var(--ink-dim); font-weight:700; font-size:11px; }
 
 .hero-pips{ margin-top:26px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .pip{ width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; background:rgba(28,33,48,0.07); color:var(--ink-dim); }
@@ -250,6 +256,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
         <div class="hero-country" data-i18n="heroCountry">🇨🇦 CANADA · ILC / OLG · LOTO-QUÉBEC · BCLC</div>
         <h1 class="hero-title" data-i18n="heroTitle">로또맥스</h1>
         <div class="hero-title-en">Lotto Max</div>
+        <div class="hero-lastdraw" id="heroLastDraw"><span class="hld-label">최근 당첨:</span></div>
       </div>
     </div>
 
@@ -350,6 +357,7 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="pr-info" style="text-align:left;margin-bottom:14px;">
       <div class="pr-title" data-i18n="checkerCardTitle">🎫 실물 복권 당첨확인</div>
       <div class="pr-desc" data-i18n="checkerCardDesc">이미 사신 복권이 있나요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 확인해드려요.</div>
+      <div class="plck-note-mini" data-i18n="checkerNote">카메라인식과 작업상 다소 불편함이 있음을 양해해 주시기 바랍니다</div>
     </div>
     <div id="checkerMount"></div>
   </div>
@@ -381,6 +389,7 @@ const i18n = {
     prCardBtn:"과거 회차 선택하기 →",
     checkerCardTitle:"🎫 실물 복권 당첨확인",
     checkerCardDesc:"이미 사신 복권이 있나요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 확인해드려요.",
+    checkerNote:"카메라인식과 작업상 다소 불편함이 있음을 양해해 주시기 바랍니다",
     s1h:"등수별 당첨 조건 (1라인 기준)",
     s1body:`<table class="prize-table">
         <thead><tr><th>등수</th><th>조건</th><th>당첨금</th><th>확률</th></tr></thead>
@@ -446,6 +455,7 @@ const i18n = {
     prCardBtn:"Try a past round →",
     checkerCardTitle:"🎫 Check Your Ticket",
     checkerCardDesc:"Already have a physical ticket? Pick the draw and enter your numbers to see your result instantly.",
+    checkerNote:"Please note that camera recognition and manual entry may be a bit inconvenient.",
     s1h:"Prize Tiers (per line)",
     s1body:`<table class="prize-table">
         <thead><tr><th>Tier</th><th>Match</th><th>Prize</th><th>Odds</th></tr></thead>
@@ -511,6 +521,7 @@ const i18n = {
     prCardBtn:"過去回にチャレンジ →",
     checkerCardTitle:"🎫 当選確認",
     checkerCardDesc:"すでに実物の宝くじをお持ちですか？回（または抽選日）を選んで番号を入力すると、すぐに当選結果を確認できます。",
+    checkerNote:"カメラ認識や手作業には多少の不便があることをご了承ください。",
     s1h:"等級別当選条件（1ライン基準）",
     s1body:`<table class="prize-table">
         <thead><tr><th>等級</th><th>条件</th><th>賞金</th><th>確率</th></tr></thead>
@@ -859,6 +870,14 @@ setInterval(updateGate, 1000);
 
 <script src="auth-widget.js"></script>
 <script src="paperlotto_checker.js"></script>
-<script>PLChecker.mount('checkerMount', 'ca_lottomax', { lang: (typeof currentLang !== 'undefined' && (currentLang==='en'||currentLang==='ja')) ? currentLang : 'ko' });</script>
+<script>PLChecker.fetchLatestDraw('ca_lottomax').then(function(d){
+  if(!d) return;
+  var el = document.getElementById('heroLastDraw');
+  var balls = (d.main_numbers||[]).map(function(n){return '<span class="hld-ball">'+n+'</span>';}).join('')
+    + ((d.bonus_numbers||[]).length ? '<span class="hld-plus">+</span>'+d.bonus_numbers.map(function(n){return '<span class="hld-ball bonus">'+n+'</span>';}).join('') : '');
+  el.innerHTML = '<span class="hld-label">'+d.draw_date+' (#'+d.round_no+')</span>'+balls;
+  el.classList.add('show');
+});
+PLChecker.mount('checkerMount', 'ca_lottomax', { lang: (typeof currentLang !== 'undefined' && (currentLang==='en'||currentLang==='ja')) ? currentLang : 'ko' });</script>
 </body>
 </html>

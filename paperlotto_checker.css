@@ -41,10 +41,31 @@
   font-family:'IBM Plex Mono',monospace; color:var(--ink); flex-shrink:0;
 }
 .plck-ball-bonus{ background:var(--gold); border-color:var(--gold); color:#fff; }
+.plck-ball-matched{ box-shadow:0 0 0 2.5px #e3392f; border-color:#e3392f; }
 .plck-plus{ align-self:center; color:var(--ink-dim); font-weight:700; font-size:12px; }
 .plck-grade-win{ font-size:18px; font-weight:800; color:#1d8a52; margin-top:2px; }
 .plck-grade-lose{ font-size:14.5px; font-weight:700; color:var(--ink-dim); margin-top:2px; }
 .plck-grade-sub{ font-size:11.5px; color:var(--ink-dim); margin-top:4px; }
+
+.plck-combos{ display:flex; flex-direction:column; gap:8px; }
+.plck-combo-row{ display:flex; align-items:center; gap:8px; }
+.plck-combo-inputs{ flex:1; display:flex; gap:8px; }
+.plck-combo-inputs .plck-input{ flex:1; }
+.plck-combo-actions{ display:flex; gap:4px; flex-shrink:0; }
+.plck-icon-btn{
+  width:36px; height:36px; border-radius:8px; border:1px solid rgba(28,33,48,0.18); background:var(--paper-2);
+  color:var(--ink-dim); font-size:14px; cursor:pointer; flex-shrink:0;
+}
+.plck-icon-btn:hover{ border-color:var(--gold); color:var(--gold); }
+.plck-combo-remove{ color:#c0392b; }
+.plck-addcombo{
+  margin-top:8px; font-size:12px; font-weight:700; color:var(--gold); cursor:pointer; display:inline-block;
+}
+.plck-addcombo:hover{ text-decoration:underline; }
+.plck-ocrnote{ margin-top:12px; font-size:11px; color:var(--ink-dim); line-height:1.5; }
+.plck-combo-result-block{ padding:12px 0; border-top:1px dashed rgba(28,33,48,0.12); }
+.plck-combo-result-block:first-of-type{ border-top:none; margin-top:2px; }
+.plck-combo-result-label{ font-size:11px; font-weight:700; color:var(--ink-dim); margin-bottom:6px; }
 
 /* 메인페이지 카드용 미니 진입버튼 */
 .plck-entry-btn{
@@ -53,6 +74,7 @@
   color:var(--gold-bright,var(--gold)); font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;
 }
 .plck-entry-btn:hover{ background:rgba(184,134,46,0.2); }
+.plck-note-mini{ font-size:9.5px; color:var(--text-dim,var(--ink-dim)); margin-top:4px; line-height:1.4; max-width:220px; }
 
 /* 모달 (메인페이지에서 카드별 버튼 눌렀을 때) */
 .plck-modal-overlay{

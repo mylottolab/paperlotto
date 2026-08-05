@@ -715,7 +715,7 @@ const i18n = {
     regionUS:"미국", regionEU:"유로밀리언스", regionJP:"일본", regionCA:"캐나다", regionAU:"호주", regionKR:"대한민국",
     footerNote:'본 사이트는 사용자가 직접 결정한 번호를 저장·관리하고, 실제 추첨 결과와 비교하는 시뮬레이션 서비스입니다.<br>복권을 판매하거나 구매를 대행하지 않으며, 상금을 지급하지 않습니다.',
     footerTerms:"이용약관", footerPrivacy:"개인정보처리방침",
-    ballDraw:"구 추첨", perGame:"1게임", tier1Odds:"1등 확률", untilNext:"다음 추첨까지", registerCta:"가상 번호 등록하기", checkerBtn:"🎫 당첨확인",
+    ballDraw:"구 추첨", perGame:"1게임", tier1Odds:"1등 확률", untilNext:"다음 추첨까지", registerCta:"가상 번호 등록하기", checkerBtn:"🎫 당첨확인", checkerNote:"카메라인식과 작업상 다소 불편함이 있음을 양해해 주시기 바랍니다",
     day:"일", hour:"시간",
     gameCount1:"GAME", gameCountN:"GAMES",
     nameKey:"nameKr",
@@ -744,7 +744,7 @@ const i18n = {
     regionUS:"United States", regionEU:"EuroMillions", regionJP:"Japan", regionCA:"Canada", regionAU:"Australia", regionKR:"Korea",
     footerNote:'This site stores and manages numbers chosen by users, and compares them against real draw results as a simulation service.<br>It does not sell tickets, act as a purchase agent, or pay out prizes.',
     footerTerms:"Terms of Service", footerPrivacy:"Privacy Policy",
-    ballDraw:"-ball draw", perGame:"1 line", tier1Odds:"Tier 1 odds", untilNext:"Until next draw", registerCta:"Register virtual numbers", checkerBtn:"🎫 Check Numbers",
+    ballDraw:"-ball draw", perGame:"1 line", tier1Odds:"Tier 1 odds", untilNext:"Until next draw", registerCta:"Register virtual numbers", checkerBtn:"🎫 Check Numbers", checkerNote:"Please note that camera recognition and manual entry may be a bit inconvenient.",
     day:"d", hour:"h",
     gameCount1:"GAME", gameCountN:"GAMES",
     nameKey:"nameEn",
@@ -773,7 +773,7 @@ const i18n = {
     regionUS:"アメリカ", regionEU:"ユーロミリオンズ", regionJP:"日本", regionCA:"カナダ", regionAU:"オーストラリア", regionKR:"韓国",
     footerNote:'当サイトはユーザーが選んだ番号を保存・管理し、実際の抽選結果と比較するシミュレーションサービスです。<br>宝くじの販売や購入代行は行わず、賞金の支払いもありません。',
     footerTerms:"利用規約", footerPrivacy:"プライバシーポリシー",
-    ballDraw:"球抽選", perGame:"1口", tier1Odds:"1等確率", untilNext:"次回抽選まで", registerCta:"仮想番号を登録する", checkerBtn:"🎫 当選確認",
+    ballDraw:"球抽選", perGame:"1口", tier1Odds:"1等確率", untilNext:"次回抽選まで", registerCta:"仮想番号を登録する", checkerBtn:"🎫 当選確認", checkerNote:"カメラ認識や手作業には多少の不便があることをご了承ください。",
     day:"日", hour:"時間",
     gameCount1:"GAME", gameCountN:"GAMES",
     nameKey:"nameJa",
@@ -962,6 +962,7 @@ function renderCards(){
           <div><span class="meta-label">${t.untilNext}</span><span class="meta-value countdown" data-cd="${g.id}">${fmtCountdown(g.next)}</span></div>
         </div>
         <button class="plck-entry-btn" onclick="event.preventDefault();event.stopPropagation();openChecker('${g.id}')">${t.checkerBtn}</button>
+        <div class="plck-note-mini">${t.checkerNote}</div>
         <div class="ticket-cta">${t.registerCta} <span class="arrow">→</span></div>
       </a>`;
     }).join('');

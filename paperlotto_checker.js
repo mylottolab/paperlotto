@@ -107,6 +107,7 @@
       needCount: '개 입력해주세요', selectRound: '먼저 회차를 선택해주세요', invalidRange: '올바른 번호를 입력해주세요',
       ocr: '사진으로 인식', ocrRunning: '사진 분석 중... (시간이 좀 걸려요)', ocrFail: '번호를 못 읽었어요. 직접 입력해주세요.',
       ocrPartial: '번호를 인식했어요 — 맞는지 확인하고 눌러주세요.', resultDate: '추첨일',
+      addCombo: '+ 조합 추가', comboLabel: '조합', ocrNote: '⚠️ 카메라인식과 작업상 다소 불편함이 있음을 양해해 주시기 바랍니다.',
     },
     en: {
       pickRound: 'Select draw', main: 'My Numbers', bonusSep: 'Bonus Numbers',
@@ -115,6 +116,7 @@
       needCount: ' numbers needed', selectRound: 'Please select a draw first', invalidRange: 'Please enter valid numbers',
       ocr: 'Scan photo', ocrRunning: 'Analyzing photo... (may take a moment)', ocrFail: "Couldn't read the numbers — please enter manually.",
       ocrPartial: 'Numbers detected — please verify before checking.', resultDate: 'Draw date',
+      addCombo: '+ Add combo', comboLabel: 'Combo', ocrNote: '⚠️ Please note that camera recognition and manual entry may be a bit inconvenient.',
     },
     ja: {
       pickRound: '回を選択', main: '自分の番号（本数字）', bonusSep: 'ボーナス番号',
@@ -123,6 +125,7 @@
       needCount: '個入力してください', selectRound: 'まず回を選択してください', invalidRange: '正しい番号を入力してください',
       ocr: '写真で読み取る', ocrRunning: '写真を解析中...（少し時間がかかります）', ocrFail: '番号を読み取れませんでした。直接入力してください。',
       ocrPartial: '番号を認識しました — 確認してから押してください。', resultDate: '抽選日',
+      addCombo: '+ 組み合わせ追加', comboLabel: '組み合わせ', ocrNote: '⚠️ カメラ認識や手作業には多少の不便があることをご了承ください。',
     },
   };
 
@@ -152,22 +155,35 @@
 
     var needsSeparateBonus = !!SEPARATE_BONUS_GAMES[gameId];
     var bonusCount = SEPARATE_BONUS_GAMES[gameId] || 0;
-    var state = { offset: 0, rounds: [], selectedRound: null };
+    var state = { offset: 0, rounds: [] };
+    var comboSeq = 0;
+
+    function comboRowHtml(idx) {
+      return (
+        '<div class="plck-combo-row" data-idx="' + idx + '">' +
+          '<div class="plck-combo-inputs">' +
+            '<input class="plck-input plck-combo-main" placeholder="' + t.placeholder + '" inputmode="numeric" autocomplete="off">' +
+            (needsSeparateBonus ? '<input class="plck-input plck-combo-bonus" placeholder="' + (bonusCount === 1 ? '예: 24' : '예: 4 9') + '" inputmode="numeric" autocomplete="off">' : '') +
+          '</div>' +
+          '<div class="plck-combo-actions">' +
+            '<button class="plck-icon-btn plck-combo-ocr" type="button" title="' + t.ocr + '">📷</button>' +
+            '<input type="file" accept="image/*" capture="environment" class="plck-combo-ocrfile" style="display:none;">' +
+            '<button class="plck-icon-btn plck-combo-remove" type="button" title="remove">✕</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
 
     el.innerHTML =
       '<div class="plck-box">' +
         '<label class="plck-label">' + t.pickRound + '</label>' +
         '<select class="plck-select" id="' + containerId + '_round"><option value="">' + t.loading + '</option></select>' +
         '<div class="plck-loadmore" id="' + containerId + '_loadmore" style="display:none;">' + t.loadMore + '</div>' +
-        '<label class="plck-label" style="margin-top:14px;">' + t.main + ' (' + meta.main + t.needCount + ')</label>' +
-        '<input class="plck-input" id="' + containerId + '_main" placeholder="' + t.placeholder + '" inputmode="numeric" autocomplete="off">' +
-        (needsSeparateBonus ? (
-          '<label class="plck-label" style="margin-top:10px;">' + t.bonusSep + ' (' + bonusCount + t.needCount + ')</label>' +
-          '<input class="plck-input" id="' + containerId + '_bonus" placeholder="' + (bonusCount === 1 ? '예: 24' : '예: 4 9') + '" inputmode="numeric" autocomplete="off">'
-        ) : '') +
+        '<label class="plck-label" style="margin-top:14px;">' + t.main + ' (' + meta.main + t.needCount + ')' + (needsSeparateBonus ? ' · ' + t.bonusSep + ' (' + bonusCount + t.needCount + ')' : '') + '</label>' +
+        '<div class="plck-combos" id="' + containerId + '_combos">' + comboRowHtml(0) + '</div>' +
+        '<div class="plck-addcombo" id="' + containerId + '_addcombo">' + t.addCombo + '</div>' +
+        '<div class="plck-ocrnote">' + t.ocrNote + '</div>' +
         '<div class="plck-row">' +
-          '<button class="plck-btn plck-btn-ghost" id="' + containerId + '_ocrbtn" type="button">📷 ' + t.ocr + '</button>' +
-          '<input type="file" accept="image/*" capture="environment" id="' + containerId + '_ocrfile" style="display:none;">' +
           '<button class="plck-btn plck-btn-primary" id="' + containerId + '_checkbtn" type="button">' + t.check + '</button>' +
         '</div>' +
         '<div class="plck-result" id="' + containerId + '_result"></div>' +
@@ -176,10 +192,8 @@
     var roundSelect = document.getElementById(containerId + '_round');
     var loadMoreBtn = document.getElementById(containerId + '_loadmore');
     var resultBox = document.getElementById(containerId + '_result');
-    var mainInput = document.getElementById(containerId + '_main');
-    var bonusInput = document.getElementById(containerId + '_bonus');
-    var ocrBtn = document.getElementById(containerId + '_ocrbtn');
-    var ocrFile = document.getElementById(containerId + '_ocrfile');
+    var combosBox = document.getElementById(containerId + '_combos');
+    var addComboBtn = document.getElementById(containerId + '_addcombo');
     var checkBtn = document.getElementById(containerId + '_checkbtn');
 
     function renderRoundOptions(rows, append) {
@@ -188,7 +202,6 @@
       }).join('');
       roundSelect.innerHTML = (append ? roundSelect.innerHTML : '') + opts2;
     }
-
     function loadRounds(append) {
       fetchRounds(gameId, state.offset).then(function (rows) {
         if (!append) roundSelect.innerHTML = '';
@@ -206,53 +219,107 @@
       resultBox.className = 'plck-result show plck-result-' + kind;
       resultBox.innerHTML = html;
     }
+    function updateRemoveButtons() {
+      var rows = combosBox.querySelectorAll('.plck-combo-row');
+      rows.forEach(function (row) {
+        var btn = row.querySelector('.plck-combo-remove');
+        btn.style.visibility = rows.length > 1 ? 'visible' : 'hidden';
+      });
+    }
+    updateRemoveButtons();
+
+    function wireOcrForRow(row) {
+      var ocrBtn = row.querySelector('.plck-combo-ocr');
+      var ocrFile = row.querySelector('.plck-combo-ocrfile');
+      var mainInput = row.querySelector('.plck-combo-main');
+      var bonusInput = row.querySelector('.plck-combo-bonus');
+      ocrBtn.addEventListener('click', function () { ocrFile.click(); });
+      ocrFile.addEventListener('change', function (e) {
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        showResult(t.ocrRunning, 'warn');
+        ensureTesseract().then(function () {
+          var img = URL.createObjectURL(file);
+          global.Tesseract.recognize(img, 'eng', {}).then(function (res) {
+            URL.revokeObjectURL(img);
+            var text = (res && res.data && res.data.text) || '';
+            var nums = (text.match(/\d{1,2}/g) || []).map(Number).filter(function (n) { return n >= 1 && n <= 90; });
+            var uniq = nums.filter(function (n, i) { return nums.indexOf(n) === i; });
+            if (!uniq.length) { showResult(t.ocrFail, 'warn'); return; }
+            mainInput.value = uniq.slice(0, meta.main).join(' ');
+            if (needsSeparateBonus && uniq.length > meta.main) bonusInput.value = uniq.slice(meta.main, meta.main + bonusCount).join(' ');
+            showResult(t.ocrPartial, 'warn');
+          }).catch(function () { showResult(t.ocrFail, 'warn'); });
+        });
+      });
+    }
+    combosBox.querySelectorAll('.plck-combo-row').forEach(wireOcrForRow);
+
+    combosBox.addEventListener('click', function (e) {
+      if (e.target.classList.contains('plck-combo-remove')) {
+        var rows = combosBox.querySelectorAll('.plck-combo-row');
+        if (rows.length > 1) { e.target.closest('.plck-combo-row').remove(); updateRemoveButtons(); }
+      }
+    });
+    addComboBtn.addEventListener('click', function () {
+      comboSeq++;
+      var wrap = document.createElement('div');
+      wrap.innerHTML = comboRowHtml(comboSeq);
+      var row = wrap.firstChild;
+      combosBox.appendChild(row);
+      wireOcrForRow(row);
+      updateRemoveButtons();
+    });
+
+    function ballsHtml(nums, matchSet, bonusCls) {
+      return nums.map(function (n) {
+        var cls = 'plck-ball' + (bonusCls ? ' plck-ball-bonus' : '') + (matchSet && matchSet[n] ? ' plck-ball-matched' : '');
+        return '<span class="' + cls + '">' + n + '</span>';
+      }).join('');
+    }
 
     checkBtn.addEventListener('click', function () {
       var roundNo = roundSelect.value;
       if (!roundNo) { showResult(t.selectRound, 'warn'); return; }
-      var mainNums = parseNums(mainInput.value);
-      var bonusNums = needsSeparateBonus ? parseNums(bonusInput.value) : [];
-      if (mainNums.length !== meta.main || (needsSeparateBonus && bonusNums.length !== bonusCount)) {
-        showResult(t.invalidRange, 'warn'); return;
+
+      var rows = Array.prototype.slice.call(combosBox.querySelectorAll('.plck-combo-row'));
+      var combos = [];
+      for (var i = 0; i < rows.length; i++) {
+        var mainNums = parseNums(rows[i].querySelector('.plck-combo-main').value);
+        var bonusNums = needsSeparateBonus ? parseNums(rows[i].querySelector('.plck-combo-bonus').value) : [];
+        if (mainNums.length !== meta.main || (needsSeparateBonus && bonusNums.length !== bonusCount)) {
+          showResult((t.comboLabel + ' ' + (i + 1) + ': ') + t.invalidRange, 'warn'); return;
+        }
+        combos.push({ main: mainNums, bonus: bonusNums });
       }
+
       showResult(t.loading, 'warn');
       fetchRoundDetail(gameId, roundNo).then(function (draw) {
         if (!draw) { showResult(t.invalidRange, 'warn'); return; }
         var gradeFn = GRADE_RULES[gameId];
-        var grade = gradeFn(draw.main_numbers || [], draw.bonus_numbers || [], mainNums, bonusNums);
-        var matchedCount = countMatches(mainNums, draw.main_numbers || []);
-        var drawBallsHtml = (draw.main_numbers || []).map(function (n) { return '<span class="plck-ball">' + n + '</span>'; }).join('')
-          + ((draw.bonus_numbers || []).length ? '<span class="plck-plus">+</span>' + draw.bonus_numbers.map(function (n) { return '<span class="plck-ball plck-ball-bonus">' + n + '</span>'; }).join('') : '');
-        var header = '<div class="plck-drawinfo">' + t.resultDate + ': ' + draw.draw_date + ' (#' + draw.round_no + ')<div class="plck-drawballs">' + drawBallsHtml + '</div></div>';
-        if (grade) {
-          showResult(header + '<div class="plck-grade-win">🎉 ' + grade + t.win + '</div><div class="plck-grade-sub">' + matchedCount + t.matched + '</div>', 'win');
-        } else {
-          showResult(header + '<div class="plck-grade-lose">' + t.lose + '</div><div class="plck-grade-sub">' + matchedCount + t.matched + '</div>', 'lose');
-        }
-      });
-    });
+        var drawMain = draw.main_numbers || [];
+        var drawBonus = draw.bonus_numbers || [];
+        var drawMatchSet = {}; drawMain.forEach(function (n) { drawMatchSet[n] = true; });
+        var header = '<div class="plck-drawinfo">' + t.resultDate + ': ' + draw.draw_date + ' (#' + draw.round_no + ')' +
+          '<div class="plck-drawballs">' + ballsHtml(drawMain) + (drawBonus.length ? '<span class="plck-plus">+</span>' + ballsHtml(drawBonus, null, true) : '') + '</div></div>';
 
-    // ── OCR (Tesseract.js, 브라우저에서만 돎 — 서버 전송 없음) ──
-    ocrBtn.addEventListener('click', function () { ocrFile.click(); });
-    ocrFile.addEventListener('change', function (e) {
-      var file = e.target.files && e.target.files[0];
-      if (!file) return;
-      showResult(t.ocrRunning, 'warn');
-      ensureTesseract().then(function () {
-        var img = URL.createObjectURL(file);
-        global.Tesseract.recognize(img, 'eng', {}).then(function (res) {
-          URL.revokeObjectURL(img);
-          var text = (res && res.data && res.data.text) || '';
-          var nums = (text.match(/\d{1,2}/g) || []).map(Number).filter(function (n) { return n >= 1 && n <= 90; });
-          var uniq = nums.filter(function (n, i) { return nums.indexOf(n) === i; });
-          if (!uniq.length) { showResult(t.ocrFail, 'warn'); return; }
-          var mainGuess = uniq.slice(0, meta.main);
-          mainInput.value = mainGuess.join(' ');
-          if (needsSeparateBonus && uniq.length > meta.main) {
-            bonusInput.value = uniq.slice(meta.main, meta.main + bonusCount).join(' ');
-          }
-          showResult(t.ocrPartial, 'warn');
-        }).catch(function () { showResult(t.ocrFail, 'warn'); });
+        var blocksHtml = combos.map(function (c, i) {
+          var grade = gradeFn(drawMain, drawBonus, c.main, c.bonus);
+          var matchedCount = countMatches(c.main, drawMain);
+          var myBallsHtml = ballsHtml(c.main, drawMatchSet) + (needsSeparateBonus && c.bonus.length ? '<span class="plck-plus">+</span>' + ballsHtml(c.bonus, null, true) : '');
+          var gradeLine = grade
+            ? '<div class="plck-grade-win">🎉 ' + grade + t.win + '</div>'
+            : '<div class="plck-grade-lose">' + t.lose + '</div>';
+          return '<div class="plck-combo-result-block ' + (grade ? 'is-win' : 'is-lose') + '">' +
+            '<div class="plck-combo-result-label">' + t.comboLabel + ' ' + (i + 1) + '</div>' +
+            '<div class="plck-drawballs">' + myBallsHtml + '</div>' +
+            gradeLine +
+            '<div class="plck-grade-sub">' + matchedCount + t.matched + '</div>' +
+          '</div>';
+        }).join('');
+
+        var anyWin = combos.some(function (c) { return !!gradeFn(drawMain, drawBonus, c.main, c.bonus); });
+        showResult(header + blocksHtml, anyWin ? 'win' : 'lose');
       });
     });
   }
@@ -270,5 +337,11 @@
     return tesseractLoading;
   }
 
-  global.PLChecker = { mount: mount, GAME_META: GAME_META, GRADE_RULES: GRADE_RULES, SEPARATE_BONUS_GAMES: SEPARATE_BONUS_GAMES };
+  function fetchLatestDraw(gameId) {
+    var url = SUPABASE_URL + '/rest/v1/draw_results?select=round_no,draw_date,main_numbers,bonus_numbers&game_id=eq.' + gameId + '&order=round_no.desc&limit=1';
+    return fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } })
+      .then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) { return rows[0] || null; });
+  }
+
+  global.PLChecker = { mount: mount, fetchLatestDraw: fetchLatestDraw, GAME_META: GAME_META, GRADE_RULES: GRADE_RULES, SEPARATE_BONUS_GAMES: SEPARATE_BONUS_GAMES };
 })(window);
