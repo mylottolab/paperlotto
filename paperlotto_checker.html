@@ -26,6 +26,10 @@ h1,h2{ font-family:'Fraunces',serif; margin:0; }
 .brand-mark{ width:34px; height:34px; border-radius:9px; background:var(--gold); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Fraunces',serif; }
 .brand-name{ font-size:16px; font-weight:700; }
 .theme-toggle{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px; }
+.header-right{ display:flex; align-items:center; gap:10px; }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 12px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:#fff; }
 main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
 .page-title{ font-size:26px; font-weight:700; margin-bottom:6px; }
 .page-sub{ font-size:13px; color:var(--text-dim); margin-bottom:24px; }
@@ -46,12 +50,19 @@ main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
     <div class="brand-mark">P</div>
     <div class="brand-name">PaperLotto</div>
   </a>
-  <button class="theme-toggle" id="themeToggleBtn" title="다크/라이트 모드 전환">🌙</button>
+  <div class="header-right">
+    <div class="lang-toggle" id="langToggle">
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+    <button class="theme-toggle" id="themeToggleBtn" title="다크/라이트 모드 전환">🌙</button>
+  </div>
 </div>
 
 <main>
-  <div class="page-title">🎟️ 당첨확인</div>
-  <div class="page-sub">실물 복권을 갖고 계신가요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 알려드려요.</div>
+  <div class="page-title" id="pageTitle">🎟️ 당첨확인</div>
+  <div class="page-sub" id="pageSub">실물 복권을 갖고 계신가요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 알려드려요.</div>
 
   <div class="game-tabs" id="gameTabs"></div>
   <div id="checkerMount"></div>
@@ -59,23 +70,48 @@ main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
 
 <script src="paperlotto_checker.js"></script>
 <script>
+var PAGE_TEXT = {
+  ko: { title: '🎟️ 당첨확인', sub: '실물 복권을 갖고 계신가요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 알려드려요.' },
+  en: { title: '🎟️ Check Your Numbers', sub: 'Got a physical ticket? Pick the draw and enter your numbers to see your result instantly.' },
+  ja: { title: '🎟️ 当選確認', sub: 'すでに実物の宝くじをお持ちですか？回（または抽選日）を選んで番号を入力すると、すぐに当選結果を確認できます。' },
+};
 var GAME_ORDER = ['kr_lotto645','us_powerball','us_megamillions','eu_euromillions','jp_miniloto','jp_loto7','jp_loto6','ca_lottomax','ca_lotto649','au_powerball','au_ozlotto','au_tattslotto'];
 var currentGame = new URLSearchParams(location.search).get('game') || 'kr_lotto645';
 if (GAME_ORDER.indexOf(currentGame) === -1) currentGame = 'kr_lotto645';
+var currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
+if (!PAGE_TEXT[currentLang]) currentLang = 'ko';
+
+function gameName(meta){ return currentLang === 'en' ? meta.nameEn : (currentLang === 'ja' ? meta.nameJa : meta.nameKr); }
 
 function renderTabs(){
   document.getElementById('gameTabs').innerHTML = GAME_ORDER.map(function(id){
     var meta = PLChecker.GAME_META[id];
-    return '<button class="game-tab-btn' + (id === currentGame ? ' active' : '') + '" onclick="selectGame(\'' + id + '\')">' + meta.nameKr + '</button>';
+    return '<button class="game-tab-btn' + (id === currentGame ? ' active' : '') + '" onclick="selectGame(\'' + id + '\')">' + gameName(meta) + '</button>';
   }).join('');
+}
+function applyPageLang(){
+  document.getElementById('pageTitle').textContent = PAGE_TEXT[currentLang].title;
+  document.getElementById('pageSub').textContent = PAGE_TEXT[currentLang].sub;
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
 }
 function selectGame(id){
   currentGame = id;
   history.replaceState(null, '', '?game=' + id);
   renderTabs();
   document.getElementById('checkerMount').innerHTML = '';
-  PLChecker.mount('checkerMount', id, { lang: 'kr' });
+  PLChecker.mount('checkerMount', id, { lang: currentLang });
 }
+document.getElementById('langToggle').addEventListener('click', function(e){
+  var btn = e.target.closest('button[data-lang]');
+  if (!btn) return;
+  currentLang = btn.dataset.lang;
+  localStorage.setItem('paperlotto_lang', currentLang);
+  applyPageLang();
+  renderTabs();
+  document.getElementById('checkerMount').innerHTML = '';
+  PLChecker.mount('checkerMount', currentGame, { lang: currentLang });
+});
+applyPageLang();
 renderTabs();
 selectGame(currentGame);
 

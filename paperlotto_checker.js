@@ -6,7 +6,7 @@
 // (등수 판정 기준이 서로 어긋나면 안 되므로 — 세 곳 모두 항상 같이 유지보수할 것).
 //
 // 사용법: <div id="myContainer"></div> 를 두고
-//   PLChecker.mount('myContainer', 'kr_lotto645', { lang: 'kr' });
+//   PLChecker.mount('myContainer', 'kr_lotto645', { lang: 'ko' });
 // 페이지 안에 여러 개 동시에 mount 가능(각각 독립 상태).
 // =====================================================
 (function (global) {
@@ -18,18 +18,18 @@
 
   // ── 게임 메타 (표시명/본번호개수/보너스개수) ──
   var GAME_META = {
-    kr_lotto645:     { nameKr: '로또 6/45', nameEn: 'Lotto 6/45', main: 6, bonus: 0 },
-    us_powerball:    { nameKr: '파워볼', nameEn: 'Powerball', main: 5, bonus: 1, roundLabel: false },
-    us_megamillions: { nameKr: '메가밀리언스', nameEn: 'Mega Millions', main: 5, bonus: 1, roundLabel: false },
-    eu_euromillions: { nameKr: '유로밀리언스', nameEn: 'EuroMillions', main: 5, bonus: 2, roundLabel: false },
-    jp_miniloto:     { nameKr: '미니로또', nameEn: 'Mini Loto', main: 5, bonus: 1 },
-    jp_loto7:        { nameKr: '로또7', nameEn: 'Loto 7', main: 7, bonus: 2 },
-    jp_loto6:        { nameKr: '로또6', nameEn: 'Loto 6', main: 6, bonus: 1 },
-    ca_lottomax:     { nameKr: '로또맥스', nameEn: 'Lotto Max', main: 7, bonus: 1 },
-    ca_lotto649:     { nameKr: '로또 6/49', nameEn: 'Lotto 6/49', main: 6, bonus: 1 },
-    au_powerball:    { nameKr: '호주 파워볼', nameEn: 'Australia Powerball', main: 7, bonus: 1, roundLabel: false },
-    au_ozlotto:      { nameKr: '오즈로또', nameEn: 'Oz Lotto', main: 7, bonus: 3 },
-    au_tattslotto:   { nameKr: '새터데이로또', nameEn: 'Saturday Lotto', main: 6, bonus: 2 },
+    kr_lotto645:     { nameKr: '로또 6/45', nameEn: 'Lotto 6/45', nameJa: 'ロト6/45', main: 6, bonus: 0 },
+    us_powerball:    { nameKr: '파워볼', nameEn: 'Powerball', nameJa: 'パワーボール', main: 5, bonus: 1, roundLabel: false },
+    us_megamillions: { nameKr: '메가밀리언스', nameEn: 'Mega Millions', nameJa: 'メガミリオンズ', main: 5, bonus: 1, roundLabel: false },
+    eu_euromillions: { nameKr: '유로밀리언스', nameEn: 'EuroMillions', nameJa: 'ユーロミリオンズ', main: 5, bonus: 2, roundLabel: false },
+    jp_miniloto:     { nameKr: '미니로또', nameEn: 'Mini Loto', nameJa: 'ミニロト', main: 5, bonus: 1 },
+    jp_loto7:        { nameKr: '로또7', nameEn: 'Loto 7', nameJa: 'ロト7', main: 7, bonus: 2 },
+    jp_loto6:        { nameKr: '로또6', nameEn: 'Loto 6', nameJa: 'ロト6', main: 6, bonus: 1 },
+    ca_lottomax:     { nameKr: '로또맥스', nameEn: 'Lotto Max', nameJa: 'ロトマックス', main: 7, bonus: 1 },
+    ca_lotto649:     { nameKr: '로또 6/49', nameEn: 'Lotto 6/49', nameJa: 'ロト6/49', main: 6, bonus: 1 },
+    au_powerball:    { nameKr: '호주 파워볼', nameEn: 'Australia Powerball', nameJa: '豪パワーボール', main: 7, bonus: 1, roundLabel: false },
+    au_ozlotto:      { nameKr: '오즈로또', nameEn: 'Oz Lotto', nameJa: 'オズロト', main: 7, bonus: 3 },
+    au_tattslotto:   { nameKr: '새터데이로또', nameEn: 'Saturday Lotto', nameJa: 'サタデーロト', main: 6, bonus: 2 },
   };
   // 위 bonus는 "추첨되는 보너스/서플리멘터리 개수"일 뿐, 아래 SEPARATE_BONUS_GAMES에 없는 게임은
   // 그 보너스가 운영사 추첨(본번호 풀에서 뽑힘)이라 사용자가 입력할 필요가 없다 — 본번호만 입력받음.
@@ -100,7 +100,7 @@
   };
 
   var T = {
-    kr: {
+    ko: {
       pickRound: '회차 선택', main: '내 번호 (본번호)', bonusSep: '보너스 번호',
       placeholder: '예: 3 12 25 34 41 45 (스페이스로 구분)', check: '당첨 확인', loadMore: '더 예전 회차 불러오기',
       loading: '불러오는 중...', win: '등 당첨입니다!', lose: '아쉽지만 낙첨입니다.', matched: '일치',
@@ -115,6 +115,14 @@
       needCount: ' numbers needed', selectRound: 'Please select a draw first', invalidRange: 'Please enter valid numbers',
       ocr: 'Scan photo', ocrRunning: 'Analyzing photo... (may take a moment)', ocrFail: "Couldn't read the numbers — please enter manually.",
       ocrPartial: 'Numbers detected — please verify before checking.', resultDate: 'Draw date',
+    },
+    ja: {
+      pickRound: '回を選択', main: '自分の番号（本数字）', bonusSep: 'ボーナス番号',
+      placeholder: '例: 3 12 25 34 41 45（スペース区切り）', check: '当選確認', loadMore: 'もっと過去の回を読み込む',
+      loading: '読み込み中...', win: '等当選です！', lose: '残念ながら落選です。', matched: '一致',
+      needCount: '個入力してください', selectRound: 'まず回を選択してください', invalidRange: '正しい番号を入力してください',
+      ocr: '写真で読み取る', ocrRunning: '写真を解析中...（少し時間がかかります）', ocrFail: '番号を読み取れませんでした。直接入力してください。',
+      ocrPartial: '番号を認識しました — 確認してから押してください。', resultDate: '抽選日',
     },
   };
 
@@ -136,7 +144,7 @@
 
   function mount(containerId, gameId, opts) {
     opts = opts || {};
-    var lang = opts.lang === 'en' ? 'en' : 'kr';
+    var lang = (opts.lang === 'en' || opts.lang === 'ja') ? opts.lang : 'ko';
     var t = T[lang];
     var meta = GAME_META[gameId];
     var el = document.getElementById(containerId);

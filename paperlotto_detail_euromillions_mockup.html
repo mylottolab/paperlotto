@@ -350,8 +350,8 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
 
   <div class="pr-detail-card" style="display:block;">
     <div class="pr-info" style="text-align:left;margin-bottom:14px;">
-      <div class="pr-title">🎫 실물 복권 당첨확인</div>
-      <div class="pr-desc">이미 사신 복권이 있나요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 확인해드려요.</div>
+      <div class="pr-title" data-i18n="checkerCardTitle">🎫 실물 복권 당첨확인</div>
+      <div class="pr-desc" data-i18n="checkerCardDesc">이미 사신 복권이 있나요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 확인해드려요.</div>
     </div>
     <div id="checkerMount"></div>
   </div>
@@ -381,6 +381,8 @@ const i18n = {
     prCardTitle:"이미 추첨 끝난 회차, 내 번호였다면?",
     prCardDesc:"과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.",
     prCardBtn:"과거 회차 선택하기 →",
+    checkerCardTitle:"🎫 실물 복권 당첨확인",
+    checkerCardDesc:"이미 사신 복권이 있나요? 회차(또는 추첨일)를 고르고 번호를 입력하면 바로 당첨등수를 확인해드려요.",
     s1h:"등수별 당첨 조건 (총 13개 등수)",
     s1body:`<table class="prize-table">
         <thead><tr><th>등수</th><th>조건</th><th>확률</th></tr></thead>
@@ -452,6 +454,8 @@ const i18n = {
     prCardTitle:"Wonder if your numbers would've won a past draw?",
     prCardDesc:"Pick a past round and register your numbers — get graded instantly.",
     prCardBtn:"Try a past round →",
+    checkerCardTitle:"🎫 Check Your Ticket",
+    checkerCardDesc:"Already have a physical ticket? Pick the draw and enter your numbers to see your result instantly.",
     s1h:"Prize Tiers (13 tiers total)",
     s1body:`<table class="prize-table">
         <thead><tr><th>Tier</th><th>Match</th><th>Odds</th></tr></thead>
@@ -523,6 +527,8 @@ const i18n = {
     prCardTitle:"すでに抽選が終わった回、自分の番号だったら？",
     prCardDesc:"過去の回を選んで番号を登録すると、登録後すぐに結果を確認できます。",
     prCardBtn:"過去回にチャレンジ →",
+    checkerCardTitle:"🎫 当選確認",
+    checkerCardDesc:"すでに実物の宝くじをお持ちですか？回（または抽選日）を選んで番号を入力すると、すぐに当選結果を確認できます。",
     s1h:"等級別当選条件（全13等級）",
     s1body:`<table class="prize-table">
         <thead><tr><th>等級</th><th>条件</th><th>確率</th></tr></thead>
@@ -601,6 +607,7 @@ function applyLang(lang){
   updateGate();
   if (typeof renderDlCard === 'function') renderDlCard();
   if (typeof renderTicker === 'function') renderTicker();
+  if (typeof PLChecker !== 'undefined') { document.getElementById('checkerMount').innerHTML=''; PLChecker.mount('checkerMount', 'eu_euromillions', { lang: currentLang }); }
 }
 document.querySelectorAll('.lang-toggle button').forEach(btn => {
   btn.addEventListener('click', () => applyLang(btn.dataset.lang));
@@ -874,6 +881,6 @@ setInterval(updateGate, 1000);
 
 <script src="auth-widget.js"></script>
 <script src="paperlotto_checker.js"></script>
-<script>PLChecker.mount('checkerMount', 'eu_euromillions', { lang: (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'en' : 'kr' });</script>
+<script>PLChecker.mount('checkerMount', 'eu_euromillions', { lang: (typeof currentLang !== 'undefined' && (currentLang==='en'||currentLang==='ja')) ? currentLang : 'ko' });</script>
 </body>
 </html>
