@@ -114,13 +114,6 @@ input:focus{ border-color:var(--gold); }
     </div>
 
     <div id="panelLogin">
-      <button class="google-btn" type="button" id="googleLoginBtn">
-        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3c-7.5 0-14 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.2-5l-6.6-5.4C29.6 36.3 27 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.9 40.5 16.4 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.6 5.4C41.5 36 45 30.5 45 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
-        <span data-i18n="googleLogin">Google로 계속하기</span>
-      </button>
-
-      <div class="divider" data-i18n="or">또는</div>
-
       <label for="loginEmail" data-i18n="email">이메일</label>
       <input type="email" id="loginEmail" placeholder="you@example.com">
       <label for="loginPw" data-i18n="password">비밀번호</label>
@@ -135,13 +128,6 @@ input:focus{ border-color:var(--gold); }
     <div id="panelSignup" style="display:none;">
       <h1 class="title" data-i18n="signupTitle">가입은 30초면 충분해요</h1>
       <div class="subtitle" data-i18n="signupSubtitle">이메일과 비밀번호만 있으면 바로 시작할 수 있어요. 닉네임과 언어 설정은 자동으로 입력되며, 나중에 마이페이지에서 언제든 바꾸실 수 있어요.</div>
-
-      <button class="google-btn" type="button" id="googleSignupBtn">
-        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.5 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3c-7.5 0-14 4.3-17.7 10.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.2-5l-6.6-5.4C29.6 36.3 27 37 24 37c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.9 40.5 16.4 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.6 5.4C41.5 36 45 30.5 45 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
-        <span data-i18n="googleSignup">Google로 가입하기</span>
-      </button>
-
-      <div class="divider" data-i18n="or">또는</div>
 
       <label for="suEmail" data-i18n="email">이메일</label>
       <input type="email" id="suEmail" placeholder="you@example.com">
@@ -377,18 +363,6 @@ signupSubmitBtn.addEventListener('click', async () => {
   setTimeout(() => { window.location.href = REDIRECT_AFTER_AUTH; }, 1600);
 });
 
-// ── Google OAuth 로그인/가입 (둘 다 동일 동작) ──
-async function loginWithGoogle() {
-  const { error } = await sb.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: REDIRECT_AFTER_AUTH }
-  });
-  if (error) {
-    alert(i18n[currentLang].errGoogleFail + error.message);
-  }
-}
-document.getElementById('googleLoginBtn').addEventListener('click', loginWithGoogle);
-document.getElementById('googleSignupBtn').addEventListener('click', loginWithGoogle);
 </script>
 
 </body>
