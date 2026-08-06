@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>카드결제 내역 — PaperLotto Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2{ font-family:'Fraunces',serif; margin:0; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; flex-wrap:wrap; }
+nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
+nav.admin-nav a:hover{ color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-mid); }
+.hdr-right button{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:6px 12px; border-radius:7px; font-size:12px; cursor:pointer; }
+.hdr-right button:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+main{ max-width:900px; margin:0 auto; padding:28px 20px 90px; }
+section{ margin-bottom:36px; }
+.section-title{ font-size:18px; margin-bottom:4px; }
+.section-desc{ font-size:12.5px; color:var(--text-mid); margin:6px 0 16px; }
+
+.summary-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+.summary-card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:16px 20px; flex:1; min-width:150px; }
+.summary-card .label{ font-size:11.5px; color:var(--ink-dim); margin-bottom:4px; }
+.summary-card .value{ font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:700; }
+
+.card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:18px 22px; margin-bottom:10px; }
+.req-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+.req-title{ font-size:14px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+.badge{ font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; background:rgba(31,122,79,0.15); color:var(--ok); }
+.req-meta{ font-size:11.5px; color:var(--ink-dim); margin-bottom:3px; }
+.req-amount{ font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:700; margin:8px 0 2px; color:var(--ok); }
+
+.empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:50px 0; }
+.refresh-btn{ background:transparent; border:1px solid var(--board-line); color:var(--text-mid); padding:7px 14px; border-radius:8px; font-size:12px; cursor:pointer; margin-bottom:14px; }
+.refresh-btn:hover{ border-color:var(--gold); color:var(--gold-bright); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em> Admin</div>
+  </div>
+  <nav class="admin-nav">
+    <a href="paperlotto_admin_scrape_review.html">당첨번호 검수</a>
+    <a href="paperlotto_admin_bank_transfers.html">계좌이체 관리</a>
+    <a href="paperlotto_admin_card_payments.html" style="color:var(--gold-bright);">카드결제 내역</a>
+    <a href="paperlotto_admin_point_costs.html">포인트 설정</a>
+    <a href="paperlotto_admin_analytics.html">접속통계</a>
+    <a href="paperlotto_admin_board.html">게시판 관리</a>
+    <a href="paperlotto_admin_reports.html">매출·회원 리포트</a>
+  </nav>
+  <div class="hdr-right">
+    <span id="adminEmail"></span>
+    <button id="logoutBtn">로그아웃</button>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h1 class="section-title">카드결제 내역</h1>
+    <p class="section-desc">신용카드(PG) 결제는 승인 절차 없이 자동으로 포인트가 적립됩니다. 아래는 최근 결제 내역 조회용 화면입니다.</p>
+
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="label">조회된 건수</div>
+        <div class="value" id="sumCount">-</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">합계 적립 포인트</div>
+        <div class="value" id="sumPoints">-</div>
+      </div>
+    </div>
+
+    <button class="refresh-btn" id="refreshBtn">↻ 새로고침</button>
+    <div id="reqList"></div>
+  </section>
+</main>
+
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const LIST_URL = SUPABASE_URL + "/functions/v1/admin-list-card-payments";
+
+const accessToken = sessionStorage.getItem('pl_admin_token');
+const adminEmail = sessionStorage.getItem('pl_admin_email');
+
+if (!accessToken) {
+  window.location.href = 'paperlotto_admin_login.html';
+}
+
+document.getElementById('adminEmail').textContent = adminEmail || '';
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('pl_admin_token');
+  sessionStorage.removeItem('pl_admin_key');
+  sessionStorage.removeItem('pl_admin_email');
+  window.location.href = 'paperlotto_admin_login.html';
+});
+
+async function loadPayments() {
+  const list = document.getElementById('reqList');
+  list.innerHTML = '<div class="empty-state">불러오는 중…</div>';
+  try {
+    const resp = await fetch(LIST_URL + '?limit=200', {
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+    });
+    const data = await resp.json();
+    if (resp.status === 401 || resp.status === 403) {
+      alert('관리자 인증이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+      window.location.href = 'paperlotto_admin_login.html';
+      return;
+    }
+    if (!resp.ok) {
+      list.innerHTML = '<div class="empty-state">불러오지 못했습니다: ' + (data.error || '') + '</div>';
+      return;
+    }
+    renderPayments(data.items || []);
+  } catch (e) {
+    list.innerHTML = '<div class="empty-state">오류가 발생했습니다: ' + e.message + '</div>';
+  }
+}
+
+function renderPayments(items) {
+  const list = document.getElementById('reqList');
+  document.getElementById('sumCount').textContent = items.length.toLocaleString() + '건';
+  const totalPoints = items.reduce((sum, it) => sum + Number(it.amount || 0), 0);
+  document.getElementById('sumPoints').textContent = totalPoints.toLocaleString() + 'P';
+
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty-state">카드결제 내역이 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  items.forEach(item => list.appendChild(renderCard(item)));
+}
+
+function renderCard(item) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML =
+    '<div class="req-top">' +
+      '<div class="req-title">' + (item.order_id || item.id) + '</div>' +
+      '<span class="badge">' + (item.source || '-') + '</span>' +
+    '</div>' +
+    '<div class="req-meta">회원 ID: ' + item.user_id + '</div>' +
+    '<div class="req-meta">결제 시각: ' + new Date(item.created_at).toLocaleString('ko-KR') + '</div>' +
+    '<div class="req-amount">+' + Number(item.amount).toLocaleString() + 'P</div>';
+  return div;
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadPayments);
+
+loadPayments();
+</script>
+</body>
+</html>
