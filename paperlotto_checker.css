@@ -67,6 +67,16 @@
 .plck-combo-result-block:first-of-type{ border-top:none; margin-top:2px; }
 .plck-combo-result-label{ font-size:11px; font-weight:700; color:var(--ink-dim); margin-bottom:6px; }
 
+/* ── 실시간 카메라 스캔(QR/바코드) — kr_lotto645부터 시작, 향후 다른 게임도 확장 예정 ── */
+.plck-camview{ position:relative; width:100%; max-width:280px; aspect-ratio:1/1; margin:10px auto 0; border-radius:12px; overflow:hidden; background:#000; }
+.plck-camview video{ position:absolute; top:0; left:0; width:100%!important; height:100%!important; object-fit:cover; }
+.plck-camtarget{ position:absolute; top:12%; left:12%; right:12%; bottom:12%; border:3px solid var(--gold); border-radius:14px; box-shadow:0 0 0 2000px rgba(0,0,0,.5); pointer-events:none; }
+.plck-camtarget::before,.plck-camtarget::after{ content:''; position:absolute; width:20px; height:20px; border:3px solid #fff; }
+.plck-camtarget::before{ top:-3px; left:-3px; border-right:none; border-bottom:none; border-top-left-radius:9px; }
+.plck-camtarget::after{ bottom:-3px; right:-3px; border-left:none; border-top:none; border-bottom-right-radius:9px; }
+.plck-camctrls{ display:flex; gap:8px; margin-top:8px; }
+.plck-camctrls .plck-btn{ flex:1; }
+
 /* 메인페이지 카드용 미니 진입버튼 */
 .plck-entry-btn{
   display:inline-flex; align-items:center; gap:5px; margin-top:10px; padding:6px 12px;
