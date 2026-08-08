@@ -5,22 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>당첨번호 검수 — PaperLotto Admin</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
-  --paper:#f6f1e4; --ink:#1c2130; --ink-dim:#5b5646;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
   --gold:#b8862e; --gold-bright:#e0aa4e;
   --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
-  --ok:#1f7a4f; --err:#c65a2e;
+  --ok:#1f7a4f; --warn:#b8862e; --bad:#b23b3b; --err:#c65a2e;
 }
 *{box-sizing:border-box;}
 body{
   margin:0; background:var(--board); color:var(--text-hi); min-height:100vh;
-  font-family:'Inter',sans-serif; word-break:keep-all;
+  font-family:'Inter',sans-serif; word-break:keep-all; -webkit-font-smoothing:antialiased;
 }
 h1,h2{ font-family:'Fraunces',serif; margin:0; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
 
 header{
   position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
@@ -38,7 +40,15 @@ nav.admin-nav{ display:flex; gap:14px; font-size:12.5px; }
 nav.admin-nav a{ color:var(--text-mid); text-decoration:none; }
 nav.admin-nav a:hover{ color:var(--gold-bright); }
 
-main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
+/* ── 페이지 내부 4개 화면 전환 메뉴 (신규) ── */
+.section-nav{ max-width:960px; margin:0 auto; padding:14px 20px 0; display:flex; gap:8px; flex-wrap:wrap; }
+.section-tab{ padding:8px 15px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; border:1px solid var(--board-line); color:var(--text-mid); background:var(--board-2); }
+.section-tab.active{ background:var(--gold); color:var(--ink); border-color:var(--gold); }
+.section-tab:hover:not(.active){ border-color:var(--gold); color:var(--gold-bright); }
+.section-panel{ display:none; }
+.section-panel.active{ display:block; }
+
+main{ max-width:960px; margin:0 auto; padding:18px 20px 90px; }
 
 .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:20px; }
 .tabs{ display:flex; gap:6px; }
@@ -78,6 +88,86 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
 
 .empty-state{ text-align:center; color:var(--text-mid); font-size:13.5px; padding:60px 0; }
 .source-link{ font-size:11px; color:#8a5b1c; text-decoration:underline; }
+
+/* ── 데이터 현황판 / 경마 진행현황 공용 ── */
+.wrap{ max-width:1180px; margin:0 auto; padding:0; }
+.eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; letter-spacing:1.6px; color:var(--gold-bright); }
+.title{ font-size:clamp(20px,3vw,26px); font-weight:600; margin-top:8px; }
+.sub{ color:var(--text-mid); font-size:13.5px; margin-top:8px; line-height:1.6; }
+.refresh-btn{ margin-top:14px; background:var(--gold); color:var(--ink); border:none; padding:9px 18px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit; }
+.refresh-btn:hover{ background:var(--gold-bright); }
+.refresh-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+.section{ margin-top:30px; }
+.section-title{ font-size:16px; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+
+.status-table-wrap{ background:var(--paper); color:var(--ink); border-radius:14px; overflow-x:auto; box-shadow:0 14px 30px -18px rgba(0,0,0,0.55); margin-top:20px; }
+table{ width:100%; border-collapse:collapse; font-size:13px; }
+th{ text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:0.03em; color:var(--ink-dim); font-weight:700; padding:11px 12px; border-bottom:2px solid rgba(28,33,48,0.15); background:var(--paper-2); white-space:nowrap; }
+td{ padding:10px 12px; border-bottom:1px solid rgba(28,33,48,0.08); vertical-align:middle; white-space:nowrap; }
+tr:last-child td{ border-bottom:none; }
+.flag{ margin-right:6px; }
+#tab-data table{ min-width:760px; }
+#tab-race table{ min-width:920px; }
+
+.pill{ display:inline-block; padding:2px 9px; border-radius:10px; font-size:10.5px; font-weight:700; }
+.pill.ok{ background:rgba(31,122,79,0.14); color:var(--ok); }
+.pill.warn{ background:rgba(184,134,46,0.14); color:#8a5b1c; }
+.pill.bad{ background:rgba(178,59,59,0.14); color:var(--bad); }
+.pill.open{ background:rgba(31,122,79,0.14); color:var(--ok); }
+.pill.wait{ background:rgba(184,134,46,0.14); color:#8a5b1c; }
+.pill.none{ background:rgba(178,59,59,0.14); color:var(--bad); }
+
+.week-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:10px; }
+.week-day{ background:var(--paper); color:var(--ink); border-radius:12px; padding:14px; min-height:130px; }
+.week-day-name{ font-family:'Fraunces',serif; font-weight:700; font-size:14px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid rgba(28,33,48,0.12); }
+.week-day-name.today{ color:#8a5b1c; }
+.week-game-item{ font-size:11.5px; margin-bottom:8px; line-height:1.4; }
+.week-game-item .wg-name{ font-weight:700; }
+.week-game-item .wg-time{ color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
+.week-empty{ color:var(--ink-dim); font-size:11px; font-style:italic; }
+
+.game-name{ font-weight:700; }
+.done-round{ font-weight:700; color:#8a5b1c; }
+.next-round{ font-weight:700; color:var(--gold); }
+.note-cell{ font-size:11px; color:var(--ink-dim); max-width:180px; white-space:normal; }
+
+@media (max-width:900px){
+  #tab-race table, #tab-data table{ font-size:11.5px; }
+  #tab-race th, #tab-race td, #tab-data th, #tab-data td{ padding:9px 8px; }
+  .week-grid{ grid-template-columns:repeat(2,1fr); }
+}
+
+/* ── 결과 수동입력 · 가격설정 (구 draw_results_mockup) ── */
+.narrow-panel-wrap{ max-width:620px; margin:0 auto; }
+.panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:28px; margin-bottom:20px; }
+.panel h2{ font-size:17px; margin-bottom:6px; }
+.panel .desc{ font-size:12.5px; color:var(--ink-dim); margin-bottom:18px; line-height:1.6; }
+
+.narrow-panel-wrap label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-dim); margin:14px 0 6px; }
+.narrow-panel-wrap label:first-child{ margin-top:0; }
+.narrow-panel-wrap select, .narrow-panel-wrap input[type="text"], .narrow-panel-wrap input[type="date"], .narrow-panel-wrap input[type="number"]{
+  width:100%; padding:11px 13px; border:1.5px solid rgba(28,33,48,0.15); border-radius:8px;
+  font-size:13.5px; font-family:'Inter',sans-serif; color:var(--ink); background:#fff;
+}
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.numbers-input{ font-family:'IBM Plex Mono',monospace; }
+.hint{ font-size:11px; color:var(--ink-dim); margin-top:4px; }
+
+.tiers-box{ margin-top:8px; }
+.tier-row{ display:grid; grid-template-columns:70px 1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px; }
+.tier-row span{ font-size:12px; font-weight:600; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; }
+.tier-row input{ padding:8px 10px; font-size:12.5px; }
+.tier-del{ width:28px; height:28px; border-radius:50%; border:none; background:rgba(198,90,46,0.12); color:var(--err); cursor:pointer; font-size:13px; }
+.add-tier-btn{ font-size:12px; color:#8a5b1c; background:none; border:1px dashed rgba(138,91,28,0.4); border-radius:8px; padding:8px 14px; cursor:pointer; margin-top:4px; }
+
+.btn-primary{ width:100%; padding:13px; border:none; border-radius:9px; background:var(--ink); color:var(--paper); font-size:14px; font-weight:600; cursor:pointer; margin-top:20px; }
+.btn-primary:hover{ background:#2a3145; }
+.btn-primary:disabled{ opacity:0.4; cursor:not-allowed; }
+
+.status-msg{ margin-top:14px; padding:12px 16px; border-radius:8px; font-size:13px; display:none; }
+.status-msg.ok{ display:block; background:rgba(31,122,79,0.12); color:var(--ok); }
+.status-msg.err{ display:block; background:rgba(198,90,46,0.12); color:var(--err); }
 </style>
 </head>
 <body>
@@ -102,32 +192,176 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
   </div>
 </header>
 
-<main>
-  <h1 style="font-size:22px; margin-bottom:4px;">당첨번호 스크래핑 검수</h1>
-  <p style="font-size:13px; color:var(--text-mid); margin:6px 0 22px;">
-    자동 스크래핑 결과를 확인하고, 성공한 건은 승인 / 실패한 건은 직접 입력해주세요.
-    저장하면 draw_results에 즉시 반영되고 채점·이메일 발송·다운로드 상품까지 자동으로 갱신됩니다.
-  </p>
+<div class="section-nav">
+  <button class="section-tab active" data-section="scrape">📋 당첨번호 검수</button>
+  <button class="section-tab" data-section="data">📊 데이터 현황판</button>
+  <button class="section-tab" data-section="race">🏇 경마 진행현황</button>
+  <button class="section-tab" data-section="manual">✏️ 결과 수동입력 · 가격설정</button>
+</div>
 
-  <div class="toolbar">
-    <div class="tabs">
-      <button class="tab active" data-tab="false">미검수</button>
-      <button class="tab" data-tab="true">검수완료</button>
+<main>
+
+  <!-- ══════════ 1) 당첨번호 검수 (기존 scrape_review 페이지) ══════════ -->
+  <div id="tab-scrape" class="section-panel active">
+    <h1 style="font-size:22px; margin-bottom:4px;">당첨번호 스크래핑 검수</h1>
+    <p style="font-size:13px; color:var(--text-mid); margin:6px 0 22px;">
+      자동 스크래핑 결과를 확인하고, 성공한 건은 승인 / 실패한 건은 직접 입력해주세요.
+      저장하면 draw_results에 즉시 반영되고 채점·이메일 발송·다운로드 상품까지 자동으로 갱신됩니다.
+    </p>
+
+    <div class="toolbar">
+      <div class="tabs">
+        <button class="tab active" data-tab="false">미검수</button>
+        <button class="tab" data-tab="true">검수완료</button>
+      </div>
+      <button class="scrape-btn" id="runScrapeBtn">⟳ 지금 스크래핑 실행 (12개 게임)</button>
     </div>
-    <button class="scrape-btn" id="runScrapeBtn">⟳ 지금 스크래핑 실행 (12개 게임)</button>
+
+    <div class="status-line" id="statusLine"></div>
+
+    <div id="list"></div>
   </div>
 
-  <div class="status-line" id="statusLine"></div>
+  <!-- ══════════ 2) 데이터 현황판 ══════════ -->
+  <div id="tab-data" class="section-panel">
+    <div class="wrap">
+      <div class="eyebrow">ADMIN · DATA STATUS</div>
+      <h1 class="title">데이터 현황판</h1>
+      <p class="sub">12개 게임의 현재 보유 데이터 최신회차와, 한국시간(KST) 기준 요일별 추첨 스케줄을 한눈에 봅니다.<br>이 화면은 내부 관리용입니다.</p>
+      <button class="refresh-btn" id="refreshBtnData" onclick="loadDataStatus()">🔄 새로고침</button>
 
-  <div id="list"></div>
+      <div class="section">
+        <div class="section-title">📋 게임별 최신 데이터 현황</div>
+        <div class="status-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>게임</th>
+                <th>최신 보유 회차</th>
+                <th>그 회차 추첨일</th>
+                <th>경과일수</th>
+                <th>정상적으로 다음 추첨 시각(KST)</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="statusBodyData">
+              <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--ink-dim);">불러오는 중…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">📅 요일별 추첨 스케줄 (한국시간 KST 기준)</div>
+        <div class="week-grid" id="weekGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 3) 경마 진행현황 ══════════ -->
+  <div id="tab-race" class="section-panel">
+    <div class="wrap">
+      <div class="eyebrow">ADMIN · RACETRACK STATUS</div>
+      <h1 class="title">🏇 경마 진행현황</h1>
+      <p class="sub">게임별로 <b>어느 회차까지 경마 정산이 끝났는지</b>(추첨일 포함)와, <b>다음 경주가 몇 회차·언제(한국시간) 마감되는지</b>를 한눈에 봅니다.</p>
+      <button class="refresh-btn" id="refreshBtnRace" onclick="loadRaceStatus()">🔄 새로고침</button>
+
+      <div class="status-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>게임</th>
+              <th>최근 정산 완료 회차</th>
+              <th>그 회차 추첨일</th>
+              <th>다음 경주 회차</th>
+              <th>다음 경주 베팅마감(=추첨)시각 (KST)</th>
+              <th>상태</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody id="statusBodyRace">
+            <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--ink-dim);">불러오는 중…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 4) 결과 수동입력 · 가격설정 (구 draw_results_mockup 페이지) ══════════ -->
+  <div id="tab-manual" class="section-panel">
+    <div class="narrow-panel-wrap">
+
+      <div class="panel">
+        <h2>💰 조합당 가격 설정</h2>
+        <div class="desc">1개 조합 등록 시 차감되는 포인트입니다. 여기서 바꾸면 사이트 전체에 즉시 반영됩니다.</div>
+        <label>현재 가격</label>
+        <div id="currentPriceDisplay" style="font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:700; color:#8a5b1c; margin-bottom:14px;">불러오는 중…</div>
+        <label>새 가격 (포인트)</label>
+        <input type="number" id="newPrice" min="0" placeholder="예: 5">
+        <button type="button" class="btn-primary" id="savePriceBtn" style="margin-top:12px;">가격 저장</button>
+        <div class="status-msg" id="priceStatusMsg"></div>
+      </div>
+
+      <div class="panel">
+        <h2>📋 당첨결과 수동 입력</h2>
+        <div class="desc">자동 수집이 아직 안 되는 게임의 결과를 여기서 직접 입력합니다. 입력한 내용은 Edge Function을 통해 draw_results 테이블에 저장됩니다.</div>
+
+        <label>게임 선택</label>
+        <select id="gameSelect"></select>
+
+        <div class="row2">
+          <div><label>회차 번호</label><input type="number" id="roundNo" placeholder="예: 1235"></div>
+          <div><label>추첨일</label><input type="date" id="drawDate"></div>
+        </div>
+
+        <label>메인 번호 (쉼표로 구분)</label>
+        <input type="text" class="numbers-input" id="mainNumbers" placeholder="예: 3,7,15,22,29,41">
+        <div class="hint" id="mainHint"></div>
+
+        <label>보너스 번호 (쉼표로 구분, 없으면 비워두세요)</label>
+        <input type="text" class="numbers-input" id="bonusNumbers" placeholder="예: 26">
+
+        <label>출처 URL (선택)</label>
+        <input type="text" id="sourceUrl" placeholder="https://...">
+      </div>
+
+      <div class="panel">
+        <h2>🏆 등수별 당첨자수·당첨금 (선택)</h2>
+        <div class="desc">모르면 비워두고 등록해도 됩니다. 나중에 확인되면 다시 들어와서 수정하면 돼요.</div>
+        <div class="tiers-box" id="tiersBox"></div>
+        <button type="button" class="add-tier-btn" id="addTierBtn">+ 등수 추가</button>
+      </div>
+
+      <button class="btn-primary" id="submitBtn">결과 저장하기</button>
+      <div class="status-msg" id="statusMsg"></div>
+
+      <div class="panel" style="margin-top:20px;">
+        <h2>📊 전체 데이터 엑셀 다운로드</h2>
+        <div class="desc">지금까지 입력·수집된 draw_results 전체(또는 특정 게임)를 엑셀 파일로 받습니다.</div>
+
+        <label>다운로드 범위</label>
+        <select id="exportGameSelect">
+          <option value="">전체 게임</option>
+        </select>
+
+        <button type="button" class="btn-primary" id="exportBtn" style="background:#8a5b1c;">엑셀 다운로드</button>
+        <div class="status-msg" id="exportStatusMsg"></div>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 <script>
+// ══════════════════════════════════════════════════════════════
+// 공용 (4개 화면이 모두 공유하는 인증/설정) — 원래 4개 파일에 각자
+// 흩어져 있던 SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY / sb 클라이언트
+// 선언을 여기 한 곳으로 합쳤습니다 (중복 선언 시 문법오류가 나서 통합함).
+// ══════════════════════════════════════════════════════════════
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
-const LIST_URL = SUPABASE_URL + "/functions/v1/admin-list-scrape-attempts";
-const REVIEW_URL = SUPABASE_URL + "/functions/v1/admin-review-scrape";
-const SCRAPE_URL = SUPABASE_URL + "/functions/v1/admin-scrape-draw-results";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const accessToken = sessionStorage.getItem('pl_admin_token');
 const adminKey = sessionStorage.getItem('pl_admin_key');
@@ -144,6 +378,23 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   sessionStorage.removeItem('pl_admin_email');
   window.location.href = 'paperlotto_admin_login.html';
 });
+
+// ── 상단 4개 화면 전환 메뉴 (신규) ──
+document.querySelectorAll('.section-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.section-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + btn.dataset.section).classList.add('active');
+  });
+});
+
+// ══════════════════════════════════════════════════════════════
+// 1) 당첨번호 검수 (기존 scrape_review.html 그대로)
+// ══════════════════════════════════════════════════════════════
+const LIST_URL = SUPABASE_URL + "/functions/v1/admin-list-scrape-attempts";
+const REVIEW_URL = SUPABASE_URL + "/functions/v1/admin-review-scrape";
+const SCRAPE_URL = SUPABASE_URL + "/functions/v1/admin-scrape-draw-results";
 
 const DISPLAY = {
   kr_lotto645:     { flag:'🇰🇷', name:'한국 로또 6/45' },
@@ -359,6 +610,459 @@ document.getElementById('runScrapeBtn').addEventListener('click', async () => {
 });
 
 loadList();
+
+// ══════════════════════════════════════════════════════════════
+// 2) 데이터 현황판 (기존 data_status.html)
+//    ⚠ 이 페이지도 SUPABASE_URL/KEY/sb, GAMES를 자체 선언하고 있었는데,
+//    다른 화면과 이름이 겹쳐서(특히 GAMES, loadStatus, fmtKst, refreshBtn,
+//    statusBody) 전부 접미사를 붙여 구분했습니다. 동작 로직은 그대로입니다.
+// ══════════════════════════════════════════════════════════════
+const GAMES_SCHEDULE = [
+  { id:'kr_lotto645',     flag:'🇰🇷', name:'한국 로또 6/45',    drawDays:[6],     h:20, min:35, tz:'Asia/Seoul' },
+  { id:'us_powerball',    flag:'🇺🇸', name:'미국 파워볼',       drawDays:[1,3,6], h:22, min:59, tz:'America/New_York' },
+  { id:'us_megamillions', flag:'🇺🇸', name:'미국 메가밀리언스', drawDays:[2,5],   h:23, min:0,  tz:'America/New_York' },
+  { id:'eu_euromillions', flag:'🇪🇺', name:'유로밀리언스',      drawDays:[2,5],   h:20, min:45, tz:'Europe/Paris' },
+  { id:'jp_miniloto',     flag:'🇯🇵', name:'일본 미니로또',     drawDays:[2],     h:18, min:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto7',        flag:'🇯🇵', name:'일본 로또7',        drawDays:[5],     h:18, min:45, tz:'Asia/Tokyo' },
+  { id:'jp_loto6',        flag:'🇯🇵', name:'일본 로또6',        drawDays:[1,4],   h:18, min:30, tz:'Asia/Tokyo' },
+  { id:'ca_lottomax',     flag:'🇨🇦', name:'캐나다 로또맥스',   drawDays:[2,5],   h:22, min:30, tz:'America/Toronto' },
+  { id:'ca_lotto649',     flag:'🇨🇦', name:'캐나다 로또649',    drawDays:[3,6],   h:22, min:30, tz:'America/Toronto' },
+  { id:'au_powerball',    flag:'🇦🇺', name:'호주 파워볼',       drawDays:[4],     h:20, min:30, tz:'Australia/Sydney' },
+  { id:'au_ozlotto',      flag:'🇦🇺', name:'호주 오즈로또',     drawDays:[2],     h:20, min:30, tz:'Australia/Sydney' },
+  { id:'au_tattslotto',   flag:'🇦🇺', name:'호주 새터데이로또', drawDays:[6],     h:20, min:30, tz:'Australia/Sydney' },
+];
+
+const WEEKDAY_NUM = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+const KST_WEEKDAY_LABEL = ['일','월','화','수','목','금','토'];
+
+function zonedTimeToUtc(dateStr, hour, minute, timeZone){
+  const naiveUtc = new Date(`${dateStr}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00Z`);
+  const tzDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone }));
+  const utcDate = new Date(naiveUtc.toLocaleString('en-US', { timeZone: 'UTC' }));
+  const offset = utcDate.getTime() - tzDate.getTime();
+  return new Date(naiveUtc.getTime() + offset);
+}
+
+function nextDrawDate(g){
+  const now = new Date();
+  let best = null;
+  for (let addDays = 0; addDays < 8; addDays++){
+    const candidate = new Date(now.getTime() + addDays * 86400000);
+    const wdName = new Intl.DateTimeFormat('en-US', { timeZone:g.tz, weekday:'short' }).format(candidate);
+    const wd = WEEKDAY_NUM[wdName];
+    if (!g.drawDays.includes(wd)) continue;
+    const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone:g.tz }).format(candidate);
+    const drawUtc = zonedTimeToUtc(dateStr, g.h, g.min, g.tz);
+    if (drawUtc > now && (!best || drawUtc < best)) best = drawUtc;
+  }
+  return best;
+}
+
+function fmtKstFromDate(date){
+  if (!date) return '-';
+  const dateStr = new Intl.DateTimeFormat('ko-KR', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' }).format(date);
+  const wdName = new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Seoul', weekday:'short' }).format(date);
+  const wd = KST_WEEKDAY_LABEL[WEEKDAY_NUM[wdName]];
+  const timeStr = new Intl.DateTimeFormat('ko-KR', { timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit', hour12:false }).format(date);
+  return `${dateStr}(${wd}) ${timeStr}`;
+}
+
+async function loadDataStatus(){
+  const btn = document.getElementById('refreshBtnData');
+  const body = document.getElementById('statusBodyData');
+  btn.disabled = true;
+  body.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--ink-dim);">불러오는 중…</td></tr>`;
+
+  const rows = await Promise.all(GAMES_SCHEDULE.map(async (g) => {
+    const { data, error } = await sb
+      .from('draw_results').select('round_no, draw_date')
+      .eq('game_id', g.id).order('round_no', { ascending:false }).limit(1).maybeSingle();
+    return { g, latest: (!error && data) ? data : null };
+  }));
+
+  const now = new Date();
+  body.innerHTML = rows.map(({ g, latest }) => {
+    const nextDraw = nextDrawDate(g);
+    let daysAgo = '-', statusPill = '<span class="pill bad">데이터 없음</span>', dateCell = '-', roundCell = '-';
+    if (latest) {
+      roundCell = `#${latest.round_no}`;
+      dateCell = latest.draw_date || '-';
+      if (latest.draw_date) {
+        const drawnAt = new Date(latest.draw_date + 'T00:00:00+09:00');
+        const diffDays = Math.floor((now - drawnAt) / 86400000);
+        daysAgo = diffDays + '일 전';
+        const cyclesPerWeek = g.drawDays.length;
+        const avgCycleDays = 7 / cyclesPerWeek;
+        if (diffDays <= avgCycleDays + 1) statusPill = '<span class="pill ok">최신</span>';
+        else if (diffDays <= avgCycleDays * 2 + 1) statusPill = '<span class="pill warn">확인 필요</span>';
+        else statusPill = '<span class="pill bad">누락 의심</span>';
+      }
+    }
+    return `<tr>
+      <td><span class="flag">${g.flag}</span>${g.name}</td>
+      <td class="mono">${roundCell}</td>
+      <td class="mono">${dateCell}</td>
+      <td class="mono">${daysAgo}</td>
+      <td class="mono">${fmtKstFromDate(nextDraw)}</td>
+      <td>${statusPill}</td>
+    </tr>`;
+  }).join('');
+
+  btn.disabled = false;
+}
+
+function renderWeekGrid(){
+  const grid = document.getElementById('weekGrid');
+  const todayWd = WEEKDAY_NUM[new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Seoul', weekday:'short' }).format(new Date())];
+  const order = [1,2,3,4,5,6,0];
+  grid.innerHTML = order.map(wd => {
+    const matches = [];
+    GAMES_SCHEDULE.forEach(g => {
+      g.drawDays.forEach(localWd => {
+        const base = new Date();
+        for (let i = 0; i < 14; i++){
+          const cand = new Date(base.getTime() + i*86400000);
+          const wdName = new Intl.DateTimeFormat('en-US', { timeZone:g.tz, weekday:'short' }).format(cand);
+          if (WEEKDAY_NUM[wdName] === localWd) {
+            const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone:g.tz }).format(cand);
+            const drawUtc = zonedTimeToUtc(dateStr, g.h, g.min, g.tz);
+            const kstWdName = new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Seoul', weekday:'short' }).format(drawUtc);
+            const kstWd = WEEKDAY_NUM[kstWdName];
+            const kstTime = new Intl.DateTimeFormat('ko-KR', { timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit', hour12:false }).format(drawUtc);
+            if (kstWd === wd) matches.push({ name: g.name, flag: g.flag, time: kstTime });
+            break;
+          }
+        }
+      });
+    });
+    const isToday = wd === todayWd;
+    return `<div class="week-day">
+      <div class="week-day-name${isToday?' today':''}">${KST_WEEKDAY_LABEL[wd]}요일${isToday?' (오늘)':''}</div>
+      ${matches.length === 0 ? '<div class="week-empty">추첨 없음</div>' : matches.map(m => `
+        <div class="week-game-item"><span class="wg-name">${m.flag} ${m.name}</span><br><span class="wg-time">${m.time} KST</span></div>
+      `).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// 3) 경마 진행현황 (기존 race_status.html)
+// ══════════════════════════════════════════════════════════════
+const GAMES_RACE = [
+  { id:'kr_lotto645',     flag:'🇰🇷', name:'한국 로또 6/45' },
+  { id:'us_powerball',    flag:'🇺🇸', name:'미국 파워볼' },
+  { id:'us_megamillions', flag:'🇺🇸', name:'미국 메가밀리언스' },
+  { id:'eu_euromillions', flag:'🇪🇺', name:'유로밀리언스' },
+  { id:'jp_miniloto',     flag:'🇯🇵', name:'일본 미니로또' },
+  { id:'jp_loto7',        flag:'🇯🇵', name:'일본 로또7' },
+  { id:'jp_loto6',        flag:'🇯🇵', name:'일본 로또6' },
+  { id:'ca_lottomax',     flag:'🇨🇦', name:'캐나다 로또맥스' },
+  { id:'ca_lotto649',     flag:'🇨🇦', name:'캐나다 로또649' },
+  { id:'au_powerball',    flag:'🇦🇺', name:'호주 파워볼' },
+  { id:'au_ozlotto',      flag:'🇦🇺', name:'호주 오즈로또' },
+  { id:'au_tattslotto',   flag:'🇦🇺', name:'호주 새터데이로또' },
+];
+
+function fmtKst(iso){
+  if (!iso) return '-';
+  const d = new Date(iso);
+  const dateStr = new Intl.DateTimeFormat('ko-KR', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' }).format(d);
+  const wdName = new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Seoul', weekday:'short' }).format(d);
+  const wdMap = { Sun:'일',Mon:'월',Tue:'화',Wed:'수',Thu:'목',Fri:'금',Sat:'토' };
+  const timeStr = new Intl.DateTimeFormat('ko-KR', { timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit', hour12:false }).format(d);
+  return `${dateStr}(${wdMap[wdName]}) ${timeStr}`;
+}
+function fmtDateOnly(dateStr){
+  if (!dateStr) return '-';
+  const d = new Date(dateStr + 'T00:00:00+09:00');
+  const wdName = new Intl.DateTimeFormat('en-US', { timeZone:'Asia/Seoul', weekday:'short' }).format(d);
+  const wdMap = { Sun:'일',Mon:'월',Tue:'화',Wed:'수',Thu:'목',Fri:'금',Sat:'토' };
+  return `${dateStr}(${wdMap[wdName]})`;
+}
+
+async function loadRaceStatus(){
+  const btn = document.getElementById('refreshBtnRace');
+  const body = document.getElementById('statusBodyRace');
+  btn.disabled = true;
+  body.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--ink-dim);">불러오는 중…</td></tr>`;
+
+  const rows = await Promise.all(GAMES_RACE.map(async (g) => {
+    const { data: races, error } = await sb
+      .from('races').select('id, round_no, status, betting_close_at, settled_at')
+      .eq('game_id', g.id).order('round_no', { ascending:false }).limit(5);
+    if (error || !races || races.length === 0) {
+      return { g, lastSettled:null, current:null, error: true };
+    }
+    const current = races[0];
+    const lastSettled = races.find(r => r.status === 'settled') || null;
+    return { g, lastSettled, current };
+  }));
+
+  const now = new Date();
+  const rowsHtml = await Promise.all(rows.map(async ({ g, lastSettled, current, error }) => {
+    if (error) {
+      return `<tr><td><span class="flag">${g.flag}</span>${g.name}</td><td colspan="6" style="color:var(--bad);">경주 데이터 없음(부트스트랩 필요)</td></tr>`;
+    }
+
+    let doneDateStr = '-';
+    if (lastSettled) {
+      const { data: draw } = await sb.from('draw_results').select('draw_date').eq('game_id', g.id).eq('round_no', lastSettled.round_no).maybeSingle();
+      doneDateStr = draw && draw.draw_date ? fmtDateOnly(draw.draw_date) : '(추첨일 정보 없음)';
+    }
+
+    const doneRoundCell = lastSettled ? `<span class="done-round">#${lastSettled.round_no}</span>` : '<span style="color:var(--ink-dim);">아직 없음</span>';
+
+    let nextRoundCell = '-', nextCloseCell = '-', statusPill = '', note = '';
+    if (current && current.status !== 'settled') {
+      nextRoundCell = `<span class="next-round">#${current.round_no}</span>`;
+      nextCloseCell = fmtKst(current.betting_close_at);
+      const closeAt = new Date(current.betting_close_at);
+      if (closeAt > now) {
+        statusPill = '<span class="pill open">베팅 진행중</span>';
+      } else {
+        statusPill = '<span class="pill wait">결과 대기중</span>';
+        note = '마감은 지났지만 아직 당첨번호 미입력 — race-auto-check가 15분마다 자동확인 중';
+      }
+    } else {
+      statusPill = '<span class="pill none">다음 경주 없음</span>';
+      note = '정산 직후 자동생성 대기 — 잠시 후 새로고침해보세요';
+    }
+
+    return `<tr>
+      <td><span class="flag">${g.flag}</span><span class="game-name">${g.name}</span></td>
+      <td>${doneRoundCell}</td>
+      <td class="mono">${doneDateStr}</td>
+      <td>${nextRoundCell}</td>
+      <td class="mono">${nextCloseCell}</td>
+      <td>${statusPill}</td>
+      <td class="note-cell">${note}</td>
+    </tr>`;
+  }));
+
+  body.innerHTML = rowsHtml.join('');
+  btn.disabled = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// 4) 결과 수동입력 · 가격설정 (기존 draw_results_mockup.html)
+//    ⚠ 원래 이 화면은 "관리자 키"를 따로 입력받는 독립형 도구였는데,
+//    이제는 이미 로그인된 페이지 안에 들어왔으므로 세션에 저장된
+//    adminKey(맨 위에서 이미 선언됨)를 그대로 재사용합니다.
+//    → 관리자 키를 다시 입력할 필요가 없어졌습니다.
+// ══════════════════════════════════════════════════════════════
+const PRICING_FUNCTION_URL = SUPABASE_URL + '/functions/v1/pricing';
+const SAVE_DRAW_RESULT_URL = SUPABASE_URL + '/functions/v1/admin-save-draw-result';
+const EXPORT_FUNCTION_URL = SUPABASE_URL + '/functions/v1/export-draw-results';
+
+async function loadPricing(){
+  try {
+    const resp = await fetch(PRICING_FUNCTION_URL);
+    const data = await resp.json();
+    document.getElementById('currentPriceDisplay').textContent = `${data.pricePerCombo}P / 조합`;
+    document.getElementById('newPrice').placeholder = `현재: ${data.pricePerCombo}`;
+  } catch (e) {
+    document.getElementById('currentPriceDisplay').textContent = '불러오기 실패 (PRICING_FUNCTION_URL 확인 필요)';
+  }
+}
+
+document.getElementById('savePriceBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('priceStatusMsg');
+  statusEl.className = 'status-msg';
+  const newPrice = document.getElementById('newPrice').value;
+
+  if (newPrice === '' || Number(newPrice) < 0) {
+    statusEl.textContent = '올바른 가격을 입력해주세요.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+
+  try {
+    const resp = await fetch(PRICING_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ pricePerCombo: Number(newPrice) }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '저장 실패');
+    statusEl.textContent = `✅ 가격이 ${newPrice}P로 변경되었습니다.`;
+    statusEl.className = 'status-msg ok';
+    loadPricing();
+    document.getElementById('newPrice').value = '';
+  } catch (e) {
+    statusEl.textContent = `저장 실패: ${e.message}`;
+    statusEl.className = 'status-msg err';
+  }
+});
+
+const GAMES_MANUAL = [
+  { id:'kr_lotto645', name:'🇰🇷 로또 6/45', main:6 },
+  { id:'us_powerball', name:'🇺🇸 파워볼', main:5 },
+  { id:'us_megamillions', name:'🇺🇸 메가밀리언스', main:5 },
+  { id:'eu_euromillions', name:'🇪🇺 유로밀리언스', main:5 },
+  { id:'jp_miniloto', name:'🇯🇵 미니로또', main:5 },
+  { id:'jp_loto7', name:'🇯🇵 로또7', main:7 },
+  { id:'jp_loto6', name:'🇯🇵 로또6', main:6 },
+  { id:'ca_lottomax', name:'🇨🇦 로또맥스', main:7 },
+  { id:'ca_lotto649', name:'🇨🇦 로또 6/49', main:6 },
+  { id:'au_powerball', name:'🇦🇺 호주 파워볼', main:7 },
+  { id:'au_ozlotto', name:'🇦🇺 오즈로또', main:7 },
+  { id:'au_tattslotto', name:'🇦🇺 새터데이로또', main:6 },
+];
+
+const gameSelect = document.getElementById('gameSelect');
+gameSelect.innerHTML = GAMES_MANUAL.map(g => `<option value="${g.id}" data-main="${g.main}">${g.name}</option>`).join('');
+function updateMainHint(){
+  const g = GAMES_MANUAL.find(x => x.id === gameSelect.value);
+  document.getElementById('mainHint').textContent = `이 게임은 메인 번호 ${g.main}개가 필요합니다.`;
+}
+gameSelect.addEventListener('change', updateMainHint);
+updateMainHint();
+
+const exportGameSelect = document.getElementById('exportGameSelect');
+exportGameSelect.innerHTML += GAMES_MANUAL.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+
+let tierCount = 0;
+const tiersBox = document.getElementById('tiersBox');
+function addTierRow(){
+  tierCount++;
+  const row = document.createElement('div');
+  row.className = 'tier-row';
+  row.innerHTML = `
+    <span>${tierCount}등</span>
+    <input type="number" placeholder="당첨자수" class="tier-winners">
+    <input type="number" placeholder="당첨금" class="tier-prize">
+    <button type="button" class="tier-del">✕</button>`;
+  row.querySelector('.tier-del').addEventListener('click', () => { row.remove(); });
+  tiersBox.appendChild(row);
+}
+document.getElementById('addTierBtn').addEventListener('click', addTierRow);
+addTierRow(); addTierRow();
+
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('statusMsg');
+  statusEl.className = 'status-msg';
+
+  const gameId = gameSelect.value;
+  const roundNo = +document.getElementById('roundNo').value;
+  const drawDate = document.getElementById('drawDate').value;
+  const mainRaw = document.getElementById('mainNumbers').value.trim();
+  const bonusRaw = document.getElementById('bonusNumbers').value.trim();
+  const sourceUrl = document.getElementById('sourceUrl').value.trim();
+
+  if (!roundNo || !drawDate || !mainRaw) {
+    statusEl.textContent = '회차 번호, 추첨일, 메인 번호는 필수입니다.';
+    statusEl.className = 'status-msg err';
+    return;
+  }
+
+  const mainNumbers = mainRaw.split(',').map(s => +s.trim()).filter(n => !isNaN(n));
+  const bonusNumbers = bonusRaw ? bonusRaw.split(',').map(s => +s.trim()).filter(n => !isNaN(n)) : [];
+
+  const tiers = [];
+  document.querySelectorAll('.tier-row').forEach((row, i) => {
+    const w = row.querySelector('.tier-winners').value;
+    const p = row.querySelector('.tier-prize').value;
+    if (w || p) tiers.push({ tier: i+1, winners: w ? +w : null, prize: p ? +p : null });
+  });
+
+  const payload = {
+    game_id: gameId, round_no: roundNo, draw_date: drawDate,
+    main_numbers: mainNumbers, bonus_numbers: bonusNumbers, tiers,
+    source_url: sourceUrl || null, collection_type: 'manual',
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '저장 중…';
+
+  try {
+    const resp = await fetch(SAVE_DRAW_RESULT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '저장 실패');
+
+    statusEl.textContent = `✅ ${gameId} ${roundNo}회차 결과가 저장되었습니다.`;
+    statusEl.className = 'status-msg ok';
+  } catch (e) {
+    statusEl.textContent = `저장 실패: ${e.message}`;
+    statusEl.className = 'status-msg err';
+  } finally {
+    btn.disabled = false; btn.textContent = '결과 저장하기';
+  }
+});
+
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('exportStatusMsg');
+  statusEl.className = 'status-msg';
+
+  const gameId = document.getElementById('exportGameSelect').value;
+  const btn2 = document.getElementById('exportBtn');
+  btn2.disabled = true; btn2.textContent = '불러오는 중…';
+
+  try {
+    const url = gameId ? `${EXPORT_FUNCTION_URL}?game_id=${encodeURIComponent(gameId)}` : EXPORT_FUNCTION_URL;
+    const resp = await fetch(url, { headers: { 'x-admin-key': adminKey, 'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY } });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '조회 실패');
+
+    if (!data.rows || data.rows.length === 0) {
+      statusEl.textContent = '해당 범위에 데이터가 없습니다.';
+      statusEl.className = 'status-msg err';
+      return;
+    }
+
+    let maxTiers = 1;
+    data.rows.forEach(r => {
+      if (Array.isArray(r.tiers) && r.tiers.length > maxTiers) maxTiers = r.tiers.length;
+    });
+
+    const sheetRows = data.rows.map(r => {
+      const row = {
+        '게임': r.game_id,
+        '회차': r.round_no,
+        '추첨일': r.draw_date,
+        '메인번호': (r.main_numbers || []).join(', '),
+        '보너스번호': (r.bonus_numbers || []).join(', '),
+      };
+      for (let i = 1; i <= maxTiers; i++) {
+        const t = (r.tiers || []).find(x => Number(x.tier) === i);
+        row[`${i}등 당첨자수`] = t && t.winners != null ? t.winners : '';
+        row[`${i}등 당첨금`] = t && t.prize != null ? t.prize : '';
+      }
+      row['출처'] = r.collection_type || '';
+      row['업데이트'] = r.updated_at ? new Date(r.updated_at).toLocaleString('ko-KR') : '';
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(sheetRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'draw_results');
+
+    const today = new Date().toISOString().slice(0,10);
+    const filename = gameId ? `paperlotto_${gameId}_${today}.xlsx` : `paperlotto_전체게임_${today}.xlsx`;
+    XLSX.writeFile(wb, filename);
+
+    statusEl.textContent = `✅ ${data.count}건 다운로드 완료 (${filename})`;
+    statusEl.className = 'status-msg ok';
+  } catch (e) {
+    statusEl.textContent = `다운로드 실패: ${e.message}`;
+    statusEl.className = 'status-msg err';
+  } finally {
+    btn2.disabled = false; btn2.textContent = '엑셀 다운로드';
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// 초기 로드 — 4개 화면 데이터를 페이지 열자마자 한꺼번에 미리 불러둡니다.
+// (탭을 눌렀을 때 매번 새로 불러오지 않아도 바로 보이도록)
+// ══════════════════════════════════════════════════════════════
+loadList();
+loadDataStatus();
+renderWeekGrid();
+loadRaceStatus();
+loadPricing();
 </script>
 </body>
 </html>
