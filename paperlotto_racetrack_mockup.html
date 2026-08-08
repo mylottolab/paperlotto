@@ -319,7 +319,8 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
     <table class="board" id="boardTable">
       <thead>
         <tr>
-          <th data-sort="rank" data-i18n="thRank">순위</th>
+          <th data-sort="recentRank" data-i18n="thRecentRank">최근순위</th>
+          <th data-sort="rank" data-i18n="thRank">누적순위</th>
           <th data-i18n="thType">전략기준</th>
           <th data-sort="name" data-i18n="thName">전략명 (Horse Name)</th>
           <th data-sort="races_run" data-i18n="thRaces">출전횟수</th>
@@ -392,7 +393,7 @@ const I18N = {
     footerNote:"본 콘텐츠는 정보 제공 및 통계적 시뮬레이션 목적으로만 제공됩니다. PaperLotto는 복권을 판매하지 않으며, 어떠한 형태의 상금도 지급하지 않습니다. World Jackpot Racetrack의 베팅은 실제 화폐가 아닌 포인트로만 이루어지며, 실제 현금으로 환급되지 않습니다.",
     filterLabel:"구분", filterAll:"전체 (100필)", filterStrategy:"전략중시형 (68)", filterLoyal:"일편단심형 (16)", filterRandom:"Que será, será형 (16)",
     loading:"불러오는 중…", noData:"이 게임은 아직 정산된 경주가 없습니다. 첫 경주가 끝나면 순위가 채워집니다.", loadError:"불러오는 중 오류가 발생했습니다.",
-    thRank:"순위", thType:"전략기준", thName:"전략명 (Horse Name)", thRaces:"출전횟수", thWinCount:"당첨건수", thWinRate:"당첨율", thGradeDist:"등급분포", thDetail:"상세전략", thBet:"베팅",
+    thRecentRank:"최근순위", thRank:"누적순위", thType:"전략기준", thName:"전략명 (Horse Name)", thRaces:"출전횟수", thWinCount:"당첨건수", thWinRate:"당첨율", thGradeDist:"등급분포", thDetail:"상세전략", thBet:"베팅",
     betBtn:"베팅", betPlaced:(units,horse)=>`${horse}에 ${units}구좌 베팅 완료!`, betFail:"베팅에 실패했습니다.",
     loginRequired:"베팅하려면 로그인이 필요합니다.", betUnitPrice:"1구좌 = 100P (최대 100구좌)",
     myBet:(units)=>`내 베팅: ${units}구좌`, insufficientPoints:(shortfall)=>`포인트가 부족합니다 (부족: ${shortfall.toLocaleString()}P).`,
@@ -420,7 +421,7 @@ const I18N = {
     footerNote:"This content is provided for informational and statistical simulation purposes only. PaperLotto does not sell lottery tickets and does not pay out any prizes. Betting on World Jackpot Racetrack uses points only, not real currency, and cannot be cashed out.",
     filterLabel:"Type", filterAll:"All (100 horses)", filterStrategy:"Strategy-driven (68)", filterLoyal:"Loyal / Fixed (16)", filterRandom:"Que será, será (16)",
     loading:"Loading…", noData:"No settled races yet for this game. Rankings will populate after the first race.", loadError:"An error occurred while loading.",
-    thRank:"Rank", thType:"Type", thName:"Strategy (Horse Name)", thRaces:"Races Run", thWinCount:"Win Count", thWinRate:"Win Rate", thGradeDist:"Grade Breakdown", thDetail:"Detail", thBet:"Bet",
+    thRecentRank:"Recent Rank", thRank:"Cumulative Rank", thType:"Type", thName:"Strategy (Horse Name)", thRaces:"Races Run", thWinCount:"Win Count", thWinRate:"Win Rate", thGradeDist:"Grade Breakdown", thDetail:"Detail", thBet:"Bet",
     betBtn:"Bet", betPlaced:(units,horse)=>`Placed ${units} unit(s) on ${horse}!`, betFail:"Bet failed.",
     loginRequired:"You need to log in to place a bet.", betUnitPrice:"1 unit = 100P (max 100 units)",
     myBet:(units)=>`My bet: ${units} unit(s)`, insufficientPoints:(shortfall)=>`Not enough points (short by ${shortfall.toLocaleString()}P).`,
@@ -448,7 +449,7 @@ const I18N = {
     footerNote:"本コンテンツは情報提供および統計的シミュレーション目的でのみ提供されます。PaperLottoは宝くじを販売せず、いかなる形でも賞金を支払いません。World Jackpot Racetrackのベットは実際の通貨ではなくポイントのみで行われ、現金化はできません。",
     filterLabel:"区分", filterAll:"すべて(100頭)", filterStrategy:"戦略重視型(68)", filterLoyal:"一途型(16)", filterRandom:"Que será, será型(16)",
     loading:"読み込み中…", noData:"このゲームはまだ精算されたレースがありません。最初のレース終了後にランキングが表示されます。", loadError:"読み込み中にエラーが発生しました。",
-    thRank:"順位", thType:"戦略基準", thName:"戦略名(Horse Name)", thRaces:"出走回数", thWinCount:"当選件数", thWinRate:"当選率", thGradeDist:"等級分布", thDetail:"詳細戦略", thBet:"ベット",
+    thRecentRank:"直近順位", thRank:"累積順位", thType:"戦略基準", thName:"戦略名(Horse Name)", thRaces:"出走回数", thWinCount:"当選件数", thWinRate:"当選率", thGradeDist:"等級分布", thDetail:"詳細戦略", thBet:"ベット",
     betBtn:"ベット", betPlaced:(units,horse)=>`${horse}に${units}口ベットしました！`, betFail:"ベットに失敗しました。",
     loginRequired:"ベットするにはログインが必要です。", betUnitPrice:"1口=100P(最大100口)",
     myBet:(units)=>`自分のベット: ${units}口`, insufficientPoints:(shortfall)=>`ポイントが不足しています(不足:${shortfall.toLocaleString()}P)。`,
@@ -472,7 +473,7 @@ const I18N = {
 let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
 let currentGame = GAMES[0].id;
 let currentTypeFilter = 'all';
-let sortKey = 'rank';
+let sortKey = 'recentRank';
 let sortDir = 'asc';
 let horseRows = []; // 현재 게임의 100마리 (race_horses + race_horse_stats 병합)
 
@@ -518,14 +519,17 @@ async function loadBoard(){
     (stats || []).forEach(s => { statsByHorse[s.horse_no] = s; });
 
     horseRows = (horses || []).map(h => {
-      const s = statsByHorse[h.horse_no] || { races_run:0, place1_count:0, place2_count:0, place3_count:0, win_count:0, grade_histogram:{} };
+      const s = statsByHorse[h.horse_no] || { races_run:0, place1_count:0, place2_count:0, place3_count:0, win_count:0, grade_histogram:{}, recent_ranks:[] };
       const totalCombos = (s.races_run || 0) * 100;
+      const recentRanks = Array.isArray(s.recent_ranks) ? s.recent_ranks : [];
       return {
         horse_no: h.horse_no, name: h.name, horse_type: h.horse_type, condition: h.condition,
         races_run: s.races_run || 0, win_count: s.win_count || 0,
         win_rate: totalCombos > 0 ? (s.win_count || 0) / totalCombos : 0,
         place1_count: s.place1_count || 0, place2_count: s.place2_count || 0, place3_count: s.place3_count || 0,
         grade_histogram: s.grade_histogram || {},
+        recentRanks: recentRanks,
+        recentRank: recentRanks.length ? recentRanks[0] : null, // "이번회차(가장 최근) 순위"
       };
     });
 
@@ -557,8 +561,17 @@ async function loadBoard(){
 function sortedFilteredRows(){
   let rows = horseRows.filter(r => currentTypeFilter === 'all' || r.horse_type === currentTypeFilter);
   const dir = sortDir === 'asc' ? 1 : -1;
+  const isRankCol = (sortKey === 'rank' || sortKey === 'recentRank');
   rows = [...rows].sort((a,b) => {
     let av = a[sortKey], bv = b[sortKey];
+    if (isRankCol) {
+      // 순위 계열 컬럼은 값이 없는(아직 채점 안 된) 말을 정렬방향과 무관하게 항상 맨 뒤로 보낸다.
+      const aMissing = av == null, bMissing = bv == null;
+      if (aMissing && bMissing) return 0;
+      if (aMissing) return 1;
+      if (bMissing) return -1;
+      return (av - bv) * dir;
+    }
     if (av === undefined) av = 0; if (bv === undefined) bv = 0;
     if (typeof av === 'string') return av.localeCompare(bv) * dir;
     return (av - bv) * dir;
@@ -715,10 +728,12 @@ function renderTable(){
   const rows = sortedFilteredRows();
   const bodyEl = document.getElementById('boardBody');
   if (rows.length === 0) {
-    bodyEl.innerHTML = `<tr><td colspan="9" class="empty-note">${tt.noData}</td></tr>`;
+    bodyEl.innerHTML = `<tr><td colspan="10" class="empty-note">${tt.noData}</td></tr>`;
   } else {
     bodyEl.innerHTML = rows.map(r => {
       const rankCls = r.rank <= 3 ? `rank-${r.rank}` : 'rank-etc';
+      const recentRankCls = (r.recentRank != null && r.recentRank <= 3) ? `rank-${r.recentRank}` : 'rank-etc';
+      const recentRankHtml = r.recentRank != null ? `<span class="rank-pill ${recentRankCls}">${r.recentRank}</span>` : '<span class="rank-pill rank-etc">–</span>';
       const myUnits = myBetsByHorse[r.horse_no] || 0;
       const canBet = !!currentRace;
       const betCell = canBet
@@ -730,6 +745,7 @@ function renderTable(){
            ${myUnits > 0 ? `<div class="my-bet-tag">${tt.myBet(myUnits)}</div>` : ''}`
         : '–';
       return `<tr>
+        <td>${recentRankHtml}</td>
         <td><span class="rank-pill ${rankCls}">${r.rank}</span></td>
         <td>${typeBadge(r.horse_type)}</td>
         <td class="horse-name"><span class="no">#${r.horse_no}</span>${r.name}</td>
@@ -752,7 +768,7 @@ document.querySelectorAll('table.board th[data-sort]').forEach(th => {
   th.addEventListener('click', () => {
     const key = th.dataset.sort;
     if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-    else { sortKey = key; sortDir = key === 'rank' ? 'asc' : 'desc'; }
+    else { sortKey = key; sortDir = (key === 'rank' || key === 'recentRank') ? 'asc' : 'desc'; }
     renderTable();
   });
 });
