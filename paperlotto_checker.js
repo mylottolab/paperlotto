@@ -108,9 +108,10 @@
       ocr: '사진으로 인식', ocrRunning: '사진 분석 중... (시간이 좀 걸려요)', ocrFail: '번호를 못 읽었어요. 직접 입력해주세요.',
       ocrPartial: '번호를 인식했어요 — 맞는지 확인하고 눌러주세요.', resultDate: '추첨일',
       addCombo: '+ 조합 추가', comboLabel: '조합', ocrNote: '⚠️ 카메라인식과 작업상 다소 불편함이 있음을 양해해 주시기 바랍니다.',
-      qrScan: '🔍 QR코드로 회차·번호 자동입력', qrRunning: 'QR코드 분석 중...',
+      qrScan: '🔍 QR코드로 회차·번호 자동입력', qrRunning: '카메라로 QR코드를 찾는 중... 표적 안에 맞춰주세요',
       qrFail: 'QR코드를 읽지 못했어요. 사진으로 인식 또는 직접입력을 이용해주세요.',
       qrOk: '✅ {round}회차, {count}개 조합을 QR코드에서 자동으로 채웠어요. 맞는지 확인하고 눌러주세요.',
+      camStop: '종료',
     },
     en: {
       pickRound: 'Select draw', main: 'My Numbers', bonusSep: 'Bonus Numbers',
@@ -120,9 +121,10 @@
       ocr: 'Scan photo', ocrRunning: 'Analyzing photo... (may take a moment)', ocrFail: "Couldn't read the numbers — please enter manually.",
       ocrPartial: 'Numbers detected — please verify before checking.', resultDate: 'Draw date',
       addCombo: '+ Add combo', comboLabel: 'Combo', ocrNote: '⚠️ Please note that camera recognition and manual entry may be a bit inconvenient.',
-      qrScan: '🔍 Auto-fill via QR code', qrRunning: 'Analyzing QR code...',
+      qrScan: '🔍 Auto-fill via QR code', qrRunning: 'Looking for a QR code... Align it inside the frame',
       qrFail: "Couldn't read the QR code — try Scan photo or manual entry.",
       qrOk: '✅ Auto-filled draw #{round} with {count} combo(s) from the QR code. Please verify before checking.',
+      camStop: 'Stop',
     },
     ja: {
       pickRound: '回を選択', main: '自分の番号（本数字）', bonusSep: 'ボーナス番号',
@@ -132,9 +134,10 @@
       ocr: '写真で読み取る', ocrRunning: '写真を解析中...（少し時間がかかります）', ocrFail: '番号を読み取れませんでした。直接入力してください。',
       ocrPartial: '番号を認識しました — 確認してから押してください。', resultDate: '抽選日',
       addCombo: '+ 組み合わせ追加', comboLabel: '組み合わせ', ocrNote: '⚠️ カメラ認識や手作業には多少の不便があることをご了承ください。',
-      qrScan: '🔍 QRコードで自動入力', qrRunning: 'QRコードを解析中...',
+      qrScan: '🔍 QRコードで自動入力', qrRunning: 'QRコードを探しています...枠内に合わせてください',
       qrFail: 'QRコードを読み取れませんでした。写真認識または直接入力をご利用ください。',
       qrOk: '✅ QRコードから第{round}回、{count}組を自動入力しました。確認してから押してください。',
+      camStop: '終了',
     },
   };
 
@@ -183,16 +186,22 @@
       );
     }
 
+    var camScan = CAMERA_SCAN_CONFIG[gameId]; // 이 게임이 실시간 카메라 스캔을 지원하는지
+
     el.innerHTML =
       '<div class="plck-box">' +
         '<label class="plck-label">' + t.pickRound + '</label>' +
         '<select class="plck-select" id="' + containerId + '_round"><option value="">' + t.loading + '</option></select>' +
         '<div class="plck-loadmore" id="' + containerId + '_loadmore" style="display:none;">' + t.loadMore + '</div>' +
-        (gameId === 'kr_lotto645' ?
+        (camScan ?
           '<div class="plck-row" style="margin-top:10px;">' +
             '<button class="plck-btn plck-btn-ghost" type="button" id="' + containerId + '_qrbtn" style="flex:1;">' + t.qrScan + '</button>' +
           '</div>' +
-          '<input type="file" accept="image/*" capture="environment" id="' + containerId + '_qrfile" style="display:none;">'
+          '<div class="plck-camview" id="' + containerId + '_camview" style="display:none;"></div>' +
+          '<div class="plck-camctrls" id="' + containerId + '_camctrls" style="display:none;">' +
+            '<button class="plck-btn plck-btn-ghost" type="button" id="' + containerId + '_camstop">⏹ ' + t.camStop + '</button>' +
+            '<button class="plck-btn plck-btn-ghost" type="button" id="' + containerId + '_camtorch" style="display:none;flex:0 0 auto;">🔦</button>' +
+          '</div>'
         : '') +
         '<label class="plck-label" style="margin-top:14px;">' + t.main + ' (' + meta.main + t.needCount + ')' + (needsSeparateBonus ? ' · ' + t.bonusSep + ' (' + bonusCount + t.needCount + ')' : '') + '</label>' +
         '<div class="plck-combos" id="' + containerId + '_combos">' + comboRowHtml(0) + '</div>' +
@@ -270,46 +279,138 @@
     }
     combosBox.querySelectorAll('.plck-combo-row').forEach(wireOcrForRow);
 
-    if (gameId === 'kr_lotto645') {
+    if (camScan) {
       var qrBtn = document.getElementById(containerId + '_qrbtn');
-      var qrFile = document.getElementById(containerId + '_qrfile');
-      qrBtn.addEventListener('click', function () { qrFile.click(); });
-      qrFile.addEventListener('change', function (e) {
-        var file = e.target.files && e.target.files[0];
-        qrFile.value = ''; // 같은 파일을 다시 선택해도 change가 다시 뜨도록
-        if (!file) return;
-        showResult(t.qrRunning, 'warn');
-        decodeQrFromFile(file).then(function (text) {
-          if (!text) { showResult(t.qrFail, 'warn'); return; }
-          var parsed = parseLottoQrUrl(text);
-          if (!parsed) { showResult(t.qrFail, 'warn'); return; }
+      var camview = document.getElementById(containerId + '_camview');
+      var camctrls = document.getElementById(containerId + '_camctrls');
+      var camStopBtn = document.getElementById(containerId + '_camstop');
+      var camTorchBtn = document.getElementById(containerId + '_camtorch');
 
-          // 회차 자동 선택 (아직 불러온 목록에 없는 오래된 회차면 옵션을 직접 추가)
-          var roundStr = String(parsed.round);
-          var hasOption = Array.prototype.some.call(roundSelect.options, function (o) { return o.value === roundStr; });
-          if (!hasOption) {
-            var opt = document.createElement('option');
-            opt.value = roundStr; opt.textContent = '#' + roundStr;
-            roundSelect.insertBefore(opt, roundSelect.firstChild);
-          }
-          roundSelect.value = roundStr;
+      // 이 mount 인스턴스 전용 카메라 상태 (여러 개 동시에 mount돼도 서로 안 얽히도록)
+      var camStream = null, camTrack = null, camVideo = null, camCanvas = null;
+      var camTimer = null, camBusy = false, torchOn = false;
 
-          // 조합 자동 채우기 — QR 안에 있던 조합 개수(최대 5개, A~E)만큼 행을 새로 구성
-          combosBox.innerHTML = '';
-          comboSeq = 0;
-          parsed.combos.forEach(function (nums) {
-            var wrap = document.createElement('div');
-            wrap.innerHTML = comboRowHtml(comboSeq);
-            var row = wrap.firstChild;
-            combosBox.appendChild(row);
-            wireOcrForRow(row);
-            row.querySelector('.plck-combo-main').value = nums.join(' ');
-            comboSeq++;
-          });
-          updateRemoveButtons();
-          showResult(t.qrOk.replace('{round}', roundStr).replace('{count}', String(parsed.combos.length)), 'warn');
+      function stopCam() {
+        if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+        if (camStream) { camStream.getTracks().forEach(function (tr) { tr.stop(); }); camStream = null; }
+        camTrack = null; camVideo = null; camBusy = false; torchOn = false;
+        camview.style.display = 'none'; camview.innerHTML = '';
+        camctrls.style.display = 'none';
+        qrBtn.style.display = 'block';
+      }
+
+      function toggleTorch() {
+        if (!camTrack) return;
+        torchOn = !torchOn;
+        try { camTrack.applyConstraints({ advanced: [{ torch: torchOn }] }); } catch (e) {}
+        camTorchBtn.textContent = torchOn ? '🔦✕' : '🔦';
+      }
+
+      async function decodeCanvasQr(ctx, side) {
+        if ('BarcodeDetector' in global) {
+          try {
+            var blob = await new Promise(function (r) { ctx.canvas.toBlob(r, 'image/jpeg', 0.92); });
+            var bmp = await createImageBitmap(blob);
+            var det = new global.BarcodeDetector({ formats: camScan.formats });
+            var codes = await det.detect(bmp);
+            if (codes.length > 0) return codes[0].rawValue;
+          } catch (e) {}
+        }
+        try {
+          await ensureZxing();
+          var imageData = ctx.getImageData(0, 0, side, side);
+          var results = await global.ZXingWASM.readBarcodes(imageData, { formats: camScan.zxingFormats, tryHarder: true, maxNumberOfSymbols: 1 });
+          if (results && results.length > 0) return results[0].text;
+        } catch (e) {}
+        return null;
+      }
+
+      function applyParsedResult(parsed) {
+        var roundStr = String(parsed.round);
+        var hasOption = Array.prototype.some.call(roundSelect.options, function (o) { return o.value === roundStr; });
+        if (!hasOption) {
+          var opt = document.createElement('option');
+          opt.value = roundStr; opt.textContent = '#' + roundStr;
+          roundSelect.insertBefore(opt, roundSelect.firstChild);
+        }
+        roundSelect.value = roundStr;
+
+        combosBox.innerHTML = '';
+        comboSeq = 0;
+        parsed.combos.forEach(function (nums) {
+          var wrap = document.createElement('div');
+          wrap.innerHTML = comboRowHtml(comboSeq);
+          var row = wrap.firstChild;
+          combosBox.appendChild(row);
+          wireOcrForRow(row);
+          row.querySelector('.plck-combo-main').value = nums.join(' ');
+          comboSeq++;
         });
-      });
+        updateRemoveButtons();
+        showResult(t.qrOk.replace('{round}', roundStr).replace('{count}', String(parsed.combos.length)), 'warn');
+      }
+
+      async function scanLoop() {
+        if (!camStream) return; // stopCam()으로 이미 종료됨
+        if (camBusy || !camVideo || camVideo.readyState < 2) { camTimer = setTimeout(scanLoop, 150); return; }
+        camBusy = true;
+        try {
+          var vw = camVideo.videoWidth, vh = camVideo.videoHeight;
+          if (vw && vh) {
+            var side = Math.min(vw, vh);
+            var sx = (vw - side) / 2, sy = (vh - side) / 2;
+            camCanvas.width = side; camCanvas.height = side;
+            var ctx = camCanvas.getContext('2d');
+            ctx.drawImage(camVideo, sx, sy, side, side, 0, 0, side, side);
+            var text = await decodeCanvasQr(ctx, side);
+            if (text) {
+              var parsed = camScan.parse(text);
+              if (parsed) { stopCam(); applyParsedResult(parsed); return; }
+              // 우리가 찾는 QR이 아니면(예: 광고용 QR) 계속 스캔
+            }
+          }
+        } catch (e) {}
+        camBusy = false;
+        if (camStream) camTimer = setTimeout(scanLoop, 200);
+      }
+
+      async function startCam() {
+        try {
+          qrBtn.style.display = 'none';
+          camview.style.display = 'block'; camview.innerHTML = '';
+          camctrls.style.display = 'flex';
+
+          camVideo = document.createElement('video');
+          camVideo.setAttribute('playsinline', ''); camVideo.setAttribute('muted', '');
+          camVideo.muted = true; camVideo.playsInline = true;
+          camview.appendChild(camVideo);
+          var target = document.createElement('div');
+          target.className = 'plck-camtarget';
+          camview.appendChild(target);
+
+          camStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 }, advanced: [{ focusMode: 'continuous' }] }
+          });
+          camVideo.srcObject = camStream;
+          await camVideo.play();
+          camTrack = camStream.getVideoTracks()[0];
+
+          var caps = camTrack.getCapabilities ? camTrack.getCapabilities() : {};
+          camTorchBtn.style.display = caps.torch ? 'inline-flex' : 'none';
+          torchOn = false; camTorchBtn.textContent = '🔦';
+
+          camCanvas = document.createElement('canvas');
+          showResult(t.qrRunning, 'warn');
+          scanLoop();
+        } catch (e) {
+          stopCam();
+          showResult(t.qrFail, 'warn');
+        }
+      }
+
+      qrBtn.addEventListener('click', startCam);
+      camStopBtn.addEventListener('click', stopCam);
+      camTorchBtn.addEventListener('click', toggleTorch);
     }
 
     combosBox.addEventListener('click', function (e) {
@@ -436,51 +537,13 @@
     } catch (e) { return null; }
   }
 
-  // 캡처된 사진 파일 하나에서 QR 텍스트를 읽어낸다.
-  // (네이티브 BarcodeDetector 우선 시도 → 실패시 zxing-wasm(TRY_HARDER)로 재시도,
-  //  큰 원본 사진은 적당히 축소 후 분석 — My Lotto Lab의 camera_qr.html과 동일한 전략)
-  function decodeQrFromFile(file) {
-    return ensureZxing().then(function () {
-      return new Promise(function (resolve) {
-        var objUrl = URL.createObjectURL(file);
-        var img = new Image();
-        img.onload = function () {
-          URL.revokeObjectURL(objUrl);
-          var maxDim = 1280;
-          var scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
-          var w = Math.max(1, Math.round(img.naturalWidth * scale));
-          var h = Math.max(1, Math.round(img.naturalHeight * scale));
-          var canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-
-          (async function () {
-            var text = null;
-            if ('BarcodeDetector' in global) {
-              try {
-                var det = new global.BarcodeDetector({ formats: ['qr_code'] });
-                var blob = await new Promise(function (r) { canvas.toBlob(r, 'image/jpeg', 0.92); });
-                var bmp = await createImageBitmap(blob);
-                var codes = await det.detect(bmp);
-                if (codes.length > 0) text = codes[0].rawValue;
-              } catch (e) {}
-            }
-            if (!text) {
-              try {
-                var imageData = ctx.getImageData(0, 0, w, h);
-                var results = await global.ZXingWASM.readBarcodes(imageData, { formats: ['QRCode'], tryHarder: true, maxNumberOfSymbols: 1 });
-                if (results && results.length > 0) text = results[0].text;
-              } catch (e) {}
-            }
-            resolve(text);
-          })();
-        };
-        img.onerror = function () { URL.revokeObjectURL(objUrl); resolve(null); };
-        img.src = objUrl;
-      });
-    });
-  }
+  // ── 실시간 카메라 스캔 지원 게임 목록 (확장 지점) ──────────────────────────────
+  // 지금은 한국로또만 있지만, 다른 나라 게임도 실물 QR/바코드 표준이 생기면
+  // 여기에 항목 하나(어떤 포맷을 찾을지 + 그 텍스트를 회차/번호로 해석할 파서 함수)만
+  // 추가하면 됩니다. 나머지 카메라 UI·인식 로직은 전부 공용으로 재사용됩니다.
+  var CAMERA_SCAN_CONFIG = {
+    kr_lotto645: { formats: ['qr_code'], zxingFormats: ['QRCode'], parse: parseLottoQrUrl },
+  };
 
   function fetchLatestDraw(gameId) {
     var url = SUPABASE_URL + '/rest/v1/draw_results?select=round_no,draw_date,main_numbers,bonus_numbers&game_id=eq.' + gameId + '&order=round_no.desc&limit=1';
