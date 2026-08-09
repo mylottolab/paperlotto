@@ -161,7 +161,26 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 }
 .bet-btn:hover{ background:var(--gold-bright); }
 .bet-btn:disabled{ opacity:0.5; cursor:not-allowed; }
-.my-bet-tag{ font-size:10.5px; color:var(--ok); font-weight:700; margin-top:2px; }
+.my-bet-tag{
+  margin-top:3px;
+  display:inline-block;
+  font-size:10px;
+  font-weight:800;
+  padding:4px 9px;
+  border-radius:8px;
+  color:#1a1305;
+  background:linear-gradient(90deg, #e0b341 0%, #fff3c4 50%, #e0b341 100%);
+  background-size:200% 100%;
+  animation:mbtShimmer 2s linear infinite, mbtGlow 1.3s ease-in-out infinite;
+}
+@keyframes mbtShimmer{
+  0%{background-position:0% 50%;}
+  100%{background-position:200% 50%;}
+}
+@keyframes mbtGlow{
+  0%,100%{box-shadow:0 0 0 rgba(224,179,65,0);}
+  50%{box-shadow:0 0 8px rgba(224,179,65,.6);}
+}
 .bet-msg{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:300; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; display:none; }
 .bet-msg.show{ display:block; }
 .bet-msg.ok{ background:var(--ok); color:#fff; }
@@ -396,7 +415,7 @@ const I18N = {
     thRecentRank:"최근순위", thRank:"누적순위", thType:"전략기준", thName:"전략명 (Horse Name)", thRaces:"출전횟수", thWinCount:"당첨건수", thWinRate:"당첨율", thGradeDist:"등급분포", thDetail:"상세전략", thBet:"베팅",
     betBtn:"베팅", betPlaced:(units,horse)=>`${horse}에 ${units}구좌 베팅 완료!`, betFail:"베팅에 실패했습니다.",
     loginRequired:"베팅하려면 로그인이 필요합니다.", betUnitPrice:"1구좌 = 100P (최대 100구좌)",
-    myBet:(units)=>`내 베팅: ${units}구좌`, insufficientPoints:(shortfall)=>`포인트가 부족합니다 (부족: ${shortfall.toLocaleString()}P).`,
+    myBet:(units)=>`🌟 내 베팅: ${units}구좌 (${(units*100).toLocaleString()}P)`, insufficientPoints:(shortfall)=>`포인트가 부족합니다 (부족: ${shortfall.toLocaleString()}P).`,
     unitCapExceeded:(already)=>`이 말에는 이미 ${already}구좌를 베팅하셨습니다 (최대 100구좌).`,
     raceOpen:(round)=>`🏇 현재 베팅 가능 · ${round}회차`, raceClosed:"현재 베팅 가능한 경주가 없습니다 (정산 중이거나 다음 경주 준비 중).",
     bettingCloseIn:"베팅마감까지", raceNotOpen:"이 경주는 베팅이 마감됐습니다.",
@@ -424,7 +443,7 @@ const I18N = {
     thRecentRank:"Recent Rank", thRank:"Cumulative Rank", thType:"Type", thName:"Strategy (Horse Name)", thRaces:"Races Run", thWinCount:"Win Count", thWinRate:"Win Rate", thGradeDist:"Grade Breakdown", thDetail:"Detail", thBet:"Bet",
     betBtn:"Bet", betPlaced:(units,horse)=>`Placed ${units} unit(s) on ${horse}!`, betFail:"Bet failed.",
     loginRequired:"You need to log in to place a bet.", betUnitPrice:"1 unit = 100P (max 100 units)",
-    myBet:(units)=>`My bet: ${units} unit(s)`, insufficientPoints:(shortfall)=>`Not enough points (short by ${shortfall.toLocaleString()}P).`,
+    myBet:(units)=>`🌟 My bet: ${units} unit(s) (${(units*100).toLocaleString()}P)`, insufficientPoints:(shortfall)=>`Not enough points (short by ${shortfall.toLocaleString()}P).`,
     unitCapExceeded:(already)=>`You've already bet ${already} units on this horse (max 100).`,
     raceOpen:(round)=>`🏇 Betting Open · Round ${round}`, raceClosed:"No race is currently open for betting (settling or preparing the next race).",
     bettingCloseIn:"Betting closes in", raceNotOpen:"Betting for this race has closed.",
@@ -452,7 +471,7 @@ const I18N = {
     thRecentRank:"直近順位", thRank:"累積順位", thType:"戦略基準", thName:"戦略名(Horse Name)", thRaces:"出走回数", thWinCount:"当選件数", thWinRate:"当選率", thGradeDist:"等級分布", thDetail:"詳細戦略", thBet:"ベット",
     betBtn:"ベット", betPlaced:(units,horse)=>`${horse}に${units}口ベットしました！`, betFail:"ベットに失敗しました。",
     loginRequired:"ベットするにはログインが必要です。", betUnitPrice:"1口=100P(最大100口)",
-    myBet:(units)=>`自分のベット: ${units}口`, insufficientPoints:(shortfall)=>`ポイントが不足しています(不足:${shortfall.toLocaleString()}P)。`,
+    myBet:(units)=>`🌟 自分のベット: ${units}口 (${(units*100).toLocaleString()}P)`, insufficientPoints:(shortfall)=>`ポイントが不足しています(不足:${shortfall.toLocaleString()}P)。`,
     unitCapExceeded:(already)=>`この馬にはすでに${already}口ベット済みです(最大100口)。`,
     raceOpen:(round)=>`🏇 ベット受付中・第${round}回`, raceClosed:"現在ベット可能なレースがありません(精算中または次のレース準備中)。",
     bettingCloseIn:"ベット締切まで", raceNotOpen:"このレースはベットが締め切られました。",
