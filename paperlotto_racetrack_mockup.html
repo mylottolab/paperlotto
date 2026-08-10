@@ -770,7 +770,10 @@ async function openBetStatus(){
 
     var settled = currentRace.status === 'settled';
     var poolAmount = (agg || []).reduce(function(s, h){ return s + (h.total_amount || 0); }, 0);
-    var bettorsTotal = (agg || []).reduce(function(s, h){ return s + (h.bettors_count || 0); }, 0);
+    // ⚠ 2026-08-10 수정: 기존엔 말별 bettors_count를 전부 합산했는데, 한 사람이 여러 말에
+    // 나눠 베팅하면 그 사람이 여러 번 중복 카운트되는 버그가 있었음. race_bet_status가
+    // 이제 경주 전체 고유인원수를 total_bettors_in_race로 별도 계산해서 내려주므로 그걸 그대로 씀.
+    var bettorsTotal = (agg && agg.length) ? (agg[0].total_bettors_in_race || 0) : 0;
     var payoutRate = 0.8; // ⚠ My Lotto Lab과 동일한 20% 수수료율로 가정 — 실제 비율이 다르면 알려주세요
 
     var rows = (agg || []).slice().sort(function(a, b){ return (b.total_units||0) - (a.total_units||0); });
