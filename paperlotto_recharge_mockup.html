@@ -107,6 +107,22 @@ input[type="text"], input[type="number"]{
   .tabs{ flex-direction:column; gap:4px; }
   .tabs button{ font-size:12.5px; padding:10px; }
 }
+
+.history-panel{ background:var(--paper); color:var(--ink); border-radius:14px; padding:26px; margin-top:22px; }
+.history-panel h3{ font-size:14.5px; margin-bottom:16px; }
+.hist-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid rgba(28,33,48,0.1); font-size:12.5px; }
+.hist-row:last-child{ border-bottom:none; }
+.hist-left{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.hist-label{ font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hist-sub{ font-size:11px; color:var(--ink-dim); }
+.hist-amount{ font-weight:800; font-family:'IBM Plex Mono',monospace; white-space:nowrap; flex-shrink:0; }
+.hist-amount.plus{ color:var(--ok); }
+.hist-amount.minus{ color:var(--ink-dim); }
+.hist-badge{ display:inline-block; padding:1px 7px; border-radius:9px; font-size:10px; font-weight:700; margin-left:6px; }
+.hist-badge.pending{ background:rgba(184,134,46,0.15); color:#8a5b1c; }
+.hist-badge.approved{ background:rgba(31,122,79,0.12); color:var(--ok); }
+.hist-badge.rejected{ background:rgba(198,90,46,0.12); color:var(--err); }
+.hist-empty{ text-align:center; padding:24px; color:var(--ink-dim); font-size:12.5px; }
 </style>
 </head>
 <body>
@@ -211,6 +227,11 @@ input[type="text"], input[type="number"]{
       <div class="status-msg" id="bankMsg"></div>
     </div>
   </div>
+
+  <div class="history-panel" id="historyPanel" style="display:none;">
+    <h3 data-i18n="txHistoryTitle">💳 포인트 입출금 내역</h3>
+    <div id="historyList"><div class="hist-empty" data-i18n="txLoading">불러오는 중…</div></div>
+  </div>
 </main>
 
 <script>
@@ -245,6 +266,8 @@ const i18n = {
     errPaymentPrepFail:"결제 준비 실패",
     errDepositorNameNeeded:"입금자명을 입력해주세요.",
     errBankRequestFail:"신청 실패",
+    txHistoryTitle:"💳 포인트 입출금 내역", txLoading:"불러오는 중…", txEmpty:"입출금 내역이 없습니다.",
+    txStatusPending:"확인중", txStatusApproved:"완료", txStatusRejected:"반려", txStatusFailed:"실패",
   },
   en: {
     navBack:"← All Games", balanceLabel:"Current Points Balance",
@@ -274,6 +297,8 @@ const i18n = {
     errPaymentPrepFail:"Failed to prepare payment",
     errDepositorNameNeeded:"Please enter the depositor's name.",
     errBankRequestFail:"Request failed",
+    txHistoryTitle:"💳 Point Transaction History", txLoading:"Loading…", txEmpty:"No transactions yet.",
+    txStatusPending:"Pending", txStatusApproved:"Completed", txStatusRejected:"Rejected", txStatusFailed:"Failed",
   },
   ja: {
     navBack:"← 全ゲーム", balanceLabel:"現在の保有ポイント",
@@ -303,6 +328,8 @@ const i18n = {
     errPaymentPrepFail:"決済準備に失敗しました",
     errDepositorNameNeeded:"入金者名を入力してください。",
     errBankRequestFail:"申請に失敗しました",
+    txHistoryTitle:"💳 ポイント入出金履歴", txLoading:"読み込み中…", txEmpty:"入出金履歴がありません。",
+    txStatusPending:"確認中", txStatusApproved:"完了", txStatusRejected:"却下", txStatusFailed:"失敗",
   },
 };
 
@@ -322,6 +349,7 @@ function applyLang(lang){
   updateCardEstPoints();
   updateBankEstPoints();
   renderBankInfo();
+  if (typeof renderPointHistory === 'function') renderPointHistory();
 }
 document.querySelectorAll('.lang-toggle button').forEach(btn => {
   btn.addEventListener('click', () => applyLang(btn.dataset.lang));
@@ -335,6 +363,7 @@ const PAYPAL_CAPTURE_ORDER_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/funct
 const BANK_INFO_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-request";
 const BANK_REQUEST_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-request";
 const POINTS_BALANCE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/points-balance";
+const POINT_HISTORY_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/point-history";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 let accessToken = null;
@@ -672,6 +701,55 @@ document.getElementById('bankSubmitBtn').addEventListener('click', async () => {
   }
 });
 
+// ── 포인트 입출금 내역 (2026-08-11 신규) ──
+let lastHistoryItems = [];
+async function loadPointHistory(){
+  const panel = document.getElementById('historyPanel');
+  panel.style.display = 'block';
+  document.getElementById('historyList').innerHTML = '<div class="hist-empty">' + i18n[currentLang].txLoading + '</div>';
+  try {
+    const resp = await fetch(POINT_HISTORY_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    lastHistoryItems = resp.ok ? (data.items || []) : [];
+  } catch (e) {
+    lastHistoryItems = [];
+  }
+  renderPointHistory();
+}
+
+function statusBadge(status){
+  const t = i18n[currentLang];
+  const map = {
+    approved: ['approved', t.txStatusApproved], completed: ['approved', t.txStatusApproved],
+    pending: ['pending', t.txStatusPending], created: ['pending', t.txStatusPending],
+    rejected: ['rejected', t.txStatusRejected], failed: ['rejected', t.txStatusFailed],
+  };
+  const m = map[status];
+  if (!m) return '';
+  return '<span class="hist-badge ' + m[0] + '">' + m[1] + '</span>';
+}
+
+function renderPointHistory(){
+  const t = i18n[currentLang];
+  const localeTag = currentLang === 'ko' ? 'ko-KR' : (currentLang === 'ja' ? 'ja-JP' : 'en-US');
+  const list = document.getElementById('historyList');
+  if (!lastHistoryItems.length) {
+    list.innerHTML = '<div class="hist-empty">' + t.txEmpty + '</div>';
+    return;
+  }
+  list.innerHTML = lastHistoryItems.map(function(h){
+    const when = new Date(h.at).toLocaleString(localeTag, { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    if (h.kind === 'deposit') {
+      const pts = h.points != null ? ('+' + Number(h.points).toLocaleString() + 'P') : (Number(h.amountKrw||0).toLocaleString());
+      return '<div class="hist-row"><div class="hist-left"><div class="hist-label">' + h.label + statusBadge(h.status) + '</div><div class="hist-sub">' + when + '</div></div><div class="hist-amount plus">' + pts + '</div></div>';
+    }
+    if (h.kind === 'credit') {
+      return '<div class="hist-row"><div class="hist-left"><div class="hist-label">' + h.label + '</div><div class="hist-sub">' + when + '</div></div><div class="hist-amount plus">+' + Number(h.points||0).toLocaleString() + 'P</div></div>';
+    }
+    return '<div class="hist-row"><div class="hist-left"><div class="hist-label">' + h.label + '</div><div class="hist-sub">' + when + '</div></div><div class="hist-amount minus">-' + Number(h.points||0).toLocaleString() + 'P</div></div>';
+  }).join('');
+}
+
 // ── 초기화 ──
 applyLang(currentLang);
 (async () => {
@@ -680,6 +758,7 @@ applyLang(currentLang);
     await loadExchangeRate();
     await initPaypal();
     await loadBankInfo();
+    await loadPointHistory();
   }
 })();
 </script>
