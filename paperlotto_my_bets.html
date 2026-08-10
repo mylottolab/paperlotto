@@ -262,10 +262,24 @@ function t(){ return I18N[currentLang]; }
 // 고치고 다시 정산해야 하는 부담이 있어 — 우선 화면에서 "알려진 문구 패턴"을 언어별로
 // 번역해서 보여주도록 처리한다. 매칭되지 않는 새 문구가 나오면(향후 다른 사유의 환불 등)
 // 원문(한글)을 그대로 보여준다 — 안전한 폴백.
+//
+// ⚠ 2026-08-10 정산룰 개정: "1등마에 베팅한 사람이 없어 전액환불" 문구는 더 이상 서버가
+// 만들지 않는다(이제 2등, 3등...으로 순위를 내려가며 배당하는 방식으로 바뀜 — race-advance의
+// settleRace() 참고). 그 대신 캐스케이드가 일어났을 때 서버가 남기는 새 문구(등수/말번호가
+// 매번 달라지는 동적 문구)를 아래에서 캡처그룹으로 뽑아 언어별로 재구성해서 보여준다.
 const PAYOUT_NOTE_TRANSLATIONS = [
   {
-    // ⚠ 원래는 문장 전체를 엄격하게 매칭했으나, DB에 저장된 실제 문구가 쉼표/띄어쓰기 등에서
-    // 미세하게 달라 매칭에 실패할 수 있어 — 핵심 키워드만으로 느슨하게 매칭하도록 완화함.
+    // 새 문구 예시: "1등마부터 순서대로 확인해, 베팅이 있었던 가장 높은 순위인 3등마(#57)에 배당되었습니다."
+    // → 등수(3)와 말번호(57)를 뽑아서 언어별 문장에 그대로 끼워넣는다.
+    match: /1등마부터\s*순서대로\s*확인해,?\s*베팅이\s*있었던\s*가장\s*높은\s*순위인\s*(\d+)등마\(#?(\d+)\)에\s*배당/,
+    build: (m) => ({
+      en: `No one bet on the higher-ranked horses ahead of it, so the payout went to the highest rank that actually had bettors — rank ${m[1]} (horse #${m[2]}).`,
+      ja: `それより上位の馬には誰もベットしていなかったため、実際にベットがあった最上位の順位（${m[1]}着馬・#${m[2]}）に配当されました。`,
+    }),
+  },
+  {
+    // 구버전(2026-08-10 이전) 정산 기록 호환용 — 예전에 이 문구로 이미 정산된 과거 베팅내역이
+    // 남아있을 수 있어 계속 지원한다 (신규 정산에는 더 이상 쓰이지 않음).
     match: /1등마에\s*베팅한\s*사람이\s*없/,
     en: 'No one bet on the winning horse, so the entire prize pool was refunded to all participants of this race in proportion to their bets.',
     ja: '1着馬にベットした人がいなかったため、賞金プール全額がこのレースの全参加者にベット比率に応じて返金されました。',
@@ -275,7 +289,11 @@ function translatePayoutNote(note){
   if (!note) return note;
   if (currentLang === 'ko') return note;
   for (const item of PAYOUT_NOTE_TRANSLATIONS) {
-    if (item.match.test(note)) return item[currentLang] || note;
+    const m = item.match.exec(note);
+    if (m) {
+      if (item.build) { const r = item.build(m); return r[currentLang] || note; }
+      return item[currentLang] || note;
+    }
   }
   return note; // 알려지지 않은 문구는 원문 그대로(폴백)
 }
