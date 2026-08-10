@@ -148,6 +148,28 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 .race-banner .rb-sub{ font-size:12px; opacity:0.85; }
 .race-banner .rb-countdown{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:15px; }
 .race-banner.closed{ background:var(--paper-2); color:var(--ink-dim); }
+.rb-bet-status-btn{
+  background:rgba(28,33,48,0.14); color:var(--ink); border:none; padding:6px 13px;
+  border-radius:20px; font-size:11.5px; font-weight:700; cursor:pointer; font-family:inherit;
+}
+.rb-bet-status-btn:hover{ background:rgba(28,33,48,0.22); }
+.bsm-overlay{position:fixed;inset:0;background:rgba(12,16,32,.6);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;}
+.bsm-box{background:var(--paper);color:var(--ink);border-radius:14px;width:100%;max-width:640px;max-height:85vh;overflow-y:auto;padding:22px;box-shadow:0 14px 30px -18px rgba(0,0,0,0.55);}
+.bsm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.bsm-title{font-family:'Fraunces',serif;font-size:16px;font-weight:700;}
+.bsm-close{background:none;border:none;color:var(--ink-dim);font-size:20px;cursor:pointer;line-height:1;}
+.bsm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.bsm-stat{background:var(--paper-2);border-radius:10px;padding:10px;}
+.bsm-stat-label{font-size:10.5px;color:var(--ink-dim);font-weight:600;margin-bottom:2px;font-family:'IBM Plex Mono',monospace;}
+.bsm-stat-val{font-size:15px;font-weight:800;color:var(--ink);}
+.bsm-table{width:100%;border-collapse:collapse;font-size:12px;}
+.bsm-table th{text-align:left;padding:7px 5px;color:var(--ink-dim);border-bottom:2px solid rgba(28,33,48,0.15);font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--paper-2);}
+.bsm-table td{padding:7px 5px;border-bottom:1px solid rgba(28,33,48,0.08);color:var(--ink);font-weight:600;}
+.bsm-table tr.winner{background:rgba(184,134,46,0.14);}
+.bsm-est{color:var(--gold);font-weight:700;}
+.bsm-actual-win{color:var(--ok);font-weight:800;}
+.bsm-actual-lose{color:var(--ink-dim);font-weight:600;}
+.bsm-note{font-size:10.5px;color:var(--ink-dim);margin-top:8px;}
 .bet-cell{ display:flex; align-items:center; gap:6px; }
 .bet-cell input{ width:52px; padding:6px 7px; border-radius:6px; border:1px solid rgba(28,33,48,0.2); font-family:'IBM Plex Mono',monospace; font-size:12px; }
 .bet-cell input.invalid{ border:2px solid #c0392b; background:#fdecea; }
@@ -415,6 +437,13 @@ const I18N = {
     thRecentRank:"최근순위", thRank:"누적순위", thType:"전략기준", thName:"전략명 (Horse Name)", thRaces:"출전횟수", thWinCount:"당첨건수", thWinRate:"당첨율", thGradeDist:"등급분포", thDetail:"상세전략", thBet:"베팅",
     betBtn:"베팅", betPlaced:(units,horse)=>`${horse}에 ${units}구좌 베팅 완료!`, betFail:"베팅에 실패했습니다.",
     loginRequired:"베팅하려면 로그인이 필요합니다.", betUnitPrice:"1구좌 = 100P (최대 100구좌)",
+    betStatusBtn:"베팅현황", betStatusTitle:(round)=>`Round ${round} 베팅현황`,
+    bsmBettors:"전체 참여", bsmPool:"총 판돈", bsmPayoutFund:(pct)=>`배당재원(${pct}%)`,
+    bsmColNo:"번호", bsmColName:"이름", bsmColBettors:"참여자", bsmColUnits:"총구좌", bsmColAmount:"총베팅액",
+    bsmColEst:"1등시 구좌당", bsmColActual:"배당/구좌", bsmLose:"낙첨",
+    bsmNoteOpen:"총구좌 많은 순 정렬 · \"1등시 구좌당\"은 지금 판돈 기준 실시간 예상치입니다",
+    bsmNoteSettled:"실제 배당 확정 · 우승마에 강조 표시",
+    bsmLoadFail:"베팅현황을 불러오지 못했습니다.",
     myBet:(units)=>`🌟 내 베팅: ${units}구좌 (${(units*100).toLocaleString()}P)`, insufficientPoints:(shortfall)=>`포인트가 부족합니다 (부족: ${shortfall.toLocaleString()}P).`,
     unitCapExceeded:(already)=>`이 말에는 이미 ${already}구좌를 베팅하셨습니다 (최대 100구좌).`,
     raceOpen:(round)=>`🏇 현재 베팅 가능 · ${round}회차`, raceClosed:"현재 베팅 가능한 경주가 없습니다 (정산 중이거나 다음 경주 준비 중).",
@@ -443,6 +472,13 @@ const I18N = {
     thRecentRank:"Recent Rank", thRank:"Cumulative Rank", thType:"Type", thName:"Strategy (Horse Name)", thRaces:"Races Run", thWinCount:"Win Count", thWinRate:"Win Rate", thGradeDist:"Grade Breakdown", thDetail:"Detail", thBet:"Bet",
     betBtn:"Bet", betPlaced:(units,horse)=>`Placed ${units} unit(s) on ${horse}!`, betFail:"Bet failed.",
     loginRequired:"You need to log in to place a bet.", betUnitPrice:"1 unit = 100P (max 100 units)",
+    betStatusBtn:"Bet status", betStatusTitle:(round)=>`Round ${round} bet status`,
+    bsmBettors:"Total bettors", bsmPool:"Total pool", bsmPayoutFund:(pct)=>`Payout fund (${pct}%)`,
+    bsmColNo:"No.", bsmColName:"Name", bsmColBettors:"Bettors", bsmColUnits:"Total units", bsmColAmount:"Total bet",
+    bsmColEst:"Est. payout/unit", bsmColActual:"Payout/unit", bsmLose:"Lost",
+    bsmNoteOpen:"Sorted by total units · \"Est. payout/unit\" is a live estimate based on the current pool",
+    bsmNoteSettled:"Final payout confirmed · Winning horse highlighted",
+    bsmLoadFail:"Couldn't load bet status.",
     myBet:(units)=>`🌟 My bet: ${units} unit(s) (${(units*100).toLocaleString()}P)`, insufficientPoints:(shortfall)=>`Not enough points (short by ${shortfall.toLocaleString()}P).`,
     unitCapExceeded:(already)=>`You've already bet ${already} units on this horse (max 100).`,
     raceOpen:(round)=>`🏇 Betting Open · Round ${round}`, raceClosed:"No race is currently open for betting (settling or preparing the next race).",
@@ -471,6 +507,13 @@ const I18N = {
     thRecentRank:"直近順位", thRank:"累積順位", thType:"戦略基準", thName:"戦略名(Horse Name)", thRaces:"出走回数", thWinCount:"当選件数", thWinRate:"当選率", thGradeDist:"等級分布", thDetail:"詳細戦略", thBet:"ベット",
     betBtn:"ベット", betPlaced:(units,horse)=>`${horse}に${units}口ベットしました！`, betFail:"ベットに失敗しました。",
     loginRequired:"ベットするにはログインが必要です。", betUnitPrice:"1口=100P(最大100口)",
+    betStatusBtn:"ベット状況", betStatusTitle:(round)=>`第${round}回 ベット状況`,
+    bsmBettors:"参加者数", bsmPool:"総額", bsmPayoutFund:(pct)=>`配当原資(${pct}%)`,
+    bsmColNo:"番号", bsmColName:"名前", bsmColBettors:"参加者", bsmColUnits:"総口数", bsmColAmount:"総ベット額",
+    bsmColEst:"1位時の口あたり", bsmColActual:"配当/口", bsmLose:"落選",
+    bsmNoteOpen:"総口数の多い順 ・「1位時の口あたり」は現在の賭け金に基づくリアルタイム予想値です",
+    bsmNoteSettled:"実際の配当確定 ・勝ち馬をハイライト表示",
+    bsmLoadFail:"ベット状況を読み込めませんでした。",
     myBet:(units)=>`🌟 自分のベット: ${units}口 (${(units*100).toLocaleString()}P)`, insufficientPoints:(shortfall)=>`ポイントが不足しています(不足:${shortfall.toLocaleString()}P)。`,
     unitCapExceeded:(already)=>`この馬にはすでに${already}口ベット済みです(最大100口)。`,
     raceOpen:(round)=>`🏇 ベット受付中・第${round}回`, raceClosed:"現在ベット可能なレースがありません(精算中または次のレース準備中)。",
@@ -637,6 +680,7 @@ function renderRaceBanner(){
       <div class="rb-title">${tt.raceOpen(currentRace.round_no)}</div>
       <div class="rb-sub">${tt.betUnitPrice}</div>
     </div>
+    <button type="button" class="rb-bet-status-btn" onclick="openBetStatus()">📊 ${t().betStatusBtn}</button>
     <div class="rb-countdown" id="rbCountdown">--:--:--</div>`;
 
   const closeAt = new Date(currentRace.betting_close_at);
@@ -651,6 +695,75 @@ function renderRaceBanner(){
   };
   tick();
   raceCountdownTimer = setInterval(tick, 1000);
+}
+
+// ── 베팅현황판 팝업 (2026-08-10 신규) ──────────────────────────────────────
+// race_bet_status RPC(집계전용, 개인정보 노출 없음)를 호출해서 100마리 전체 베팅현황을 보여준다.
+async function openBetStatus(){
+  if (!currentRace) return;
+  var tt = t();
+
+  var existing = document.getElementById('bsmOverlay');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'bsmOverlay';
+  overlay.className = 'bsm-overlay';
+  overlay.innerHTML =
+    '<div class="bsm-box">' +
+      '<div class="bsm-head"><div class="bsm-title">' + tt.betStatusTitle(currentRace.round_no) + '</div><button type="button" class="bsm-close" id="bsmCloseBtn">✕</button></div>' +
+      '<div id="bsmBody" style="text-align:center;padding:30px 0;color:var(--ink-dim);">' + t().loading + '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.remove(); });
+  document.getElementById('bsmCloseBtn').addEventListener('click', function(){ overlay.remove(); });
+
+  try {
+    var { data: agg, error } = await sb.rpc('race_bet_status', { p_race_id: currentRace.id });
+    if (error) throw error;
+
+    var nameByNo = {};
+    horseRows.forEach(function(h){ nameByNo[h.horse_no] = h.name; });
+
+    var settled = currentRace.status === 'settled';
+    var poolAmount = (agg || []).reduce(function(s, h){ return s + (h.total_amount || 0); }, 0);
+    var bettorsTotal = (agg || []).reduce(function(s, h){ return s + (h.bettors_count || 0); }, 0);
+    var payoutRate = 0.8; // ⚠ My Lotto Lab과 동일한 20% 수수료율로 가정 — 실제 비율이 다르면 알려주세요
+
+    var rows = (agg || []).slice().sort(function(a, b){ return (b.total_units||0) - (a.total_units||0); });
+
+    var rowsHtml = rows.map(function(h){
+      var name = nameByNo[h.horse_no] || ('#' + h.horse_no);
+      var estPayout = h.total_units > 0 ? Math.floor((poolAmount * payoutRate) / h.total_units) : 0;
+      var lastCol = settled
+        ? (h.is_winner
+            ? '<span class="bsm-actual-win">🏆 ' + Number(h.payout_per_unit).toLocaleString() + 'P</span>'
+            : '<span class="bsm-actual-lose">' + tt.bsmLose + '</span>')
+        : '<span class="bsm-est">' + estPayout.toLocaleString() + 'P</span>';
+      return '<tr class="' + (settled && h.is_winner ? 'winner' : '') + '">' +
+        '<td>' + h.horse_no + '</td>' +
+        '<td>' + name + '</td>' +
+        '<td>' + h.bettors_count + '</td>' +
+        '<td>' + Number(h.total_units).toLocaleString() + '</td>' +
+        '<td>' + Number(h.total_amount).toLocaleString() + 'P</td>' +
+        '<td>' + lastCol + '</td>' +
+      '</tr>';
+    }).join('');
+
+    document.getElementById('bsmBody').innerHTML =
+      '<div class="bsm-stats">' +
+        '<div class="bsm-stat"><div class="bsm-stat-label">' + tt.bsmBettors + '</div><div class="bsm-stat-val">' + bettorsTotal.toLocaleString() + '</div></div>' +
+        '<div class="bsm-stat"><div class="bsm-stat-label">' + tt.bsmPool + '</div><div class="bsm-stat-val">' + poolAmount.toLocaleString() + 'P</div></div>' +
+        '<div class="bsm-stat"><div class="bsm-stat-label">' + tt.bsmPayoutFund(Math.round(payoutRate*100)) + '</div><div class="bsm-stat-val">' + Math.floor(poolAmount*payoutRate).toLocaleString() + 'P</div></div>' +
+      '</div>' +
+      '<table class="bsm-table"><thead><tr>' +
+        '<th>' + tt.bsmColNo + '</th><th>' + tt.bsmColName + '</th><th>' + tt.bsmColBettors + '</th><th>' + tt.bsmColUnits + '</th><th>' + tt.bsmColAmount + '</th><th>' + (settled ? tt.bsmColActual : tt.bsmColEst) + '</th>' +
+      '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
+      '<div class="bsm-note">' + (settled ? tt.bsmNoteSettled : tt.bsmNoteOpen) + '</div>';
+  } catch (e) {
+    console.error('[racetrack] bet-status error', e);
+    document.getElementById('bsmBody').textContent = t().bsmLoadFail;
+  }
 }
 
 function showBetMsg(text, ok){
