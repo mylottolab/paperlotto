@@ -264,7 +264,9 @@ function t(){ return I18N[currentLang]; }
 // 원문(한글)을 그대로 보여준다 — 안전한 폴백.
 const PAYOUT_NOTE_TRANSLATIONS = [
   {
-    match: /1등마에\s*베팅한\s*사람이\s*없어,?\s*상금풀\s*전액이\s*이\s*경주\s*전체\s*참가자에게\s*베팅\s*비율대로\s*환불되었습니다\.?/,
+    // ⚠ 원래는 문장 전체를 엄격하게 매칭했으나, DB에 저장된 실제 문구가 쉼표/띄어쓰기 등에서
+    // 미세하게 달라 매칭에 실패할 수 있어 — 핵심 키워드만으로 느슨하게 매칭하도록 완화함.
+    match: /1등마에\s*베팅한\s*사람이\s*없/,
     en: 'No one bet on the winning horse, so the entire prize pool was refunded to all participants of this race in proportion to their bets.',
     ja: '1着馬にベットした人がいなかったため、賞金プール全額がこのレースの全参加者にベット比率に応じて返金されました。',
   },
