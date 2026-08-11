@@ -261,6 +261,9 @@ const i18n = {
     paypalPaySuccess:function(pts){ return `✅ 결제 완료! ${pts.toLocaleString()}P가 적립되었습니다.`; },
     errPaypalError:"결제 중 오류가 발생했습니다. 다시 시도해주세요.",
     errPaypalLoadFail:"PayPal 결제 버튼을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.",
+    paypalSlowLoading:"아직 불러오는 중입니다... 결제 서버가 잠에서 깨어나는 중일 수 있어요, 최대 1분 정도 걸릴 수 있습니다.",
+    loadingPaymentModule:"결제 모듈을 불러오는 중...",
+    retryBtn:"다시 시도",
     errMinAmountKrw:"충전금액은 1,000원 이상이어야 합니다.",
     errBuyerNameNeeded:"구매자 이름을 입력해주세요.",
     errPaymentPrepFail:"결제 준비 실패",
@@ -292,6 +295,9 @@ const i18n = {
     paypalPaySuccess:function(pts){ return `✅ Payment complete! ${pts.toLocaleString()}P has been credited.`; },
     errPaypalError:"An error occurred during payment. Please try again.",
     errPaypalLoadFail:"Could not load the PayPal payment button. Please try again shortly.",
+    paypalSlowLoading:"Still loading... the payment server may be waking up from sleep, this can take up to a minute.",
+    loadingPaymentModule:"Loading payment module...",
+    retryBtn:"Try again",
     errMinAmountKrw:"The charge amount must be at least ₩1,000.",
     errBuyerNameNeeded:"Please enter the buyer's name.",
     errPaymentPrepFail:"Failed to prepare payment",
@@ -323,6 +329,9 @@ const i18n = {
     paypalPaySuccess:function(pts){ return `✅ 決済完了！${pts.toLocaleString()}Pが付与されました。`; },
     errPaypalError:"決済中にエラーが発生しました。もう一度お試しください。",
     errPaypalLoadFail:"PayPal決済ボタンを読み込めませんでした。しばらくしてから再度お試しください。",
+    paypalSlowLoading:"まだ読み込み中です...決済サーバーがスリープから復帰中の可能性があります。最大1分ほどかかることがあります。",
+    loadingPaymentModule:"決済モジュールを読み込んでいます...",
+    retryBtn:"再試行",
     errMinAmountKrw:"チャージ金額は1,000ウォン以上である必要があります。",
     errBuyerNameNeeded:"購入者名を入力してください。",
     errPaymentPrepFail:"決済準備に失敗しました",
@@ -360,6 +369,7 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC
 const PAYPAL_CLIENT_ID_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-client-id";
 const PAYPAL_CREATE_ORDER_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-create-order";
 const PAYPAL_CAPTURE_ORDER_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/paypal-capture-order";
+const PAYMENT_CLIENT_ERROR_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/payment-client-error";
 const BANK_INFO_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-request";
 const BANK_REQUEST_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/bank-transfer-request";
 const POINTS_BALANCE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co/functions/v1/points-balance";
@@ -544,6 +554,24 @@ document.getElementById('cardPayBtn').addEventListener('click', async () => {
 let paypalSdkLoaded = false;
 let paypalSdkLoading = null;
 
+// ── 클라이언트에서 발생한 결제 실패를 서버에 기록 (2026-08-11 신규) ──
+// "손님이 결제 안 된다"고만 하고 근거가 전혀 안 남아서 원인 파악이 불가능했던
+// 문제를 해결하기 위함. My Lotto Lab의 payment_paypal.js와 동일한 패턴.
+function reportPaymentError(stage, message, extra){
+  try {
+    fetch(PAYMENT_CLIENT_ERROR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY, 'apikey': SUPABASE_PUBLISHABLE_KEY },
+      body: JSON.stringify({
+        gateway: 'paypal', stage: stage, message: String(message || ''),
+        userAgent: navigator.userAgent, lang: currentLang,
+        extra: extra || null,
+      }),
+      keepalive: true,
+    }).catch(function(){});
+  } catch(e){}
+}
+
 function loadPaypalSdk(clientId){
   if (paypalSdkLoaded) return Promise.resolve();
   if (paypalSdkLoading) return paypalSdkLoading;
@@ -555,7 +583,7 @@ function loadPaypalSdk(clientId){
     const paypalLocale = navigator.language && navigator.language.toLowerCase().startsWith('ko') ? 'ko_KR' : 'en_US';
     script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&locale=${paypalLocale}`;
     script.onload = () => { paypalSdkLoaded = true; resolve(); };
-    script.onerror = reject;
+    script.onerror = (e) => { reportPaymentError('sdk-script-load', 'PayPal SDK script failed to load (script.onerror)'); reject(e); };
     document.head.appendChild(script);
   });
   return paypalSdkLoading;
@@ -588,6 +616,7 @@ function renderPaypalButtons(){
         console.error('[paypal-create-order]', data.error);
         msgEl.textContent = t.errOrderCreateFail;
         msgEl.className = 'status-msg err';
+        reportPaymentError('create-order', data.error || 'create-order failed', { usdAmount });
         throw new Error('order failed');
       }
       return data.id;
@@ -604,6 +633,7 @@ function renderPaypalButtons(){
         console.error('[paypal-capture-order]', result.error);
         msgEl.textContent = t.errPaymentApproveFail;
         msgEl.className = 'status-msg err';
+        reportPaymentError('capture-order', result.error || 'capture failed', { orderID: data.orderID });
         return;
       }
       msgEl.textContent = t.paypalPaySuccess(result.points);
@@ -615,23 +645,46 @@ function renderPaypalButtons(){
       console.error('[PayPal] 버튼 오류:', err);
       msgEl.textContent = t.errPaypalError;
       msgEl.className = 'status-msg err';
+      reportPaymentError('paypal-buttons-onerror', (err && err.message) || String(err));
     },
   }).render('#paypal-button-container');
 }
 
+// ⚠ 2026-08-11 수정: 이전엔 client-id 조회가 오래 걸리거나 실패해도 "불러오는
+// 중..." 상태로 무한정 있거나 그냥 에러 문구만 뜨고 재시도할 방법이 없었음.
+// 이제는 5초 넘으면 "서버가 깨어나는 중일 수 있어요" 안내로 바뀌고, 실패하면
+// 다시 시도 버튼과 함께 서버에 실패 원인이 자동 기록된다.
+function fetchWithTimeout(url, options, timeoutMs){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, Object.assign({}, options, { signal: controller.signal })).finally(() => clearTimeout(timer));
+}
+
 async function initPaypal(){
   const t = i18n[currentLang];
+  const container = document.getElementById('paypal-button-container');
+  container.innerHTML = `<div class="status-msg" id="paypalLoadingMsg">${t.loadingPaymentModule || ''}</div>`;
+  const loadingMsgEl = document.getElementById('paypalLoadingMsg');
+  const slowHintTimer = setTimeout(() => {
+    if (loadingMsgEl) loadingMsgEl.textContent = t.paypalSlowLoading;
+  }, 5000);
+
   try {
-    const resp = await fetch(PAYPAL_CLIENT_ID_URL, {
+    const resp = await fetchWithTimeout(PAYPAL_CLIENT_ID_URL, {
       headers: { 'Authorization': 'Bearer ' + SUPABASE_PUBLISHABLE_KEY, 'apikey': SUPABASE_PUBLISHABLE_KEY },
-    });
+    }, 45000);
+    clearTimeout(slowHintTimer);
     const data = await resp.json();
-    if (!resp.ok || !data.clientId) { console.error('[paypal-client-id]', data.error); throw new Error('config load failed'); }
+    if (!resp.ok || !data.clientId) { console.error('[paypal-client-id]', data.error); throw new Error(data.error || 'config load failed'); }
     await loadPaypalSdk(data.clientId);
     renderPaypalButtons();
   } catch (e) {
-    document.getElementById('paypal-button-container').innerHTML =
-      `<div style="font-size:12.5px; color:var(--err);">${t.errPaypalLoadFail}</div>`;
+    clearTimeout(slowHintTimer);
+    const isTimeout = e.name === 'AbortError';
+    reportPaymentError('client-id-fetch', isTimeout ? 'timeout after 45s' : e.message);
+    container.innerHTML =
+      `<div style="font-size:12.5px; color:var(--err);">${t.errPaypalLoadFail}</div>` +
+      `<button type="button" onclick="initPaypal()" style="margin-top:8px;background:var(--gold);color:var(--ink);border:none;border-radius:7px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;">${t.retryBtn}</button>`;
   }
 }
 
