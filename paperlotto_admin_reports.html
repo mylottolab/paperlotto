@@ -104,6 +104,7 @@ tr:last-child td{ border-bottom:none; }
     <button class="report-tab" data-report="signups">신규 가입 회원</button>
     <button class="report-tab" data-report="sales">항목별 판매현황</button>
     <button class="report-tab" data-report="race">🏆 경마 배당내역</button>
+    <button class="report-tab" data-report="errors">⚠️ 결제 실패 로그</button>
   </div>
 
   <div class="filter-bar">
@@ -188,6 +189,7 @@ async function loadReport() {
     if (currentReport === 'signups') renderSignups(data);
     if (currentReport === 'sales') renderSales(data);
     if (currentReport === 'race') renderRace(data);
+    if (currentReport === 'errors') renderErrors(data);
   } catch (e) {
     body.innerHTML = '<div class="err-note">오류가 발생했습니다: ' + e.message + '</div>';
   }
@@ -339,6 +341,30 @@ function renderRace(data) {
     html += '</tbody></table></div>';
   }
 
+  body.innerHTML = html;
+}
+
+function renderErrors(data) {
+  const body = document.getElementById('reportBody');
+  const items = data.items || [];
+  if (items.length === 0) {
+    body.innerHTML = '<div class="empty-state">해당 기간에 기록된 결제 실패가 없습니다.</div>';
+    return;
+  }
+  let html = '<div class="card"><table><thead><tr>' +
+    '<th>시각</th><th>결제수단</th><th>단계</th><th>메시지</th><th>언어</th><th>기기/브라우저</th>' +
+    '</tr></thead><tbody>';
+  items.forEach(r => {
+    html += '<tr>' +
+      '<td>' + fmtDateTime(r.created_at) + '</td>' +
+      '<td>' + escapeHtml(r.gateway || '-') + '</td>' +
+      '<td>' + escapeHtml(r.stage || '-') + '</td>' +
+      '<td style="white-space:normal;max-width:280px;">' + escapeHtml(r.message || '-') + '</td>' +
+      '<td>' + escapeHtml(r.lang || '-') + '</td>' +
+      '<td style="white-space:normal;max-width:220px;font-size:11px;">' + escapeHtml(r.user_agent || '-') + '</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
   body.innerHTML = html;
 }
 
