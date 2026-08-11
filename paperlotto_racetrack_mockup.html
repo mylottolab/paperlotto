@@ -238,6 +238,29 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 .rt-numbers-row .rn-no{ width:26px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
 .rt-pip{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; background:rgba(28,33,48,0.07); color:var(--ink); flex-shrink:0; }
 .rt-pip.bonus{ background:var(--gold); color:var(--ink); }
+.rt-pip.hit{ background:#22c55e; color:#062b13; box-shadow:0 0 0 2px #16a34a inset; }
+.rt-pip.bonus-hit{ background:#a855f7; color:#fff; box-shadow:0 0 0 2px #7e22ce inset; }
+
+/* ── 2026-08-11 신규: 지난 회차 결과보기 ── */
+.past-results-section{ max-width:1180px; margin:0 auto 18px; padding:0 24px; }
+.past-results-toggle{ width:100%; text-align:left; background:var(--board-2); border:1px solid var(--board-line); border-radius:12px; padding:12px 16px; color:var(--text-hi); font-size:13px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.past-results-toggle:hover{ border-color:var(--gold); }
+.past-results-body{ background:var(--board-2); border:1px solid var(--board-line); border-top:none; border-radius:0 0 12px 12px; padding:14px 16px; }
+.past-round-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+.past-round-chip{ background:var(--paper); color:var(--ink); border:none; border-radius:10px; padding:8px 14px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.past-round-chip:hover{ background:var(--gold-bright); }
+.win-nums-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin:10px 0 16px; padding:10px 12px; background:rgba(28,33,48,0.05); border-radius:10px; font-size:12px; }
+.win-nums-row .rt-pip{ width:24px; height:24px; font-size:11px; }
+.past-result-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 4px; border-bottom:1px solid rgba(28,33,48,0.08); font-size:12.5px; }
+.past-result-row:last-child{ border-bottom:none; }
+.past-result-row .pr-rank{ width:26px; flex-shrink:0; color:var(--ink-dim); font-size:11px; }
+.past-result-row .pr-name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.past-result-row .pr-grade{ font-size:11px; color:var(--ink-dim); flex-shrink:0; }
+.past-result-row button{ border:1px solid rgba(28,33,48,0.2); border-radius:7px; background:none; color:var(--ink-dim); font-size:10.5px; padding:4px 8px; cursor:pointer; flex-shrink:0; }
+.past-result-row button:hover{ border-color:var(--gold); color:#8a5b1c; }
+.past-combo-row{ display:flex; align-items:center; gap:8px; padding:6px 4px; border-bottom:1px solid rgba(28,33,48,0.06); font-size:11.5px; }
+.past-combo-row .pc-idx{ width:24px; color:var(--ink-dim); flex-shrink:0; }
+.past-combo-row .pc-pips{ display:flex; gap:4px; flex-wrap:wrap; }
 .rt-toggle-btn{ font-size:12px; color:var(--gold); background:none; border:none; text-decoration:underline; cursor:pointer; padding:0; font-family:inherit; }
 .rt-recommend-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
 .rt-recommend-row input{ width:70px; padding:7px 9px; border-radius:7px; border:1px solid rgba(28,33,48,0.2); font-family:'IBM Plex Mono',monospace; font-size:12.5px; }
@@ -381,6 +404,33 @@ table.board tr:hover td{ background:rgba(184,134,46,0.06); }
 
 <div class="race-banner" id="raceBanner" style="display:none;"></div>
 
+<div class="past-results-section">
+  <button class="past-results-toggle" type="button" onclick="togglePastResults()">
+    <span data-i18n="pastResultsToggle">🏁 지난 회차 결과 보기</span><span class="info-toggle-icon" id="pastResultsToggleIcon">+</span>
+  </button>
+  <div class="past-results-body" id="pastResultsBody" style="display:none;">
+    <div id="pastRoundChips" class="past-round-chips"></div>
+  </div>
+</div>
+
+<div class="rt-modal" id="pastResultModal">
+  <div class="rt-modal-panel">
+    <button class="rt-modal-close" type="button" onclick="closePastResultModal()">✕</button>
+    <div class="rt-modal-title" id="pastResultTitle"></div>
+    <div id="pastResultWinNums"></div>
+    <div id="pastResultList"></div>
+  </div>
+</div>
+
+<div class="rt-modal" id="pastComboModal">
+  <div class="rt-modal-panel">
+    <button class="rt-modal-close" type="button" onclick="closePastComboModal()">✕</button>
+    <div class="rt-modal-title" id="pastComboTitle"></div>
+    <div id="pastComboWinNums"></div>
+    <div id="pastComboList"></div>
+  </div>
+</div>
+
 <div class="board-wrap">
   <div class="board-toolbar">
     <div>
@@ -494,6 +544,9 @@ const I18N = {
     recommendDone:(n,cost,balance)=>`${n}개 생성 완료 · ${cost.toLocaleString()}P 차감 (잔액 ${balance.toLocaleString()}P)`,
     recommendFail:"추천번호 생성에 실패했습니다.",
     recommendDisclaimer:"※ 경마로직과 같은 로직으로 산출한 참고번호입니다. 실제 이 말이 경주에 들고 나가는 번호와는 다릅니다.",
+    pastResultsToggle:"🏁 지난 회차 결과 보기", pastResultsEmpty:"아직 정산된 경주가 없습니다.",
+    pastResultRoundLabel:(n)=>`${n}회차 결과`, pastWinNumsLabel:"당첨번호", pastResultNoWin:"낙첨", pastViewCombosBtn:"조합보기",
+    pastComboLoading:"불러오는 중…", pastComboEmpty:"저장된 조합이 없습니다.",
     generating:"생성 중…",
     invalidUnits:"1~100 사이 숫자만 가능", betting:"처리 중…",
     typeStrategy:"전략중시형", typeLoyal:"일편단심형", typeRandom:"Que será, será형",
@@ -530,6 +583,9 @@ const I18N = {
     recommendDone:(n,cost,balance)=>`${n} generated · ${cost.toLocaleString()}P charged (balance ${balance.toLocaleString()}P)`,
     recommendFail:"Failed to generate recommended numbers.",
     recommendDisclaimer:"* Reference numbers generated using the same logic as the World Jackpot Racetrack. These differ from the numbers this horse actually races with.",
+    pastResultsToggle:"🏁 View Past Round Results", pastResultsEmpty:"No settled races yet.",
+    pastResultRoundLabel:(n)=>`Round ${n} Results`, pastWinNumsLabel:"Winning numbers", pastResultNoWin:"No win", pastViewCombosBtn:"View combos",
+    pastComboLoading:"Loading…", pastComboEmpty:"No stored combos.",
     generating:"Generating…",
     invalidUnits:"Enter a number between 1 and 100", betting:"Processing…",
     typeStrategy:"Strategy-driven", typeLoyal:"Loyal/Fixed", typeRandom:"Que será, será",
@@ -566,6 +622,9 @@ const I18N = {
     recommendDone:(n,cost,balance)=>`${n}個生成完了・${cost.toLocaleString()}P差引(残高${balance.toLocaleString()}P)`,
     recommendFail:"参考番号の生成に失敗しました。",
     recommendDisclaimer:"※競馬ロジックと同じロジックで算出した参考番号です。実際にこの馬がレースで使う番号とは異なります。",
+    pastResultsToggle:"🏁 過去のレース結果を見る", pastResultsEmpty:"まだ精算されたレースがありません。",
+    pastResultRoundLabel:(n)=>`${n}回結果`, pastWinNumsLabel:"当選番号", pastResultNoWin:"落選", pastViewCombosBtn:"組み合わせを見る",
+    pastComboLoading:"読み込み中…", pastComboEmpty:"保存された組み合わせがありません。",
     generating:"生成中…",
     invalidUnits:"1〜100の数字のみ入力可能", betting:"処理中…",
     typeStrategy:"戦略重視型", typeLoyal:"一途型", typeRandom:"Que será, será型",
@@ -591,7 +650,7 @@ function renderGameTabs(){
     `<button class="game-tab${g.id===currentGame?' active':''}" data-game="${g.id}" type="button">${g.flag} ${g[nameKey()]}</button>`
   ).join('');
   wrap.querySelectorAll('.game-tab').forEach(btn => {
-    btn.addEventListener('click', () => { currentGame = btn.dataset.game; loadBoard(); });
+    btn.addEventListener('click', () => { currentGame = btn.dataset.game; loadBoard(); if (typeof pastResultsLoadedForGame !== 'undefined' && pastResultsLoadedForGame !== null) { pastResultsLoadedForGame = null; var body = document.getElementById('pastResultsBody'); if (body && body.style.display !== 'none') loadPastRounds(); } });
   });
 }
 
@@ -1135,6 +1194,119 @@ function rtExportRecommendExcel(){
 }
 
 function rtCloseModal(){ document.getElementById('rtModal').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════════════
+// 2026-08-11 신규: 지난 회차 결과보기 (당첨번호 + 100마리 성적순 리스트 +
+// 조합별 일치번호 하이라이트). currentGame이 바뀔 때마다 목록을 새로 불러온다.
+// ═══════════════════════════════════════════════════════════════
+let pastResultsLoadedForGame = null;
+
+function togglePastResults(){
+  const body = document.getElementById('pastResultsBody');
+  const icon = document.getElementById('pastResultsToggleIcon');
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? 'block' : 'none';
+  icon.style.transform = opening ? 'rotate(45deg)' : 'none';
+  if (opening && pastResultsLoadedForGame !== currentGame) loadPastRounds();
+}
+
+async function loadPastRounds(){
+  const tt = t();
+  pastResultsLoadedForGame = currentGame;
+  const chipsEl = document.getElementById('pastRoundChips');
+  chipsEl.innerHTML = `<div class="rt-status">${tt.loading}</div>`;
+  const { data, error } = await sb
+    .from('races').select('id, round_no').eq('game_id', currentGame).eq('status', 'settled')
+    .order('round_no', { ascending: false }).limit(12);
+  if (error) {
+    console.error('[loadPastRounds] races 조회 오류:', error);
+    chipsEl.innerHTML = `<div class="rt-status err">${tt.loadError}</div>`;
+    return;
+  }
+  if (!data || !data.length) {
+    chipsEl.innerHTML = `<div class="rt-status">${tt.pastResultsEmpty}</div>`;
+    return;
+  }
+  chipsEl.innerHTML = data.map(r =>
+    `<button class="past-round-chip" type="button" onclick="openPastResult(${r.id}, ${r.round_no})">#${r.round_no}</button>`
+  ).join('');
+}
+
+function pipsHtml(nums, winMain, winBonus, isBonusGroup){
+  const mainSet = new Set(winMain || []);
+  const bonusSet = new Set(winBonus || []);
+  return (nums || []).map(n => {
+    let cls = 'rt-pip';
+    if (isBonusGroup) { cls += bonusSet.has(n) ? ' bonus-hit' : ' bonus'; }
+    else { cls += mainSet.has(n) ? ' hit' : ''; }
+    return `<span class="${cls}">${String(n).padStart(2,'0')}</span>`;
+  }).join('');
+}
+
+async function openPastResult(raceId, roundNo){
+  const tt = t();
+  document.getElementById('pastResultTitle').textContent = tt.pastResultRoundLabel(roundNo);
+  document.getElementById('pastResultWinNums').innerHTML = '';
+  document.getElementById('pastResultList').innerHTML = `<div class="rt-status">${tt.loading}</div>`;
+  document.getElementById('pastResultModal').classList.add('open');
+
+  const [drawResp, entriesResp] = await Promise.all([
+    sb.from('draw_results').select('main_numbers, bonus_numbers').eq('game_id', currentGame).eq('round_no', roundNo).maybeSingle(),
+    sb.from('race_entries').select('horse_no, combos, best_grade, best_grade_count, rank').eq('race_id', raceId).order('rank', { ascending: true }),
+  ]);
+
+  if (drawResp.error || entriesResp.error) {
+    console.error('[openPastResult] 조회 오류:', drawResp.error, entriesResp.error);
+    document.getElementById('pastResultList').innerHTML = `<div class="rt-status err">${tt.loadError}</div>`;
+    return;
+  }
+
+  const winMain = (drawResp.data && drawResp.data.main_numbers) || [];
+  const winBonus = (drawResp.data && drawResp.data.bonus_numbers) || [];
+  document.getElementById('pastResultWinNums').innerHTML =
+    `<div class="win-nums-row"><span style="color:var(--ink-dim);">${tt.pastWinNumsLabel}</span>${pipsHtml(winMain, winMain, winBonus, false)}${winBonus.length ? pipsHtml(winBonus, winMain, winBonus, true) : ''}</div>`;
+
+  const entries = entriesResp.data || [];
+  if (!entries.length) {
+    document.getElementById('pastResultList').innerHTML = `<div class="rt-status">${tt.pastComboEmpty}</div>`;
+    return;
+  }
+
+  document.getElementById('pastResultList').innerHTML = entries.map((e, i) => {
+    const hRow = horseRows.find(h => h.horse_no === e.horse_no);
+    const name = hRow ? hRow.name : `#${e.horse_no}`;
+    const gradeLabel = e.best_grade > 0 ? `${e.best_grade}${currentLang==='en' ? (e.best_grade===1?'st':e.best_grade===2?'nd':e.best_grade===3?'rd':'th') : (currentLang==='ja'?'着':'등')}` : tt.pastResultNoWin;
+    return `<div class="past-result-row">
+      <div class="pr-rank">${i+1}</div>
+      <div class="pr-name">${name}</div>
+      <div class="pr-grade">${gradeLabel}</div>
+      <button type="button" onclick='openPastCombo(${raceId}, ${e.horse_no}, ${JSON.stringify(name)}, ${JSON.stringify(winMain)}, ${JSON.stringify(winBonus)})'>${tt.pastViewCombosBtn}</button>
+    </div>`;
+  }).join('');
+}
+function closePastResultModal(){ document.getElementById('pastResultModal').classList.remove('open'); }
+
+async function openPastCombo(raceId, horseNo, horseName, winMain, winBonus){
+  const tt = t();
+  document.getElementById('pastComboTitle').textContent = horseName;
+  document.getElementById('pastComboWinNums').innerHTML =
+    `<div class="win-nums-row"><span style="color:var(--ink-dim);">${tt.pastWinNumsLabel}</span>${pipsHtml(winMain, winMain, winBonus, false)}${winBonus.length ? pipsHtml(winBonus, winMain, winBonus, true) : ''}</div>`;
+  document.getElementById('pastComboList').innerHTML = `<div class="rt-status">${tt.pastComboLoading}</div>`;
+  document.getElementById('pastComboModal').classList.add('open');
+
+  const { data, error } = await sb.from('race_entries').select('combos').eq('race_id', raceId).eq('horse_no', horseNo).maybeSingle();
+  if (error || !data || !data.combos || !data.combos.length) {
+    console.error('[openPastCombo] 조회 오류:', error);
+    document.getElementById('pastComboList').innerHTML = `<div class="rt-status ${error?'err':''}">${error ? tt.loadError : tt.pastComboEmpty}</div>`;
+    return;
+  }
+  document.getElementById('pastComboList').innerHTML = data.combos.map((c, i) => {
+    const mainPips = pipsHtml(c.main, winMain, winBonus, false);
+    const bonusPips = (c.bonus && c.bonus.length) ? pipsHtml(c.bonus, winMain, winBonus, true) : '';
+    return `<div class="past-combo-row"><span class="pc-idx">#${i+1}</span><span class="pc-pips">${mainPips}${bonusPips}</span></div>`;
+  }).join('');
+}
+function closePastComboModal(){ document.getElementById('pastComboModal').classList.remove('open'); }
 
 function rtToggleInfo(id){
   document.getElementById(id).classList.toggle('open');
