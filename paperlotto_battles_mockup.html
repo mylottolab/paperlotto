@@ -90,6 +90,7 @@ main{ max-width:920px; margin:0 auto; padding:28px 20px 90px; }
 .quick-units{ display:flex; gap:6px; flex-wrap:wrap; }
 .quick-units button{ padding:7px 12px; border-radius:7px; border:1.5px solid rgba(28,33,48,.15); background:#fff; font-size:12px; font-weight:600; cursor:pointer; color:var(--ink); font-family:'IBM Plex Mono',monospace; }
 .quick-units button:hover{ border-color:var(--gold); }
+.buy-hint{ font-size:12px; color:var(--ink-dim); line-height:1.55; margin-top:8px; }
 .btn{ padding:11px 18px; border-radius:9px; border:none; font-size:13.5px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; }
 .btn-gold{ background:var(--ink); color:var(--paper); }
 .btn-gold:hover{ background:#2a3145; }
@@ -253,7 +254,11 @@ const GAMES = [
   { id:'au_tattslotto',   flag:'🇦🇺', nameKo:'호주 새터데이로또', nameEn:'Saturday Lotto',      nameJa:'サタデーロト',    main:6, range:45, bonus:0, bonusRange:null },
 ];
 
-const UNIT_PRICE = 100, MAX_UNITS = 10000, COMBOS_PER_UNIT = 1000;
+// COMBOS_PER_UNIT(1,000) = 백엔드가 실제로 만드는 "방 껍데기"의 물리적 크기(운영상 이유로 방을
+// 자주 새로 발행하지 않기 위함) — 사용자에게는 노출하지 않는 내부 값.
+// UNLOCKED_PER_UNIT(100) = 사용자가 "1단위 구매"로 실제 입력 가능한 개수(=진짜 판매 단위).
+// 100개를 다 채운 뒤 더 넣고 싶으면 단위를 추가 구매해야 함(추가구매 유도 UX).
+const UNIT_PRICE = 100, MAX_UNITS = 10000, COMBOS_PER_UNIT = 1000, UNLOCKED_PER_UNIT = 100;
 
 let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
 let currentGameId = GAMES[0].id;
@@ -272,8 +277,10 @@ const I18N = {
     roundOpen:(n)=>`🎰 ${n}회차 · 배팅 가능`, roundClosed:"지금 배팅 가능한 회차가 없습니다.", closesIn:"마감까지",
     progressTitle:(bought,combos)=>`보유 ${bought.toLocaleString()}/${MAX_UNITS.toLocaleString()}단위 · 조합 ${combos.toLocaleString()}개 채움`,
     progressSub:(max)=>`총 ${max.toLocaleString()}칸 중`,
-    buyTitle:"🏠 방 구매", buyDesc:"1단위(100P)=방 1개(최대 1,000개 조합 무료로 채울 수 있는 공간). 산 방을 다 채우든 하나도 안 채우든, 산 단위 수 자체가 그대로 베팅액입니다. 추첨 후 당첨금 합계 1위가 우승 — 자기 베팅액 그대로 + 낙첨자 베팅총액의 80%를 나눠 받습니다 (혼자 참가하면 낙첨자가 없어 자동 전액환불).",
+    buyTitle:"🏠 방 구매", buyDesc:"1단위(100P)=방 1개(최대 100개 조합을 무료로 채울 수 있는 공간, 다 채우면 단위를 추가로 구매해서 늘릴 수 있어요). 산 방을 다 채우든 하나도 안 채우든, 산 단위 수 자체가 그대로 베팅액입니다. 추첨 후 당첨금 합계 1위가 우승 — 자기 베팅액 그대로 + 낙첨자 베팅총액의 80%를 나눠 받습니다 (혼자 참가하면 낙첨자가 없어 자동 전액환불).",
     unitsLabel:"구매할 단위 수", buyBtn:"방 구매하기", buying:"처리 중…",
+    buyHint:(u)=>`1단위=조합 ${(1*u).toLocaleString()}개 · 10단위=${(10*u).toLocaleString()}개 · 100단위=${(100*u).toLocaleString()}개 · 1,000단위=${(1000*u).toLocaleString()}개까지 등록 가능해요.`,
+    buyHint2:"조합을 많이 등록할수록 당첨 확률이 높아집니다.",
     submitTitle:"번호조합 등록", submitDesc:(max)=>`보유하신 방(총 ${max.toLocaleString()}칸)을 원하는 만큼 채워주세요 — 다 안 채워도 이미 낸 베팅액에는 영향 없습니다.`,
     mainLabel:(n,range)=>`주 번호 ${n}개 선택 (1~${range})`, bonusLabel:(n,range)=>`보너스 번호 ${n}개 선택 (1~${range})`,
     addComboBtn:"+ 조합 추가", autoGenLabel:"자동 생성 개수", autoGenBtn:"자동 추가",
@@ -281,12 +288,16 @@ const I18N = {
     quickSaveBtn:"💾 바로 저장", reviewBtn:"검토 후 등록하기", quickSaveHint:'"바로 저장"은 지금까지 담은 것을 확인 없이 즉시 저장합니다.',
     newTag:"신규",
     buyFirstNotice:"먼저 위에서 방을 구매하시면, 그 방들을 채울 번호조합 등록 화면이 나타납니다.",
+    fullNotice:(max)=>`이번 회차에 등록 가능한 ${max.toLocaleString()}개를 모두 채우셨어요. 더 등록하려면 단위를 추가로 구매해주세요.`,
+    buyMoreBtn:"➕ 단위 추가 구매하기",
     detailToggle:(n)=>`🚪 내 방 상세 보기 (${n}개)`, detailMoreNote:(n)=>`+ 이 외 ${n}개 방은 위 진행률로 확인해주세요`,
     confirmTitle:(total,already,staged)=>`총 ${total.toLocaleString()}개 중 ${already.toLocaleString()}개 기존 + 지금 ${staged.toLocaleString()}개`,
     confirmWarn:"⚠️ 한 번 제출한 조합은 수정·삭제가 불가능합니다. 아직 제출 안 한 나머지는 마감 전까지 언제든 다시 들어와서 추가할 수 있어요.",
     backToEditBtn:"🔙 지금 더 추가하기", submitFinalBtn:"✅ 제출하기 (마감 전까지 계속 추가 가능)",
     savedMsg:(n)=>`💾 ${n}개 저장했습니다.`,
     errLogin:"참가하려면 로그인이 필요합니다.", errUnits:"1단위 이상 입력해주세요.", errNoCombo:"조합을 1개 이상 추가해주세요.",
+    errMaxUnits:(remaining)=>`1인당 최대 ${MAX_UNITS.toLocaleString()}단위까지 구매할 수 있어요. 지금 추가로 구매 가능한 단위는 ${remaining.toLocaleString()}개입니다.`,
+    upsellFull:(max)=>`지금 구매하신 단위로는 최대 ${max.toLocaleString()}개까지만 조합을 등록할 수 있어요. 더 등록하려면 단위를 추가로 구매해야 합니다. 지금 방 구매 화면으로 이동할까요?`,
     errInsufficientPoints:(short)=>`포인트가 부족합니다 (부족: ${short.toLocaleString()}P). 충전해주세요.`,
     pastResultsToggle:"🏁 지난 회차 결과 보기", pastResultsEmpty:"아직 정산된 회차가 없습니다.",
     pastRoundLabel:(n)=>`${n}회차 결과`, winNumsLabel:"당첨번호", loadError:"불러오는 중 오류가 발생했습니다.", loading:"불러오는 중…",
@@ -299,8 +310,10 @@ const I18N = {
     roundOpen:(n)=>`🎰 Round ${n} · Betting Open`, roundClosed:"No round is open for betting right now.", closesIn:"Closes in",
     progressTitle:(bought,combos)=>`Holding ${bought.toLocaleString()}/${MAX_UNITS.toLocaleString()} units · ${combos.toLocaleString()} combos filled`,
     progressSub:(max)=>`out of ${max.toLocaleString()} slots`,
-    buyTitle:"🏠 Buy Rooms", buyDesc:"1 unit (100P) = 1 room (free space for up to 1,000 combos). Whether you fill your rooms or not, the number of units you bought is your bet. After the draw, the highest total prize wins — getting their own bet back plus 80% of the losers' total bets (if you're the only participant, your bet is fully refunded since there are no losers).",
+    buyTitle:"🏠 Buy Rooms", buyDesc:"1 unit (100P) = 1 room (free space for up to 100 combos — fill it up and buy more units to add more). Whether you fill your rooms or not, the number of units you bought is your bet. After the draw, the highest total prize wins — getting their own bet back plus 80% of the losers' total bets (if you're the only participant, your bet is fully refunded since there are no losers).",
     unitsLabel:"Units to buy", buyBtn:"Buy rooms", buying:"Processing…",
+    buyHint:(u)=>`1 unit = ${(1*u).toLocaleString()} combos · 10 units = ${(10*u).toLocaleString()} · 100 units = ${(100*u).toLocaleString()} · 1,000 units = ${(1000*u).toLocaleString()}.`,
+    buyHint2:"The more combos you register, the higher your odds of winning.",
     submitTitle:"Register Number Combos", submitDesc:(max)=>`Fill as much of your rooms (${max.toLocaleString()} slots total) as you'd like — leaving some unfilled doesn't affect your bet.`,
     mainLabel:(n,range)=>`Pick ${n} main numbers (1–${range})`, bonusLabel:(n,range)=>`Pick ${n} bonus number(s) (1–${range})`,
     addComboBtn:"+ Add combo", autoGenLabel:"Auto-generate count", autoGenBtn:"Auto add",
@@ -308,12 +321,16 @@ const I18N = {
     quickSaveBtn:"💾 Save now", reviewBtn:"Review & Register", quickSaveHint:'"Save now" instantly saves what you\'ve added without a review step.',
     newTag:"NEW",
     buyFirstNotice:"Buy rooms above first, then a number-registration screen will appear here.",
+    fullNotice:(max)=>`You've filled all ${max.toLocaleString()} combos available this round. Buy more units to register more.`,
+    buyMoreBtn:"➕ Buy more units",
     detailToggle:(n)=>`🚪 View my rooms (${n})`, detailMoreNote:(n)=>`+ ${n} more rooms — see the progress bar above`,
     confirmTitle:(total,already,staged)=>`${total.toLocaleString()} total — ${already.toLocaleString()} existing + ${staged.toLocaleString()} now`,
     confirmWarn:"⚠️ Once submitted, combos can't be edited or deleted. You can still add more (unsubmitted ones) any time before the deadline.",
     backToEditBtn:"🔙 Add more now", submitFinalBtn:"✅ Submit (you can keep adding until the deadline)",
     savedMsg:(n)=>`💾 Saved ${n} combos.`,
     errLogin:"Please log in to join.", errUnits:"Please enter at least 1 unit.", errNoCombo:"Please add at least 1 combo.",
+    errMaxUnits:(remaining)=>`You can buy up to ${MAX_UNITS.toLocaleString()} units per person. You can still buy ${remaining.toLocaleString()} more right now.`,
+    upsellFull:(max)=>`With the units you've bought, you can register up to ${max.toLocaleString()} combos. To add more, you'll need to buy more units. Go to the buy-rooms section now?`,
     errInsufficientPoints:(short)=>`Insufficient points (short: ${short.toLocaleString()}P). Please recharge.`,
     pastResultsToggle:"🏁 View Past Round Results", pastResultsEmpty:"No settled rounds yet.",
     pastRoundLabel:(n)=>`Round ${n} Results`, winNumsLabel:"Winning numbers", loadError:"Failed to load.", loading:"Loading…",
@@ -326,8 +343,10 @@ const I18N = {
     roundOpen:(n)=>`🎰 第${n}回 · ベット受付中`, roundClosed:"現在ベット可能な回はありません。", closesIn:"締切まで",
     progressTitle:(bought,combos)=>`保有 ${bought.toLocaleString()}/${MAX_UNITS.toLocaleString()}単位 · 組み合わせ ${combos.toLocaleString()}個入力済み`,
     progressSub:(max)=>`全${max.toLocaleString()}枠中`,
-    buyTitle:"🏠 部屋を購入", buyDesc:"1単位(100P)=部屋1つ(最大1,000個の組み合わせを無料で入力できる空間)。部屋を埋めても埋めなくても、購入した単位数がそのままベット額になります。抽選後、当せん金合計1位が優勝 — 自分のベット額そのまま + 落せん者の総ベット額の80%を分配で受け取ります(1人だけの参加時は落せん者がいないため全額返金されます)。",
+    buyTitle:"🏠 部屋を購入", buyDesc:"1単位(100P)=部屋1つ(最大100個の組み合わせを無料で入力できる空間、埋めたら単位を追加購入して増やせます)。部屋を埋めても埋めなくても、購入した単位数がそのままベット額になります。抽選後、当せん金合計1位が優勝 — 自分のベット額そのまま + 落せん者の総ベット額の80%を分配で受け取ります(1人だけの参加時は落せん者がいないため全額返金されます)。",
     unitsLabel:"購入する単位数", buyBtn:"部屋を購入する", buying:"処理中…",
+    buyHint:(u)=>`1単位=組み合わせ${(1*u).toLocaleString()}個 · 10単位=${(10*u).toLocaleString()}個 · 100単位=${(100*u).toLocaleString()}個 · 1,000単位=${(1000*u).toLocaleString()}個まで登録できます。`,
+    buyHint2:"組み合わせを多く登録するほど、当せん確率が高くなります。",
     submitTitle:"番号組み合わせ登録", submitDesc:(max)=>`保有する部屋(合計${max.toLocaleString()}枠)をお好きなだけ埋めてください — 全部埋めなくても既に支払ったベット額には影響ありません。`,
     mainLabel:(n,range)=>`本数字${n}個選択 (1~${range})`, bonusLabel:(n,range)=>`ボーナス数字${n}個選択 (1~${range})`,
     addComboBtn:"+ 組み合わせ追加", autoGenLabel:"自動生成数", autoGenBtn:"自動追加",
@@ -335,12 +354,16 @@ const I18N = {
     quickSaveBtn:"💾 すぐ保存", reviewBtn:"確認後登録する", quickSaveHint:'「すぐ保存」は確認なしで即座に保存します。',
     newTag:"新規",
     buyFirstNotice:"まず上で部屋を購入すると、その部屋を埋める番号組み合わせ登録画面が表示されます。",
+    fullNotice:(max)=>`今回登録可能な${max.toLocaleString()}個をすべて入力しました。さらに登録するには単位を追加購入してください。`,
+    buyMoreBtn:"➕ 単位を追加購入する",
     detailToggle:(n)=>`🚪 自分の部屋詳細 (${n}個)`, detailMoreNote:(n)=>`+ その他${n}部屋は上の進捗バーでご確認ください`,
     confirmTitle:(total,already,staged)=>`合計${total.toLocaleString()}個中 既存${already.toLocaleString()}個 + 今回${staged.toLocaleString()}個`,
     confirmWarn:"⚠️ 一度登録した組み合わせは修正・削除できません。まだ登録していない分は締切前ならいつでも追加できます。",
     backToEditBtn:"🔙 続けて追加する", submitFinalBtn:"✅ 登録する(締切まで追加可能)",
     savedMsg:(n)=>`💾 ${n}個保存しました。`,
     errLogin:"参加するにはログインが必要です。", errUnits:"1単位以上入力してください。", errNoCombo:"組み合わせを1個以上追加してください。",
+    errMaxUnits:(remaining)=>`お一人様最大${MAX_UNITS.toLocaleString()}単位まで購入できます。現在追加購入できるのは${remaining.toLocaleString()}単位です。`,
+    upsellFull:(max)=>`現在購入済みの単位では、最大${max.toLocaleString()}個まで組み合わせを登録できます。さらに登録するには単位の追加購入が必要です。今すぐ部屋購入画面へ移動しますか？`,
     errInsufficientPoints:(short)=>`ポイントが不足しています(不足: ${short.toLocaleString()}P)。チャージしてください。`,
     pastResultsToggle:"🏁 過去の結果を見る", pastResultsEmpty:"まだ精算された回がありません。",
     pastRoundLabel:(n)=>`第${n}回結果`, winNumsLabel:"当せん番号", loadError:"読み込み中にエラーが発生しました。", loading:"読み込み中…",
@@ -453,7 +476,7 @@ function renderProgressPanel(){
   const panel = document.getElementById('progressPanel');
   if (!currentRoom || currentRoom.myUnitsBought === 0) { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
-  const maxCombos = currentRoom.myUnitsBought * COMBOS_PER_UNIT;
+  const maxCombos = currentRoom.myUnitsBought * UNLOCKED_PER_UNIT;
   const previewCombos = currentRoom.myComboCount + stagedCombos.length;
   const pct = Math.min(100, Math.round(previewCombos / maxCombos * 100));
   panel.innerHTML = `
@@ -479,6 +502,7 @@ function renderBuyUnitsCard(){
         ${[1,10,100,1000].filter(n=>n<=remaining).map(n=>`<button type="button" onclick="setUnitsInput(${n})">${n.toLocaleString()}</button>`).join('')}
       </div>
     </div>
+    <div class="buy-hint">${t().buyHint(UNLOCKED_PER_UNIT)}<br>${t().buyHint2}</div>
     <div class="buy-row" style="margin-top:8px;">
       <label style="font-size:12px;color:var(--ink-dim);">${t().unitsLabel}</label>
       <input type="number" id="unitsInput" value="1" min="1" max="${remaining}">
@@ -489,12 +513,22 @@ function renderBuyUnitsCard(){
 }
 function setUnitsInput(n){ document.getElementById('unitsInput').value = n; }
 
+function promptBuyMoreUnits(max, skipConfirm){
+  if (!skipConfirm && !confirm(t().upsellFull(max))) return;
+  const card = document.getElementById('buyUnitsCard');
+  if (card) card.scrollIntoView({ behavior:'smooth', block:'start' });
+  const input = document.getElementById('unitsInput');
+  if (input) { input.value = 1; input.focus(); }
+}
+
 async function doBuyUnits(){
   const msgEl = document.getElementById('buyMsg');
   msgEl.className = 'status-msg';
   if (!sbAccessToken) { msgEl.textContent = t().errLogin; msgEl.className = 'status-msg err'; return; }
   const units = parseInt(document.getElementById('unitsInput').value) || 0;
   if (units < 1) { msgEl.textContent = t().errUnits; msgEl.className = 'status-msg err'; return; }
+  const remainingUnits = MAX_UNITS - currentRoom.myUnitsBought;
+  if (units > remainingUnits) { msgEl.textContent = t().errMaxUnits(remainingUnits); msgEl.className = 'status-msg err'; return; }
 
   const btn = document.getElementById('buyBtn');
   btn.disabled = true; btn.textContent = t().buying;
@@ -524,11 +558,11 @@ function renderSubmitCard(){
   if (!currentRoom || currentRoom.myUnitsBought === 0) { card.style.display = 'none'; return; }
   card.style.display = 'block';
   const g = curGame();
-  const maxCombos = currentRoom.myUnitsBought * COMBOS_PER_UNIT;
+  const maxCombos = currentRoom.myUnitsBought * UNLOCKED_PER_UNIT;
   const alreadySubmitted = currentRoom.myComboCount;
 
   if (alreadySubmitted >= maxCombos && stagedCombos.length === 0) {
-    card.innerHTML = `<h2>${t().submitTitle}</h2><div class="empty-state">✓</div>`;
+    card.innerHTML = `<h2>${t().submitTitle}</h2><div class="empty-state">✓</div><div class="buy-hint" style="text-align:center;">${t().fullNotice(maxCombos)}</div><button class="btn btn-gold" style="width:100%;margin-top:10px;" onclick="promptBuyMoreUnits(${maxCombos}, true)">${t().buyMoreBtn}</button>`;
     return;
   }
 
@@ -563,7 +597,7 @@ function renderSubmitCard(){
 
 function openReview(){
   if (!stagedCombos.length) return;
-  const maxCombos = currentRoom.myUnitsBought * COMBOS_PER_UNIT;
+  const maxCombos = currentRoom.myUnitsBought * UNLOCKED_PER_UNIT;
   const total = currentRoom.myComboCount + stagedCombos.length;
   const panel = document.getElementById('reviewPanel');
   panel.innerHTML = `
@@ -624,9 +658,9 @@ function renderDetailArea(){
   const filledTotal = currentRoom.myComboCount + stagedCombos.length;
   let cards = '';
   for (let i = 0; i < shown; i++) {
-    const filled = Math.max(0, Math.min(COMBOS_PER_UNIT, filledTotal - i * COMBOS_PER_UNIT));
-    const full = filled >= COMBOS_PER_UNIT;
-    cards += `<div class="room-plate${full?' full':''}"><div class="rp-name">#${i+1}</div><div class="rp-fill">${filled}/${COMBOS_PER_UNIT}</div></div>`;
+    const filled = Math.max(0, Math.min(UNLOCKED_PER_UNIT, filledTotal - i * UNLOCKED_PER_UNIT));
+    const full = filled >= UNLOCKED_PER_UNIT;
+    cards += `<div class="room-plate${full?' full':''}"><div class="rp-name">#${i+1}</div><div class="rp-fill">${filled}/${UNLOCKED_PER_UNIT}</div></div>`;
   }
   detailCard.innerHTML = `<div class="room-plate-grid">${cards}</div>` +
     (total > shown ? `<div class="detail-more-note">${t().detailMoreNote(total - shown)}</div>` : '');
@@ -729,6 +763,9 @@ function addComboFromPicker(){
   commitPickedCombo();
 }
 function commitPickedCombo(){
+  const maxCombos = currentRoom.myUnitsBought * UNLOCKED_PER_UNIT;
+  const already = currentRoom.myComboCount + stagedCombos.length;
+  if (already >= maxCombos) { promptBuyMoreUnits(maxCombos); return; }
   stagedCombos.push({ main: pickedMain.slice().sort((a,b)=>a-b), bonus: pickedBonus.slice().sort((a,b)=>a-b) });
   lastStagedCount = 1;
   pickedMain = []; pickedBonus = [];
@@ -737,8 +774,9 @@ function commitPickedCombo(){
 }
 function addAutoCombos(){
   const g = curGame();
-  const maxCombos = currentRoom.myUnitsBought * COMBOS_PER_UNIT;
+  const maxCombos = currentRoom.myUnitsBought * UNLOCKED_PER_UNIT;
   const cap = maxCombos - currentRoom.myComboCount - stagedCombos.length;
+  if (cap <= 0) { promptBuyMoreUnits(maxCombos); return; }
   let count = Math.max(1, Math.min(cap, parseInt(document.getElementById('autoGenCount').value) || 1));
   if (count <= 0) return;
   for (let i = 0; i < count; i++) {
@@ -766,7 +804,7 @@ function removeStagedCombo(idx){
 function renderComboList(){
   const el = document.getElementById('comboList');
   if (!el) return;
-  const maxCombos = currentRoom.myUnitsBought * COMBOS_PER_UNIT;
+  const maxCombos = currentRoom.myUnitsBought * UNLOCKED_PER_UNIT;
   const indexed = stagedCombos.map((c,i)=>({combo:c, realIndex:i}));
   indexed.reverse();
   el.innerHTML = indexed.map((item, displayIdx) => {
