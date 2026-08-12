@@ -161,6 +161,14 @@ function fmtDateTime(iso) {
     ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 function fmtNum(n) { return Number(n || 0).toLocaleString(); }
+// ⚠ 2026-08-12 신규: PayPal(USD)과 이니시스/계좌이체(KRW)가 같은 표에 섞여 나오는데,
+// 예전엔 무조건 "원"을 붙여서 "$1"이 "1원"으로 잘못 보였다. 이제 통화(currency)를 보고
+// USD면 "$", 그 외(KRW 등)는 "원"으로 정확히 구분해서 표시한다.
+function fmtAmount(amount, currency) {
+  const n = Number(amount || 0);
+  if (currency === 'USD') return '$' + n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return n.toLocaleString() + '원';
+}
 function escapeHtml(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 async function loadReport() {
@@ -202,13 +210,16 @@ function renderPayments(data) {
     body.innerHTML = '<div class="empty-state">해당 기간에 입금 내역이 없습니다.</div>';
     return;
   }
-  const totalAmount = items.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  // ⚠ 2026-08-12 수정: 원화(KRW)와 달러(USD)를 그냥 더하면 안 되므로 통화별로 따로 합산
+  const totalKrw = items.filter(r => r.currency !== 'USD').reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const totalUsd = items.filter(r => r.currency === 'USD').reduce((s, r) => s + (Number(r.amount) || 0), 0);
   const cardCount = items.filter(r => r.method === 'card').length;
   const bankCount = items.filter(r => r.method === 'bank').length;
 
   let html = '<div class="summary-row">' +
     '<div class="summary-box"><div class="label">총 건수</div><div class="value">' + items.length + '건</div></div>' +
-    '<div class="summary-box"><div class="label">총 입금액</div><div class="value">' + fmtNum(totalAmount) + '원</div></div>' +
+    '<div class="summary-box"><div class="label">총 입금액(원화)</div><div class="value">' + fmtNum(totalKrw) + '원</div></div>' +
+    (totalUsd > 0 ? '<div class="summary-box"><div class="label">총 입금액(USD)</div><div class="value">$' + totalUsd.toLocaleString() + '</div></div>' : '') +
     '<div class="summary-box"><div class="label">신용카드</div><div class="value">' + cardCount + '건</div></div>' +
     '<div class="summary-box"><div class="label">계좌이체</div><div class="value">' + bankCount + '건</div></div>' +
   '</div>';
@@ -224,7 +235,7 @@ function renderPayments(data) {
       '<td>' + fmtDateTime(r.date) + '</td>' +
       '<td>' + methodBadge + '</td>' +
       '<td>' + escapeHtml(r.payer_name) + '</td>' +
-      '<td>' + fmtNum(r.amount) + '원</td>' +
+      '<td>' + fmtAmount(r.amount, r.currency) + '</td>' +
       '<td>' + (r.points != null ? fmtNum(r.points) + 'P' : '-') + '</td>' +
       '<td><span class="badge badge-status-' + escapeHtml(r.status) + '">' + escapeHtml(r.status) + '</span></td>' +
     '</tr>';
