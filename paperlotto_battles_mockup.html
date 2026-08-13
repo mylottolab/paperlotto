@@ -44,7 +44,6 @@ header{
 .lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:11.5px; font-weight:600; padding:6px 11px; cursor:pointer; font-family:'Inter',sans-serif; }
 .lang-toggle button.active{ background:var(--gold); color:var(--ink); }
 .back-link{ font-size:13px; color:var(--text-mid); }
-.balance-chip{ background:var(--board-2); border:1px solid var(--board-line); border-radius:20px; padding:6px 14px; font-size:12.5px; color:var(--gold-bright); font-family:'IBM Plex Mono',monospace; font-weight:600; }
 
 main{ max-width:920px; margin:0 auto; padding:28px 20px 90px; }
 .hero{ margin-bottom:24px; }
@@ -144,7 +143,7 @@ main{ max-width:920px; margin:0 auto; padding:28px 20px 90px; }
   </a>
   <div class="header-right">
     <a class="back-link" href="index.html" data-i18n="navBack">← 전체 게임</a>
-    <div class="balance-chip" id="balanceChip">–</div>
+    <div id="authWidget"></div>
     <div class="lang-toggle">
       <button data-lang="ko" class="active" type="button">KR</button>
       <button data-lang="en" type="button">EN</button>
@@ -200,28 +199,12 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const BUY_UNITS_URL = SUPABASE_URL + "/functions/v1/battle-buy-units";
 const SUBMIT_COMBOS_URL = SUPABASE_URL + "/functions/v1/battle-submit-combos";
-const BALANCE_FN_URL = SUPABASE_URL + "/functions/v1/points-balance";
 let sbAccessToken = null;
 
 async function refreshToken(){
   const { data: { session } } = await sb.auth.getSession();
   sbAccessToken = session ? session.access_token : null;
   return sbAccessToken;
-}
-async function refreshBalance(){
-  if (!sbAccessToken) return;
-  try {
-    // point_ledger를 클라이언트에서 직접 조회하지 않고, 메인페이지(auth-widget.js)와
-    // 동일하게 points-balance Edge Function(service_role 경유, user_id 필터링)을 사용한다.
-    const res = await fetch(BALANCE_FN_URL, {
-      headers: { Authorization: "Bearer " + sbAccessToken }
-    });
-    if (!res.ok) throw new Error('balance fetch failed: ' + res.status);
-    const balance = await res.json();
-    document.getElementById('balanceChip').textContent = Number(balance.total || 0).toLocaleString() + 'P';
-  } catch (e) {
-    console.error('[refreshBalance]', e);
-  }
 }
 
 // ── 12개 게임 스펙 (race-advance.ts / game-specs.ts와 완전히 동일) ──
@@ -260,7 +243,7 @@ const I18N = {
     pageSub:"구매한 단위만큼 베팅한 것 — 채우고 안 채우고는 자유입니다. 추첨 후 당첨금 합계 1위가 낙첨자 베팅총액의 80%를 가져갑니다.",
     loginNoticePre:"참가하려면 먼저 ", loginNoticeLink:"로그인", loginNoticePost:"이 필요합니다.",
     roundOpen:(n)=>`🎰 ${n}회차 · 배팅 가능`, roundClosed:"지금 배팅 가능한 회차가 없습니다.", closesIn:"마감까지",
-    progressExplain:(unitsBought,comboCount,maxCombos,remainingSlots,maxUnits,remainingUnits)=>`베팅 ${unitsBought.toLocaleString()}단위(${maxCombos.toLocaleString()}개 번호조합 등록 가능)로 현재 ${comboCount.toLocaleString()}개의 번호조합을 등록하여 잔여 ${remainingSlots.toLocaleString()}개를 더 채울 수 있습니다. 게임당 최대 구매 한도는 ${maxUnits.toLocaleString()}단위(번호조합 ${(maxUnits*100).toLocaleString()}개 등록)이며, 고객님은 ${remainingUnits.toLocaleString()}단위를 더 구매하실 수 있습니다.`,
+    progressExplain:(unitsBought,comboCount,maxCombos,remainingSlots,maxUnits,remainingUnits)=>`현재 고객님께서는 ${unitsBought.toLocaleString()}단위를 베팅하고 계십니다. 따라서 ${maxCombos.toLocaleString()}개의 번호조합을 등록하실 수가 있는데 현재 ${comboCount.toLocaleString()}개를 등록하여 앞으로 ${remainingSlots.toLocaleString()}개를 더 등록하실 수가 있습니다. 물론 베팅단위를 추가하시면 더 많은 번호조합의 등록이 가능합니다. 참고로 게임당 최대 구매 한도는 ${maxUnits.toLocaleString()}단위(번호조합 ${(maxUnits*100).toLocaleString()}개 등록)이며, 고객님은 앞으로 ${remainingUnits.toLocaleString()}단위를 더 구매하실 수 있습니다.`,
     buyTitle:"💰 단위 구매", buyDesc:"1단위(100P)=번호조합 100개를 등록·채점받을 수 있는 권리(다 채우면 단위를 추가로 구매해서 늘릴 수 있어요). 등록 가능한 칸을 다 채우든 하나도 안 채우든, 산 단위 수 자체가 그대로 베팅액입니다. 추첨 후 당첨금 합계 1위가 우승 — 자기 베팅액 그대로 + 낙첨자 베팅총액의 80%를 나눠 받습니다 (혼자 참가하면 낙첨자가 없어 자동 전액환불).",
     unitsLabel:"구매할 단위 수", buyBtn:"단위 구매하기", buying:"처리 중…",
     buyHint:(u)=>`1단위=조합 ${(1*u).toLocaleString()}개 · 10단위=${(10*u).toLocaleString()}개 · 100단위=${(100*u).toLocaleString()}개 · 1,000단위=${(1000*u).toLocaleString()}개까지 등록 가능해요.`,
@@ -291,7 +274,7 @@ const I18N = {
     pageSub:"The units you buy are your bet — filling them or not is up to you. After the draw, whoever has the highest total prize wins 80% of the losers' total bets.",
     loginNoticePre:"Please ", loginNoticeLink:"log in", loginNoticePost:" to join.",
     roundOpen:(n)=>`🎰 Round ${n} · Betting Open`, roundClosed:"No round is open for betting right now.", closesIn:"Closes in",
-    progressExplain:(unitsBought,comboCount,maxCombos,remainingSlots,maxUnits,remainingUnits)=>`With ${unitsBought.toLocaleString()} unit(s) bet (able to register ${maxCombos.toLocaleString()} combos), you've registered ${comboCount.toLocaleString()} combos so far and can add ${remainingSlots.toLocaleString()} more. The max purchase per game is ${maxUnits.toLocaleString()} units (${(maxUnits*100).toLocaleString()} combos), and you can still buy ${remainingUnits.toLocaleString()} more units.`,
+    progressExplain:(unitsBought,comboCount,maxCombos,remainingSlots,maxUnits,remainingUnits)=>`You're currently betting ${unitsBought.toLocaleString()} unit(s), so you can register up to ${maxCombos.toLocaleString()} number combos. You've registered ${comboCount.toLocaleString()} so far, with ${remainingSlots.toLocaleString()} more slots available. Adding more units lets you register even more combos. For reference, the max purchase per game is ${maxUnits.toLocaleString()} units (${(maxUnits*100).toLocaleString()} combos), and you can still buy ${remainingUnits.toLocaleString()} more units.`,
     buyTitle:"💰 Buy Units", buyDesc:"1 unit (100P) = the right to register and score 100 combos (fill it up and buy more units to add more). Whether you fill every slot or not, the number of units you bought is your bet. After the draw, the highest total prize wins — getting their own bet back plus 80% of the losers' total bets (if you're the only participant, your bet is fully refunded since there are no losers).",
     unitsLabel:"Units to buy", buyBtn:"Buy units", buying:"Processing…",
     buyHint:(u)=>`1 unit = ${(1*u).toLocaleString()} combos · 10 units = ${(10*u).toLocaleString()} · 100 units = ${(100*u).toLocaleString()} · 1,000 units = ${(1000*u).toLocaleString()}.`,
@@ -322,7 +305,7 @@ const I18N = {
     pageSub:"購入した単位数がそのままベット額です — 埋めても埋めなくても自由。抽選後、当せん金合計1位が落せん者の総ベット額の80%を獲得します。",
     loginNoticePre:"参加するには先に", loginNoticeLink:"ログイン", loginNoticePost:"が必要です。",
     roundOpen:(n)=>`🎰 第${n}回 · ベット受付中`, roundClosed:"現在ベット可能な回はありません。", closesIn:"締切まで",
-    progressExplain:(unitsBought,comboCount,maxCombos,remainingSlots,maxUnits,remainingUnits)=>`ベット${unitsBought.toLocaleString()}単位(組み合わせ${maxCombos.toLocaleString()}個登録可能)で、現在${comboCount.toLocaleString()}個の組み合わせを登録済み、残り${remainingSlots.toLocaleString()}個をさらに登録できます。ゲームごとの最大購入上限は${maxUnits.toLocaleString()}単位(組み合わせ${(maxUnits*100).toLocaleString()}個登録)で、お客様はあと${remainingUnits.toLocaleString()}単位購入できます。`,
+    progressExplain:(unitsBought,comboCount,maxCombos,remainingSlots,maxUnits,remainingUnits)=>`現在お客様は${unitsBought.toLocaleString()}単位をベットされています。そのため${maxCombos.toLocaleString()}個の組み合わせを登録できますが、現在${comboCount.toLocaleString()}個を登録済みで、あと${remainingSlots.toLocaleString()}個登録できます。ベット単位を追加すると、さらに多くの組み合わせを登録できます。なお、ゲームごとの最大購入上限は${maxUnits.toLocaleString()}単位(組み合わせ${(maxUnits*100).toLocaleString()}個登録)で、お客様はあと${remainingUnits.toLocaleString()}単位購入できます。`,
     buyTitle:"💰 単位を購入", buyDesc:"1単位(100P)=組み合わせ100個を登録・採点してもらえる権利(埋めたら単位を追加購入して増やせます)。登録可能な枠を全部埋めても埋めなくても、購入した単位数がそのままベット額になります。抽選後、当せん金合計1位が優勝 — 自分のベット額そのまま + 落せん者の総ベット額の80%を分配で受け取ります(1人だけの参加時は落せん者がいないため全額返金されます)。",
     unitsLabel:"購入する単位数", buyBtn:"単位を購入する", buying:"処理中…",
     buyHint:(u)=>`1単位=組み合わせ${(1*u).toLocaleString()}個 · 10単位=${(10*u).toLocaleString()}個 · 100単位=${(100*u).toLocaleString()}個 · 1,000単位=${(1000*u).toLocaleString()}個まで登録できます。`,
@@ -356,6 +339,7 @@ function gameName(g){ return currentLang==='ko' ? g.nameKo : currentLang==='ja' 
 function applyLang(lang){
   currentLang = I18N[lang] ? lang : 'ko';
   localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang; // auth-widget.js가 이 값을 보고 로그인/충전/로그아웃 라벨을 맞춘다
   document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('active', b.dataset.lang === currentLang));
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -522,7 +506,7 @@ async function doBuyUnits(){
       return;
     }
     await loadRoomState();
-    await refreshBalance();
+    if (window.refreshAuthBalance) window.refreshAuthBalance();
   } catch (e) {
     msgEl.textContent = t().loadError; msgEl.className = 'status-msg err';
   } finally {
@@ -680,7 +664,6 @@ async function init(){
   } else {
     document.getElementById('loginNotice').style.display = 'none';
     document.getElementById('battleArea').style.display = 'block';
-    await refreshBalance();
   }
   renderGameTabs();
   await loadRoomState();
@@ -771,5 +754,6 @@ function renderComboList(){
 }
 </script>
 
+<script src="auth-widget.js"></script>
 </body>
 </html>
