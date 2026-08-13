@@ -191,6 +191,26 @@ table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
 .pr-detail-card .pr-desc{ font-size:11.5px; color:var(--ink-dim); max-width:380px; line-height:1.6; }
 .pr-detail-card .pr-btn{ flex-shrink:0; padding:12px 22px; border:1.5px solid var(--ink); border-radius:9px; background:transparent; color:var(--ink); font-size:13.5px; font-weight:700; text-decoration:none; white-space:nowrap; }
 .pr-detail-card .pr-btn:hover{ background:var(--ink); color:var(--paper); }
+/* ── 통계 미리보기 카드 (번호 결정 직전 배치, 2026-08 신설) ── */
+.stats-preview-wrap{ position:relative; margin-top:14px; }
+.stats-preview{ background:var(--card-bg,#12162a); border:1.5px solid #e0505a; border-radius:14px; padding:26px; box-shadow:0 0 0 3px rgba(224,80,90,0.12); }
+.sp-new-badge{ position:absolute; z-index:2; top:-11px; left:22px; background:#e0505a; color:#fff; font-size:10.5px; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:0.3px; box-shadow:0 3px 8px -2px rgba(224,80,90,0.6); }
+.sp-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
+.sp-title{ font-size:14.5px; font-weight:700; color:var(--gold-bright); }
+.sp-range{ font-size:11px; color:var(--text-dim); }
+.sp-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.sp-grid.sp-grid-1{ grid-template-columns:1fr; }
+@media (max-width:640px){ .sp-grid{ grid-template-columns:1fr; } }
+.sp-block-label{ font-size:11.5px; font-weight:700; color:var(--text-dim); margin-bottom:8px; }
+.sp-balls{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.sp-ball{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; background:var(--ink,#1c2130); color:#eef0f6; }
+.sp-ball.bonus{ background:var(--gold-bright); color:#1a1305; }
+.sp-line{ font-size:12px; color:var(--text-dim); line-height:1.6; }
+.sp-line b{ color:#eef0f6; }
+.sp-loading{ font-size:12px; color:var(--text-dim); text-align:center; padding:20px; }
+.sp-more{ display:inline-flex; align-items:center; gap:5px; margin-top:16px; font-size:12.5px; font-weight:700; color:var(--gold-bright); text-decoration:none; }
+.sp-more:hover{ text-decoration:underline; }
+
 
 footer{ border-top:1px solid var(--board-line); padding:36px 24px 44px; text-align:center; }
 footer p{ font-size:12px; color:var(--text-dim); line-height:1.8; max-width:560px; margin:0 auto; }
@@ -319,6 +339,13 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="sheet-eyebrow">04 · STRATEGY</div>
     <h2 data-i18n="s4h">전략 코너</h2>
     <div class="sheet-body" id="s4body"></div>
+  </div>
+
+  <div class="stats-preview-wrap">
+    <span class="sp-new-badge" id="spNewBadge">NEW</span>
+    <div class="stats-preview" id="statsPreview">
+      <div class="sp-loading" id="spLoading">통계 불러오는 중…</div>
+    </div>
   </div>
 
   <a class="sg-cta-banner" href="paperlotto_guide_mockup.html?open=jp_loto6">
@@ -575,6 +602,7 @@ function applyLang(lang){
   if (typeof renderDlCard === 'function') renderDlCard();
   if (typeof renderTicker === 'function') renderTicker();
   if (typeof PLChecker !== 'undefined') { document.getElementById('checkerMount').innerHTML=''; PLChecker.mount('checkerMount', 'jp_loto6', { lang: currentLang }); }
+  if (typeof renderStatsPreview === 'function') renderStatsPreview();
 }
 document.querySelectorAll('.lang-toggle button').forEach(btn => {
   btn.addEventListener('click', () => applyLang(btn.dataset.lang));
@@ -861,5 +889,99 @@ setInterval(updateGate, 1000);
   el.classList.add('show');
 });
 PLChecker.mount('checkerMount', 'jp_loto6', { lang: (typeof currentLang !== 'undefined' && (currentLang==='en'||currentLang==='ja')) ? currentLang : 'ko' });</script>
+<script>
+// =====================================================
+// 통계 미리보기 위젯 (번호 결정 직전 배치)
+// ⚠ 이 게임은 보너스번호가 메인번호와 "같은 통"(BONUS_DRUM='same')에서 뽑히므로
+//   출현빈도/홀짝비율은 메인+보너스를 합쳐서 하나로 계산한다(별도 블록 없음).
+// 무료 기본값: 최근 1000회. 기간을 직접 조정하는 건(과금 대상) 전체 통계 허브 페이지에서.
+// =====================================================
+const SP_GAME_ID = 'jp_loto6';
+const BONUS_DRUM = 'same';
+const SP_DEFAULT_ROUNDS = 1000;
+const SP_STATS_HUB_URL = 'paperlotto_round_stats.html?game=' + SP_GAME_ID;
+
+const SP_LABELS = {
+  ko: { newBadge:'🆕 새로운 도구', title:'📊 통계 미리보기', range:(n)=>`최근 ${n.toLocaleString()}회 기준`,
+    freqLabel:'가장 많이 나온 번호 TOP 10 (보너스 포함)', oddEven:(ratio,pct)=>`번호 홀짝비율은 <b>${ratio}</b>이 ${pct}%로 가장 흔합니다 (보너스 포함).`,
+    more:'📊 전체 통계 더 보기 (기간 조정 가능) →', loading:'통계 불러오는 중…', error:'통계를 불러오지 못했습니다.' },
+  en: { newBadge:'🆕 New', title:'📊 Stats Preview', range:(n)=>`Based on the last ${n.toLocaleString()} draws`,
+    freqLabel:'Top 10 most frequent numbers (incl. bonus)', oddEven:(ratio,pct)=>`The most common odd:even split is <b>${ratio}</b> (${pct}%), including the bonus number.`,
+    more:'📊 See full stats (adjustable range) →', loading:'Loading stats…', error:'Failed to load stats.' },
+  ja: { newBadge:'🆕 新機能', title:'📊 統計プレビュー', range:(n)=>`直近${n.toLocaleString()}回基準`,
+    freqLabel:'最も多く出た番号 TOP 10（ボーナス含む）', oddEven:(ratio,pct)=>`番号の奇偶比は<b>${ratio}</b>が${pct}%で最も多いです（ボーナス含む）。`,
+    more:'📊 全体統計をもっと見る（期間調整可）→', loading:'統計を読み込み中…', error:'統計の読み込みに失敗しました。' },
+};
+
+let spRawRows = null;
+
+function spComputeFreq(nums){
+  const freq = {};
+  nums.forEach(n => { freq[n] = (freq[n]||0) + 1; });
+  return Object.entries(freq).map(([num,count]) => ({ num:Number(num), count })).sort((a,b)=>b.count-a.count);
+}
+
+function spComputeOddEvenMode(draws){
+  const tally = {};
+  draws.forEach(arr => {
+    const oddCount = arr.filter(n => n % 2 === 1).length;
+    const key = oddCount + ':' + (arr.length - oddCount);
+    tally[key] = (tally[key]||0) + 1;
+  });
+  const sorted = Object.entries(tally).sort((a,b)=>b[1]-a[1]);
+  if (!sorted.length) return { ratio:'-', pct:0 };
+  const [ratio, count] = sorted[0];
+  return { ratio, pct: Math.round(count / draws.length * 1000) / 10 };
+}
+
+async function spFetchData(){
+  if (spRawRows) return spRawRows;
+  const { data, error } = await dlSb.from('draw_results')
+    .select('main_numbers, bonus_numbers')
+    .eq('game_id', SP_GAME_ID)
+    .order('round_no', { ascending:false })
+    .limit(SP_DEFAULT_ROUNDS);
+  if (error) throw error;
+  spRawRows = data || [];
+  return spRawRows;
+}
+
+function spBallHtml(n){
+  return `<span class="sp-ball">${n}</span>`;
+}
+
+async function renderStatsPreview(){
+  const el = document.getElementById('statsPreview');
+  if (!el) return;
+  const t = SP_LABELS[currentLang] || SP_LABELS.en;
+  const badgeEl = document.getElementById('spNewBadge');
+  if (badgeEl) badgeEl.textContent = t.newBadge;
+  try {
+    const rows = await spFetchData();
+    if (!rows.length) { el.innerHTML = `<div class="sp-loading">${t.error}</div>`; return; }
+
+    const combinedDraws = rows.map(r => (r.main_numbers || []).concat(r.bonus_numbers || []));
+    const combinedAll = combinedDraws.flat();
+    const freqTop10 = spComputeFreq(combinedAll).slice(0, 10);
+    const oe = spComputeOddEvenMode(combinedDraws);
+
+    el.innerHTML = `
+      <div class="sp-head"><span class="sp-title">${t.title}</span><span class="sp-range">${t.range(rows.length)}</span></div>
+      <div class="sp-grid sp-grid-1">
+        <div>
+          <div class="sp-block-label">${t.freqLabel}</div>
+          <div class="sp-balls">${freqTop10.map(x => spBallHtml(x.num)).join('')}</div>
+          <div class="sp-line">${t.oddEven(oe.ratio, oe.pct)}</div>
+        </div>
+      </div>
+      <a class="sp-more" href="${SP_STATS_HUB_URL}">${t.more}</a>
+    `;
+  } catch (e) {
+    console.error('[stats-preview]', e);
+    el.innerHTML = `<div class="sp-loading">${t.error}</div>`;
+  }
+}
+renderStatsPreview();
+</script>
 </body>
 </html>
