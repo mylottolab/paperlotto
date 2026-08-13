@@ -230,7 +230,9 @@ table.prize-table tr:hover td{ background:rgba(184,134,46,0.06); }
 .pr-detail-card .pr-btn:hover{ background:var(--ink); color:var(--paper); }
 
 /* ── 통계 미리보기 카드 (번호 결정 직전 배치) ── */
-.stats-preview{ margin-top:14px; background:var(--card-bg,#12162a); border:1px solid var(--board-line); border-radius:14px; padding:26px; }
+.stats-preview-wrap{ position:relative; margin-top:14px; }
+.stats-preview{ background:var(--card-bg,#12162a); border:1.5px solid #e0505a; border-radius:14px; padding:26px; box-shadow:0 0 0 3px rgba(224,80,90,0.12); }
+.sp-new-badge{ position:absolute; z-index:2; top:-11px; left:22px; background:#e0505a; color:#fff; font-size:10.5px; font-weight:800; padding:3px 10px; border-radius:20px; letter-spacing:0.3px; box-shadow:0 3px 8px -2px rgba(224,80,90,0.6); }
 .sp-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
 .sp-title{ font-size:14.5px; font-weight:700; color:var(--gold-bright); }
 .sp-range{ font-size:11px; color:var(--text-dim); }
@@ -377,8 +379,11 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
     <div class="sheet-body" id="s4body"></div>
   </div>
 
-  <div class="stats-preview" id="statsPreview">
-    <div class="sp-loading" id="spLoading">통계 불러오는 중…</div>
+  <div class="stats-preview-wrap">
+    <span class="sp-new-badge" id="spNewBadge">NEW</span>
+    <div class="stats-preview" id="statsPreview">
+      <div class="sp-loading" id="spLoading">통계 불러오는 중…</div>
+    </div>
   </div>
 
   <a class="sg-cta-banner" href="paperlotto_guide_mockup.html?open=us_powerball">
@@ -961,15 +966,15 @@ const SP_DEFAULT_ROUNDS = 1000;
 const SP_STATS_HUB_URL = 'paperlotto_round_stats.html?game=' + SP_GAME_ID;
 
 const SP_LABELS = {
-  ko: { title:'📊 통계 미리보기', range:(n)=>`최근 ${n.toLocaleString()}회 기준`,
+  ko: { newBadge:'🆕 새로운 도구', title:'📊 통계 미리보기', range:(n)=>`최근 ${n.toLocaleString()}회 기준`,
     mainFreqLabel:'가장 많이 나온 메인번호 TOP 10', mainOddEven:(ratio,pct)=>`메인번호 홀짝비율은 <b>${ratio}</b>이 ${pct}%로 가장 흔합니다.`,
     bonusFreqLabel:'파워볼 최다 출현 TOP 5', bonusOddEven:(pct)=>`파워볼은 최근 홀수가 <b>${pct}%</b>로 나왔습니다.`,
     more:'📊 전체 통계 더 보기 (기간 조정 가능) →', loading:'통계 불러오는 중…', error:'통계를 불러오지 못했습니다.' },
-  en: { title:'📊 Stats Preview', range:(n)=>`Based on the last ${n.toLocaleString()} draws`,
+  en: { newBadge:'🆕 New', title:'📊 Stats Preview', range:(n)=>`Based on the last ${n.toLocaleString()} draws`,
     mainFreqLabel:'Top 10 most frequent main numbers', mainOddEven:(ratio,pct)=>`The most common main-number odd:even split is <b>${ratio}</b> (${pct}%).`,
     bonusFreqLabel:'Top 5 most frequent Powerball numbers', bonusOddEven:(pct)=>`The Powerball has come up odd <b>${pct}%</b> of the time.`,
     more:'📊 See full stats (adjustable range) →', loading:'Loading stats…', error:'Failed to load stats.' },
-  ja: { title:'📊 統計プレビュー', range:(n)=>`直近${n.toLocaleString()}回基準`,
+  ja: { newBadge:'🆕 新機能', title:'📊 統計プレビュー', range:(n)=>`直近${n.toLocaleString()}回基準`,
     mainFreqLabel:'最も多く出たメイン番号 TOP 10', mainOddEven:(ratio,pct)=>`メイン番号の奇偶比は<b>${ratio}</b>が${pct}%で最も多いです。`,
     bonusFreqLabel:'パワーボール最多出現 TOP 5', bonusOddEven:(pct)=>`パワーボールは直近で奇数が<b>${pct}%</b>出ています。`,
     more:'📊 全体統計をもっと見る（期間調整可）→', loading:'統計を読み込み中…', error:'統計の読み込みに失敗しました。' },
@@ -1017,6 +1022,8 @@ async function renderStatsPreview(){
   const el = document.getElementById('statsPreview');
   if (!el) return;
   const t = SP_LABELS[currentLang] || SP_LABELS.en;
+  const badgeEl = document.getElementById('spNewBadge');
+  if (badgeEl) badgeEl.textContent = t.newBadge;
   try {
     const rows = await spFetchData();
     if (!rows.length) { el.innerHTML = `<div class="sp-loading">${t.error}</div>`; return; }
