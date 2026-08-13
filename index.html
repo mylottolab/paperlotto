@@ -3,11 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ⚠ 2026-08-13: GitHub Pages/브라우저/통신사 캐시가 이 문서를 오래 붙들고 있어서
+     방문할 때마다 화면이 다르게(예전 버전/최신 버전 뒤섞여) 보이던 문제 대응.
+     이 문서 자체는 매번 서버에 재검증하도록 강제한다. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>PaperLotto — Global Lottery Simulator</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="paperlotto_checker.css">
+<link rel="stylesheet" href="paperlotto_checker.css?v=20260813a">
 <style>
 :root{
   --board:#0c1020;
@@ -655,6 +661,20 @@ const GAMES = [
   { id:'kr_lotto645', region:'kr', accent:'kr', nameKr:'로또 6/45', nameEn:'Lotto 6/45', nameJa:'韓国ロト6/45', main:6, mainRange:45, bonus:1, price:'₩1,000', odds:'8,145,060', days:[6], drawHour:20, drawMinute:45, tz:'Asia/Seoul', detail:'paperlotto_detail_korea_mockup.html' },
 ];
 
+// ─── 네트워크 일시 실패 대비 재시도 헬퍼 ───
+// 모바일 등 불안정한 네트워크에서 최초 요청이 실패하면 그 데이터가 그 방문 내내
+// 영영 안 뜨던 문제 대응 — 짧은 대기 후 최대 N번까지 다시 시도한다.
+async function fetchWithRetry(fn, retries = 2, delayMs = 1200){
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const result = await fn();
+      if (result !== null && result !== undefined) return result;
+    } catch (e) { /* 아래에서 재시도 */ }
+    if (attempt < retries) await new Promise(r => setTimeout(r, delayMs));
+  }
+  return null;
+}
+
 // =====================================================
 // 잭팟(파워볼/메가밀리언스/유로밀리언스) — My Lotto Lab의 공개 API를 그대로 가져다 씀
 // =====================================================
@@ -669,7 +689,7 @@ async function loadJackpots(){
   try {
     const entries = Object.entries(JACKPOT_CODE_BY_GAME);
     const results = await Promise.all(entries.map(([gameId, code]) =>
-      fetch(JACKPOT_API_BASE + '/api/global/jackpot/' + code).then(r => r.ok ? r.json() : null).catch(() => null)
+      fetchWithRetry(() => fetch(JACKPOT_API_BASE + '/api/global/jackpot/' + code).then(r => r.ok ? r.json() : null))
     ));
     entries.forEach(([gameId], i) => { JACKPOTS[gameId] = results[i]; });
   } catch(e){ console.error('[jackpot] load error', e); }
@@ -690,14 +710,13 @@ async function loadLastDraws(){
     // 회차숫자가 작은 게임들이 아예 누락된다 — 게임별로 최신 1건씩 개별 요청한다.
     const ids = GAMES.map(g => g.id);
     const results = await Promise.all(ids.map(id =>
-      sb.from('draw_results')
+      fetchWithRetry(() => sb.from('draw_results')
         .select('game_id, round_no, draw_date, main_numbers, bonus_numbers')
         .eq('game_id', id)
         .order('round_no', { ascending: false })
         .limit(1)
         .maybeSingle()
-        .then(r => r.data)
-        .catch(() => null)
+        .then(r => r.data))
     ));
     ids.forEach((id, i) => { if (results[i]) LAST_DRAWS[id] = results[i]; });
   } catch(e){ console.error('[last-draw] load error', e); }
@@ -1042,7 +1061,7 @@ setInterval(() => { loadJackpots().then(renderCards); }, JACKPOT_REFRESH_MS);
 })();
 </script>
 
-<script src="auth-widget.js"></script>
+<script src="auth-widget.js?v=20260813a"></script>
 <script>
 // ─── 모바일 전용 헤더 재배치 ───────────────────────────────────────────
 // auth-widget.js가 #authWidget 안에 넣어주는 내용(로그인 전: 로그인 버튼 1개 /
@@ -1085,7 +1104,7 @@ setInterval(() => { loadJackpots().then(renderCards); }, JACKPOT_REFRESH_MS);
   </div>
 </div>
 
-<script src="paperlotto_checker.js"></script>
+<script src="paperlotto_checker.js?v=20260813a"></script>
 <script>
 function openChecker(gameId){
   var meta = PLChecker.GAME_META[gameId];
