@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaperLotto — 회차 통계</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2,h3{ font-family:'Fraunces',serif; margin:0; }
+a{ color:inherit; }
+
+header{
+  position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; color:var(--text-hi); }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; }
+.back-link{ font-size:12.5px; color:var(--text-mid); text-decoration:none; }
+.back-link:hover{ color:var(--gold-bright); }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:11.5px; font-weight:600; padding:6px 11px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:var(--ink); }
+
+main{ max-width:960px; margin:0 auto; padding:28px 20px 100px; }
+.page-title{ font-size:24px; margin-bottom:6px; }
+.page-sub{ font-size:12.5px; color:var(--text-mid); line-height:1.6; margin-bottom:22px; max-width:640px; }
+
+.control-card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px 22px; margin-bottom:22px; }
+.control-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+.control-row:last-child{ margin-bottom:0; }
+.control-label{ font-size:12px; font-weight:700; color:var(--ink-dim); min-width:70px; }
+select#gameSelect{ flex:1; min-width:220px; padding:10px 12px; border:1.5px solid #d9d1ba; border-radius:8px; font-size:13.5px; font-family:inherit; background:#fff; color:var(--ink); }
+.range-input-group{ display:flex; align-items:center; gap:8px; }
+.range-input-group input{ width:110px; padding:9px 10px; border:1.5px solid #d9d1ba; border-radius:7px; font-size:13.5px; font-family:'IBM Plex Mono',monospace; text-align:right; }
+.range-btn{ padding:9px 16px; border:none; border-radius:8px; background:var(--ink); color:var(--paper); font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.range-btn:hover{ background:#2a3145; }
+.range-btn:disabled{ opacity:0.55; cursor:not-allowed; }
+.range-note{ font-size:11px; color:var(--ink-dim); }
+.range-note b{ color:var(--gold); }
+.range-status{ font-size:11.5px; margin-top:8px; width:100%; }
+.range-status.ok{ color:var(--ok); }
+.range-status.err{ color:var(--err); }
+
+.stat-card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:22px 24px; margin-bottom:16px; }
+.stat-card h3{ font-size:14.5px; margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.stat-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.stat-table th{ text-align:left; padding:8px 10px; color:var(--ink-dim); font-size:11px; font-weight:700; border-bottom:1.5px solid #d9d1ba; }
+.stat-table td{ padding:8px 10px; border-bottom:1px solid #ece4cf; }
+.stat-table tr.total td{ font-weight:700; border-top:1.5px solid #d9d1ba; border-bottom:none; }
+.stat-table td.num{ text-align:right; font-family:'IBM Plex Mono',monospace; }
+
+.freq-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:6px; }
+.freq-pip{ display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--paper-2); border-radius:7px; padding:6px 10px; font-family:'IBM Plex Mono',monospace; font-size:12px; }
+.freq-pip .fp-num{ font-weight:700; }
+.freq-pip .fp-count{ color:var(--ink-dim); }
+
+.bonus-section{ margin-top:26px; padding-top:20px; border-top:1px dashed var(--board-line); }
+.bonus-section-label{ font-size:13px; font-weight:700; color:var(--gold-bright); margin-bottom:12px; }
+
+.loading-state{ text-align:center; color:var(--text-mid); font-size:13px; padding:50px 0; }
+
+@media (max-width:640px){
+  header{ padding:12px 16px; }
+  main{ padding:20px 14px 80px; }
+  .control-row{ flex-direction:column; align-items:stretch; }
+  .control-label{ min-width:auto; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="index.html">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em></div>
+  </a>
+  <div class="hdr-right">
+    <a class="back-link" href="index.html" data-i18n="navBack">← 전체 게임</a>
+    <div id="authWidget"></div>
+    <div class="lang-toggle">
+      <button data-lang="ko" class="active" type="button">KR</button>
+      <button data-lang="en" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-title" data-i18n="pageTitle">📊 회차 통계</div>
+  <div class="page-sub" data-i18n="pageSub">12개국 복권의 실제 당첨결과를 바탕으로 홀짝비율·번호 합 분포·연속번호·최다출현번호·시작번호 통계를 확인하세요. 안전한 번호 구성을 고민하실 때 참고자료로 활용하실 수 있습니다.</div>
+
+  <div class="control-card">
+    <div class="control-row">
+      <span class="control-label" data-i18n="gameLabel">게임 선택</span>
+      <select id="gameSelect"></select>
+    </div>
+    <div class="control-row">
+      <span class="control-label" data-i18n="rangeLabel">조회 기간</span>
+      <div class="range-input-group">
+        <input type="number" id="rangeInput" min="10" value="1000">
+        <span data-i18n="roundsUnit">회</span>
+      </div>
+      <button class="range-btn" id="rangeApplyBtn" data-i18n="rangeApplyBtn">조회하기</button>
+      <span class="range-note" id="rangeNote"></span>
+    </div>
+    <div class="range-status" id="rangeStatus"></div>
+  </div>
+
+  <div id="statsBody">
+    <div class="loading-state" data-i18n="loading">통계 불러오는 중…</div>
+  </div>
+</main>
+
+<script src="auth-widget.js"></script>
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const CHARGE_URL = SUPABASE_URL + "/functions/v1/charge-point-cost";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const DEFAULT_ROUNDS = 1000;
+const CUSTOM_RANGE_ACTION_KEY = 'round_stats_custom_range';
+const CUSTOM_RANGE_DISPLAY_COST = 100;
+
+const GAMES = [
+  { id:'kr_lotto645', nameKr:'한국 로또 6/45', nameEn:'Korea Lotto 6/45', nameJa:'韓国ロト6/45', mainCount:6, mainRange:[1,45], bonusDrum:'same' },
+  { id:'jp_miniloto', nameKr:'일본 미니로또', nameEn:'Japan Mini Loto', nameJa:'ミニロト', mainCount:5, mainRange:[1,31], bonusDrum:'same' },
+  { id:'jp_loto6', nameKr:'일본 로또6', nameEn:'Japan Loto 6', nameJa:'ロト6', mainCount:6, mainRange:[1,43], bonusDrum:'same' },
+  { id:'jp_loto7', nameKr:'일본 로또7', nameEn:'Japan Loto 7', nameJa:'ロト7', mainCount:7, mainRange:[1,37], bonusDrum:'same' },
+  { id:'ca_lotto649', nameKr:'캐나다 로또 6/49', nameEn:'Canada Lotto 6/49', nameJa:'カナダ ロト6/49', mainCount:6, mainRange:[1,49], bonusDrum:'same' },
+  { id:'ca_lottomax', nameKr:'캐나다 로또맥스', nameEn:'Canada Lotto Max', nameJa:'ロトマックス', mainCount:7, mainRange:[1,52], bonusDrum:'same' },
+  { id:'au_tattslotto', nameKr:'호주 새터데이로또', nameEn:'Australia Saturday Lotto', nameJa:'豪サタデーロト', mainCount:6, mainRange:[1,45], bonusDrum:'same' },
+  { id:'au_ozlotto', nameKr:'호주 오즈로또', nameEn:'Australia Oz Lotto', nameJa:'豪オズロト', mainCount:7, mainRange:[1,45], bonusDrum:'same' },
+  { id:'us_powerball', nameKr:'미국 파워볼', nameEn:'US Powerball', nameJa:'米パワーボール', mainCount:5, mainRange:[1,69], bonusDrum:'separate', bonusLabelKr:'파워볼', bonusLabelEn:'Powerball', bonusLabelJa:'パワーボール' },
+  { id:'us_megamillions', nameKr:'미국 메가밀리언스', nameEn:'US Mega Millions', nameJa:'米メガミリオンズ', mainCount:5, mainRange:[1,70], bonusDrum:'separate', bonusLabelKr:'메가볼', bonusLabelEn:'Mega Ball', bonusLabelJa:'メガボール' },
+  { id:'eu_euromillions', nameKr:'유럽 유로밀리언스', nameEn:'EuroMillions', nameJa:'ユーロミリオンズ', mainCount:5, mainRange:[1,50], bonusDrum:'separate', bonusLabelKr:'럭키스타', bonusLabelEn:'Lucky Stars', bonusLabelJa:'ラッキースター' },
+  { id:'au_powerball', nameKr:'호주 파워볼', nameEn:'Australia Powerball', nameJa:'豪パワーボール', mainCount:7, mainRange:[1,35], bonusDrum:'separate', bonusLabelKr:'파워볼', bonusLabelEn:'Powerball', bonusLabelJa:'パワーボール' },
+];
+
+const I18N = {
+  ko: {
+    navBack:"← 전체 게임", pageTitle:"📊 회차 통계", pageSub:"12개국 복권의 실제 당첨결과를 바탕으로 홀짝비율·번호 합 분포·연속번호·최다출현번호·시작번호 통계를 확인하세요. 안전한 번호 구성을 고민하실 때 참고자료로 활용하실 수 있습니다.",
+    gameLabel:"게임 선택", rangeLabel:"조회 기간", roundsUnit:"회", rangeApplyBtn:"조회하기",
+    loading:"통계 불러오는 중…", errorLoad:"통계를 불러오지 못했습니다.",
+    rangeFreeNote:(n)=>"최근 " + n.toLocaleString() + "회는 무료입니다. 다른 기간은 " + CUSTOM_RANGE_DISPLAY_COST + "P가 소요됩니다.",
+    rangeConfirm:(n,cost)=>"최근 " + n.toLocaleString() + "회 통계를 조회합니다. " + cost + "P가 차감됩니다. 진행할까요?",
+    rangeCharging:"결제 처리 중…", rangeCharged:(cost)=>"✅ " + cost + "P가 차감되었습니다.",
+    rangeErrLogin:"로그인이 필요한 기능입니다.", rangeErrInsufficient:(shortfall)=>"포인트가 부족합니다 (" + shortfall.toLocaleString() + "P 부족). 충전해주세요.",
+    rangeErrTooMany:(max)=>"이 게임은 최대 " + max.toLocaleString() + "회까지만 데이터가 있습니다.", rangeErrGeneric:"처리 중 오류가 발생했습니다.",
+    availLabel:(n)=>"이 게임의 전체 등록 회차: " + n.toLocaleString() + "회",
+    oddEvenTitle:"⚖️ 홀짝비율", sumTitle:(k)=>"➕ " + k + "개 번호의 합 분포", consecTitle:"🔗 연속번호: 숫자가 연달아 나오는 조합",
+    freqTitle:"🔥 가장 많이 출현한 번호의 횟수", startTitle:"🎯 당첨번호조합의 첫 시작번호와 횟수",
+    colCategory:"구분", colCount:"출현횟수", colRatio:"출현비율", colTotal:"합계",
+    noConsec:"연속조합 없음", nConsec:(n)=>n + "연속",
+    bonusSectionLabel:(name)=>name + " 통계 (별도 추첨)", bonusFreqTitle:(name)=>"🔥 " + name + " 최다 출현", bonusOddEvenTitle:(name)=>"⚖️ " + name + " 홀짝비율",
+  },
+  en: {
+    navBack:"← All Games", pageTitle:"📊 Round Statistics", pageSub:"Check odd:even ratio, number-sum distribution, consecutive numbers, most-frequent numbers, and starting-number stats based on real draw results across 12 countries' lotteries — useful reference when weighing a safer number combination.",
+    gameLabel:"Select game", rangeLabel:"Range", roundsUnit:"draws", rangeApplyBtn:"Query",
+    loading:"Loading stats…", errorLoad:"Failed to load stats.",
+    rangeFreeNote:(n)=>"The last " + n.toLocaleString() + " draws are free. Any other range costs " + CUSTOM_RANGE_DISPLAY_COST + "P.",
+    rangeConfirm:(n,cost)=>"Querying stats for the last " + n.toLocaleString() + " draws. " + cost + "P will be charged. Proceed?",
+    rangeCharging:"Processing payment…", rangeCharged:(cost)=>"✅ " + cost + "P charged.",
+    rangeErrLogin:"Please log in to use this feature.", rangeErrInsufficient:(shortfall)=>"Not enough points (short by " + shortfall.toLocaleString() + "P). Please charge up.",
+    rangeErrTooMany:(max)=>"This game only has data for up to " + max.toLocaleString() + " draws.", rangeErrGeneric:"An error occurred.",
+    availLabel:(n)=>"Total draws recorded for this game: " + n.toLocaleString(),
+    oddEvenTitle:"⚖️ Odd:Even Ratio", sumTitle:(k)=>"➕ Sum Distribution (" + k + " numbers)", consecTitle:"🔗 Consecutive Numbers",
+    freqTitle:"🔥 Most Frequent Numbers", startTitle:"🎯 First (Lowest) Number in Winning Combo",
+    colCategory:"Category", colCount:"Count", colRatio:"Ratio", colTotal:"Total",
+    noConsec:"No consecutive", nConsec:(n)=>n + " in a row",
+    bonusSectionLabel:(name)=>name + " Stats (separate draw)", bonusFreqTitle:(name)=>"🔥 " + name + " Most Frequent", bonusOddEvenTitle:(name)=>"⚖️ " + name + " Odd:Even Ratio",
+  },
+  ja: {
+    navBack:"← 全ゲーム", pageTitle:"📊 回別統計", pageSub:"12カ国の宝くじの実際の当せん結果をもとに、奇偶比・番号合計分布・連続番号・最多出現番号・スタート番号の統計を確認できます。安全な番号構成を検討する際の参考資料としてご活用ください。",
+    gameLabel:"ゲーム選択", rangeLabel:"照会期間", roundsUnit:"回", rangeApplyBtn:"照会する",
+    loading:"統計を読み込み中…", errorLoad:"統計の読み込みに失敗しました。",
+    rangeFreeNote:(n)=>"直近" + n.toLocaleString() + "回は無料です。それ以外の期間は" + CUSTOM_RANGE_DISPLAY_COST + "Pかかります。",
+    rangeConfirm:(n,cost)=>"直近" + n.toLocaleString() + "回の統計を照会します。" + cost + "Pが差し引かれます。進めますか？",
+    rangeCharging:"決済処理中…", rangeCharged:(cost)=>"✅ " + cost + "Pが差し引かれました。",
+    rangeErrLogin:"ログインが必要な機能です。", rangeErrInsufficient:(shortfall)=>"ポイントが不足しています（" + shortfall.toLocaleString() + "P不足）。チャージしてください。",
+    rangeErrTooMany:(max)=>"このゲームは最大" + max.toLocaleString() + "回分のデータしかありません。", rangeErrGeneric:"処理中にエラーが発生しました。",
+    availLabel:(n)=>"このゲームの全登録回数: " + n.toLocaleString() + "回",
+    oddEvenTitle:"⚖️ 奇偶比", sumTitle:(k)=>"➕ " + k + "個の番号の合計分布", consecTitle:"🔗 連続番号",
+    freqTitle:"🔥 最も多く出た番号の回数", startTitle:"🎯 当せん組み合わせの最初の番号と回数",
+    colCategory:"区分", colCount:"出現回数", colRatio:"出現比率", colTotal:"合計",
+    noConsec:"連続組み合わせなし", nConsec:(n)=>n + "連続",
+    bonusSectionLabel:(name)=>name + "統計（別抽選）", bonusFreqTitle:(name)=>"🔥 " + name + "最多出現", bonusOddEvenTitle:(name)=>"⚖️ " + name + "奇偶比",
+  },
+};
+
+let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
+let currentGameId = new URLSearchParams(location.search).get('game') || GAMES[0].id;
+let currentRounds = DEFAULT_ROUNDS;
+let cachedRows = null;
+
+function t(){ return I18N[currentLang] || I18N.ko; }
+function curGame(){ return GAMES.find(g => g.id === currentGameId) || GAMES[0]; }
+function gameName(g){ return currentLang==='en' ? g.nameEn : currentLang==='ja' ? g.nameJa : g.nameKr; }
+function bonusLabel(g){ return currentLang==='en' ? g.bonusLabelEn : currentLang==='ja' ? g.bonusLabelJa : g.bonusLabelKr; }
+
+function applyLang(lang){
+  currentLang = I18N[lang] ? lang : 'ko';
+  localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key = el.getAttribute('data-i18n');
+    if (typeof t()[key] === 'string') el.innerHTML = t()[key];
+  });
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
+  renderGameSelect();
+  updateRangeNote();
+  renderStats();
+}
+document.querySelectorAll('.lang-toggle button').forEach(function(btn){
+  btn.addEventListener('click', function(){ applyLang(btn.dataset.lang); });
+});
+
+function renderGameSelect(){
+  var sel = document.getElementById('gameSelect');
+  var prev = sel.value || currentGameId;
+  sel.innerHTML = GAMES.map(function(g){ return '<option value="' + g.id + '">' + gameName(g) + '</option>'; }).join('');
+  sel.value = GAMES.some(function(g){ return g.id === prev; }) ? prev : GAMES[0].id;
+  currentGameId = sel.value;
+}
+document.getElementById('gameSelect').addEventListener('change', function(e){
+  currentGameId = e.target.value;
+  currentRounds = DEFAULT_ROUNDS;
+  document.getElementById('rangeInput').value = DEFAULT_ROUNDS;
+  cachedRows = null;
+  history.replaceState(null, '', '?game=' + currentGameId);
+  updateRangeNote();
+  renderStats();
+});
+
+function updateRangeNote(){
+  document.getElementById('rangeNote').textContent = t().rangeFreeNote(DEFAULT_ROUNDS);
+}
+
+async function fetchDraws(gameId, rounds){
+  var res = await sb.from('draw_results')
+    .select('main_numbers, bonus_numbers', { count:'exact' })
+    .eq('game_id', gameId)
+    .order('round_no', { ascending:false })
+    .limit(rounds);
+  if (res.error) throw res.error;
+  return { rows: res.data || [], totalAvailable: res.count !== null && res.count !== undefined ? res.count : (res.data ? res.data.length : 0) };
+}
+
+function computeOddEven(draws, k){
+  var tally = {};
+  for (var i=0;i<=k;i++) tally[i+':'+(k-i)] = 0;
+  draws.forEach(function(arr){
+    var oddCount = arr.filter(function(n){ return n % 2 === 1; }).length;
+    var key = oddCount + ':' + (arr.length - oddCount);
+    if (tally[key] === undefined) tally[key] = 0;
+    tally[key]++;
+  });
+  var total = draws.length;
+  return Object.entries(tally).map(function(e){
+    return { ratio: e[0], count: e[1], pct: total ? Math.round(e[1]/total*1000)/10 : 0 };
+  }).sort(function(a,b){ return Number(b.ratio.split(':')[0]) - Number(a.ratio.split(':')[0]); });
+}
+
+function sumRangeCalc(a,b){ var s=0; for (var i=a;i<=b;i++) s+=i; return s; }
+
+function computeSumDistribution(draws, range, k){
+  var minSum = sumRangeCalc(range[0], range[0]+k-1);
+  var maxSum = sumRangeCalc(range[1]-k+1, range[1]);
+  var bucketWidth = Math.ceil((maxSum - minSum + 1) / 5);
+  var buckets = [];
+  for (var i=0;i<5;i++){
+    var lo = minSum + i*bucketWidth;
+    var hi = (i===4) ? maxSum : (minSum + (i+1)*bucketWidth - 1);
+    buckets.push({ lo:lo, hi:hi, count:0 });
+  }
+  draws.forEach(function(arr){
+    var s = arr.reduce(function(a,b){return a+b;},0);
+    var b = buckets.find(function(b){ return s >= b.lo && s <= b.hi; }) || buckets[buckets.length-1];
+    b.count++;
+  });
+  var total = draws.length;
+  return buckets.map(function(b){ return { label: b.lo + '-' + b.hi, count:b.count, pct: total ? Math.round(b.count/total*1000)/10 : 0 }; });
+}
+
+function computeConsecutive(draws, k){
+  var tally = {}; tally['none'] = 0;
+  for (var n=2;n<=k;n++) tally[n] = 0;
+  draws.forEach(function(arr){
+    var sorted = arr.slice().sort(function(a,b){return a-b;});
+    var longest = 1, cur = 1;
+    for (var i=1;i<sorted.length;i++){
+      if (sorted[i] === sorted[i-1]+1) { cur++; longest = Math.max(longest, cur); }
+      else cur = 1;
+    }
+    if (longest < 2) tally['none']++;
+    else tally[longest] = (tally[longest]||0) + 1;
+  });
+  var total = draws.length;
+  var rows = [{ key:'none', count:tally['none'], pct: total ? Math.round(tally['none']/total*1000)/10 : 0 }];
+  for (var n2=2;n2<=k;n2++) rows.push({ key:n2, count:tally[n2]||0, pct: total ? Math.round((tally[n2]||0)/total*1000)/10 : 0 });
+  return rows;
+}
+
+function computeFreq(nums){
+  var freq = {};
+  nums.forEach(function(n){ freq[n] = (freq[n]||0)+1; });
+  return Object.entries(freq).map(function(e){ return { num:Number(e[0]), count:e[1] }; }).sort(function(a,b){ return b.count-a.count || a.num-b.num; });
+}
+
+function computeStartNumbers(draws){
+  var freq = {};
+  draws.forEach(function(arr){ var min = Math.min.apply(null, arr); freq[min] = (freq[min]||0)+1; });
+  return Object.entries(freq).map(function(e){ return { num:Number(e[0]), count:e[1] }; }).sort(function(a,b){ return a.num-b.num; });
+}
+
+function oddEvenTableHtml(rows){
+  var total = rows.reduce(function(s,r){return s+r.count;},0);
+  return '<table class="stat-table"><thead><tr><th>' + t().colCategory + '</th><th>' + t().colCount + '</th><th>' + t().colRatio + '</th></tr></thead><tbody>' +
+    rows.map(function(r){ return '<tr><td>' + r.ratio + '</td><td class="num">' + r.count.toLocaleString() + '</td><td class="num">' + r.pct + '%</td></tr>'; }).join('') +
+    '<tr class="total"><td>' + t().colTotal + '</td><td class="num">' + total.toLocaleString() + '</td><td class="num">100.0%</td></tr>' +
+  '</tbody></table>';
+}
+function sumTableHtml(rows){
+  var total = rows.reduce(function(s,r){return s+r.count;},0);
+  return '<table class="stat-table"><thead><tr><th>' + t().colCategory + '</th><th>' + t().colCount + '</th><th>' + t().colRatio + '</th></tr></thead><tbody>' +
+    rows.map(function(r){ return '<tr><td>' + r.label + '</td><td class="num">' + r.count.toLocaleString() + '</td><td class="num">' + r.pct + '%</td></tr>'; }).join('') +
+    '<tr class="total"><td>' + t().colTotal + '</td><td class="num">' + total.toLocaleString() + '</td><td class="num">100.0%</td></tr>' +
+  '</tbody></table>';
+}
+function consecTableHtml(rows){
+  var total = rows.reduce(function(s,r){return s+r.count;},0);
+  return '<table class="stat-table"><thead><tr><th>' + t().colCategory + '</th><th>' + t().colCount + '</th><th>' + t().colRatio + '</th></tr></thead><tbody>' +
+    rows.map(function(r){ return '<tr><td>' + (r.key==='none' ? t().noConsec : t().nConsec(r.key)) + '</td><td class="num">' + r.count.toLocaleString() + '</td><td class="num">' + r.pct + '%</td></tr>'; }).join('') +
+    '<tr class="total"><td>' + t().colTotal + '</td><td class="num">' + total.toLocaleString() + '</td><td class="num">100.0%</td></tr>' +
+  '</tbody></table>';
+}
+function freqGridHtml(rows){
+  return '<div class="freq-grid">' + rows.map(function(r){ return '<div class="freq-pip"><span class="fp-num">' + String(r.num).padStart(2,'0') + '</span><span class="fp-count">' + r.count.toLocaleString() + '</span></div>'; }).join('') + '</div>';
+}
+
+async function renderStats(){
+  var body = document.getElementById('statsBody');
+  body.innerHTML = '<div class="loading-state">' + t().loading + '</div>';
+  var g = curGame();
+  try {
+    var data;
+    if (cachedRows && cachedRows.gameId === g.id && cachedRows.rounds === currentRounds) {
+      data = cachedRows;
+    } else {
+      var res = await fetchDraws(g.id, currentRounds);
+      data = { gameId:g.id, rounds:currentRounds, rows:res.rows, totalAvailable:res.totalAvailable };
+      cachedRows = data;
+    }
+    var rows = data.rows;
+    if (!rows.length) { body.innerHTML = '<div class="loading-state">' + t().errorLoad + '</div>'; return; }
+
+    var mainDraws = rows.map(function(r){ return r.main_numbers || []; });
+    var mainAll = mainDraws.flat();
+
+    var combinedForFreqOE = mainDraws;
+    var combinedAllForFreqOE = mainAll;
+    if (g.bonusDrum === 'same') {
+      combinedForFreqOE = rows.map(function(r){ return (r.main_numbers||[]).concat(r.bonus_numbers||[]); });
+      combinedAllForFreqOE = combinedForFreqOE.flat();
+    }
+
+    var oddEvenRows = computeOddEven(combinedForFreqOE.length ? combinedForFreqOE : mainDraws, combinedForFreqOE[0] ? combinedForFreqOE[0].length : g.mainCount);
+    var sumRows = computeSumDistribution(mainDraws, g.mainRange, g.mainCount);
+    var consecRows = computeConsecutive(mainDraws, g.mainCount);
+    var freqRows = computeFreq(combinedAllForFreqOE);
+    var startRows = computeStartNumbers(mainDraws);
+
+    var bonusHtml = '';
+    if (g.bonusDrum === 'separate') {
+      var bonusAll = rows.map(function(r){ return r.bonus_numbers || []; }).flat();
+      var bonusDraws = rows.map(function(r){ return r.bonus_numbers || []; });
+      var bonusFreqRows = computeFreq(bonusAll);
+      var bonusOE = computeOddEven(bonusDraws, bonusDraws[0] ? bonusDraws[0].length : 1);
+      var bName = bonusLabel(g);
+      bonusHtml =
+        '<div class="bonus-section">' +
+          '<div class="bonus-section-label">' + t().bonusSectionLabel(bName) + '</div>' +
+          '<div class="stat-card"><h3>' + t().bonusFreqTitle(bName) + '</h3>' + freqGridHtml(bonusFreqRows) + '</div>' +
+          '<div class="stat-card"><h3>' + t().bonusOddEvenTitle(bName) + '</h3>' + oddEvenTableHtml(bonusOE) + '</div>' +
+        '</div>';
+    }
+
+    body.innerHTML =
+      '<div style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;">' + t().availLabel(data.totalAvailable) + '</div>' +
+      '<div class="stat-card"><h3>' + t().oddEvenTitle + '</h3>' + oddEvenTableHtml(oddEvenRows) + '</div>' +
+      '<div class="stat-card"><h3>' + t().sumTitle(g.mainCount) + '</h3>' + sumTableHtml(sumRows) + '</div>' +
+      '<div class="stat-card"><h3>' + t().consecTitle + '</h3>' + consecTableHtml(consecRows) + '</div>' +
+      '<div class="stat-card"><h3>' + t().freqTitle + '</h3>' + freqGridHtml(freqRows) + '</div>' +
+      '<div class="stat-card"><h3>' + t().startTitle + '</h3>' + freqGridHtml(startRows) + '</div>' +
+      bonusHtml;
+  } catch (e) {
+    console.error('[round-stats]', e);
+    body.innerHTML = '<div class="loading-state">' + t().errorLoad + '</div>';
+  }
+}
+
+document.getElementById('rangeApplyBtn').addEventListener('click', async function(){
+  var input = document.getElementById('rangeInput');
+  var requested = Math.max(10, parseInt(input.value) || DEFAULT_ROUNDS);
+  var statusEl = document.getElementById('rangeStatus');
+  statusEl.textContent = ''; statusEl.className = 'range-status';
+
+  if (requested === currentRounds) return;
+
+  if (requested === DEFAULT_ROUNDS) {
+    currentRounds = DEFAULT_ROUNDS;
+    cachedRows = null;
+    renderStats();
+    return;
+  }
+
+  var sessionRes = await sb.auth.getSession();
+  var session = sessionRes.data.session;
+  if (!session) {
+    statusEl.textContent = t().rangeErrLogin;
+    statusEl.className = 'range-status err';
+    return;
+  }
+  if (!confirm(t().rangeConfirm(requested, CUSTOM_RANGE_DISPLAY_COST))) return;
+
+  var btn = document.getElementById('rangeApplyBtn');
+  btn.disabled = true;
+  statusEl.textContent = t().rangeCharging;
+  statusEl.className = 'range-status';
+  try {
+    var resp = await fetch(CHARGE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ actionKey: CUSTOM_RANGE_ACTION_KEY, refId: currentGameId }),
+    });
+    var data = await resp.json();
+    if (!resp.ok) {
+      if (resp.status === 402) statusEl.textContent = t().rangeErrInsufficient(data.shortfall || 0);
+      else statusEl.textContent = data.error || t().rangeErrGeneric;
+      statusEl.className = 'range-status err';
+      return;
+    }
+    statusEl.textContent = t().rangeCharged(data.charged);
+    statusEl.className = 'range-status ok';
+    if (window.refreshAuthBalance) window.refreshAuthBalance();
+
+    currentRounds = requested;
+    cachedRows = null;
+    await renderStats();
+
+    if (cachedRows && cachedRows.totalAvailable < requested) {
+      statusEl.textContent += ' ' + t().rangeErrTooMany(cachedRows.totalAvailable);
+    }
+  } catch (e) {
+    statusEl.textContent = t().rangeErrGeneric;
+    statusEl.className = 'range-status err';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+renderGameSelect();
+document.getElementById('gameSelect').value = currentGameId;
+updateRangeNote();
+applyLang(currentLang);
+</script>
+</body>
+</html>
