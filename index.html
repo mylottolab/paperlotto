@@ -360,9 +360,12 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
 .ticket-cta{
   margin-top:16px; display:flex; align-items:center; justify-content:space-between;
   font-size:12.5px; font-weight:600; color:var(--ink);
+  padding:9px 12px; border-radius:9px; background:rgba(184,134,46,0.09);
+  cursor:pointer; transition:background .15s ease;
 }
+.ticket-cta:hover{ background:rgba(184,134,46,0.18); text-decoration:underline; }
 .ticket-cta .arrow{ transition:transform .15s ease; }
-.ticket:hover .ticket-cta .arrow{ transform:translateX(3px); }
+.ticket-cta:hover .arrow{ transform:translateX(3px); }
 
 /* ══════════════ FOOTER ══════════════ */
 footer{
@@ -1004,7 +1007,7 @@ function renderCards(){
         </div>
         <button class="plck-entry-btn" onclick="event.preventDefault();event.stopPropagation();openChecker('${g.id}')">${t.checkerBtn}</button>
         <div class="plck-note-mini">${t.checkerNote}</div>
-        <div class="ticket-cta">${t.registerCta} <span class="arrow">→</span></div>
+        <div class="ticket-cta" onclick="event.preventDefault();event.stopPropagation();location.href='${g.detail}#registerCta';">${t.registerCta} <span class="arrow">→</span></div>
       </a>`;
     }).join('');
   });
