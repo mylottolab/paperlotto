@@ -95,6 +95,11 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 
   btn.disabled = true; btn.textContent = '확인 중…';
   try {
+    // ⚠️ 2026-08-14 수정: 예전엔 access_token 문자열만 뽑아서 sessionStorage에
+    // 저장했는데, 이러면 정확히 1시간(JWT 만료시간) 뒤 그 문자열이 죽어버리고
+    // 갱신 방법이 없어서 매번 재로그인해야 했음. supabase-js는 원래 로그인 세션을
+    // localStorage에 저장하고 만료 전에 알아서 갱신해주므로, 이제 그 기본 동작을
+    // 그대로 활용한다 — 문자열을 직접 뽑아서 따로 저장하지 않는다.
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error || !data.session) {
       showMsg('로그인에 실패했습니다: ' + (error?.message || ''), false);
@@ -110,8 +115,9 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
       return;
     }
 
-    sessionStorage.setItem('pl_admin_token', accessToken);
-    sessionStorage.setItem('pl_admin_email', verifyData.email || email);
+    // 이메일은 화면 표시용으로만 가볍게 남겨둔다. 실제 인증 토큰은 supabase-js가
+    // localStorage에 알아서 저장·갱신하므로 여기서 따로 다루지 않는다.
+    localStorage.setItem('pl_admin_email', verifyData.email || email);
     showMsg('로그인 확인됨. 관리자 키를 입력해주세요.', true);
     document.getElementById('stepLogin').style.display = 'none';
     document.getElementById('stepKey').style.display = 'block';
@@ -125,7 +131,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 document.getElementById('enterBtn').addEventListener('click', () => {
   const key = document.getElementById('adminKey').value.trim();
   if (!key) { showMsg('관리자 키를 입력해주세요.', false); return; }
-  sessionStorage.setItem('pl_admin_key', key);
+  localStorage.setItem('pl_admin_key', key); // 탭을 닫아도 유지되도록 localStorage 사용
   window.location.href = 'paperlotto_admin_scrape_review.html';
 });
 </script>
