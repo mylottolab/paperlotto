@@ -96,21 +96,34 @@ main{ max-width:900px; margin:0 auto; padding:28px 20px 90px; }
 
 <script>
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const POINT_COSTS_URL = SUPABASE_URL + "/functions/v1/admin-point-costs";
 
-const accessToken = sessionStorage.getItem('pl_admin_token');
-const adminKey = sessionStorage.getItem('pl_admin_key');
-const adminEmail = sessionStorage.getItem('pl_admin_email');
+// ⚠️ 2026-08-14 수정: 예전엔 로그인 때 뽑아둔 access_token 문자열을 그대로
+// sessionStorage에서 읽어 썼는데, 이러면 1시간(JWT 만료시간) 지나면 그 문자열이
+// 죽어버려서 매번 재로그인해야 했음. 이제 supabase-js가 자체적으로 관리하는
+// 세션(localStorage에 저장되고 만료 전 자동 갱신됨)에서 그때그때 최신 토큰을
+// 가져오도록 바꿈 — API 호출 직전마다 getAccessToken()을 호출하면 됨.
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const adminKey = localStorage.getItem('pl_admin_key');
+const adminEmail = localStorage.getItem('pl_admin_email');
 
-if (!accessToken || !adminKey) {
-  window.location.href = 'paperlotto_admin_login.html';
+async function getAccessToken(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'paperlotto_admin_login.html'; return null; }
+  return session.access_token;
 }
 
+(async () => {
+  const token = await getAccessToken();
+  if (!token || !adminKey) { window.location.href = 'paperlotto_admin_login.html'; return; }
+})();
+
 document.getElementById('adminEmail').textContent = adminEmail || '';
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('pl_admin_token');
-  sessionStorage.removeItem('pl_admin_key');
-  sessionStorage.removeItem('pl_admin_email');
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  localStorage.removeItem('pl_admin_key');
+  localStorage.removeItem('pl_admin_email');
   window.location.href = 'paperlotto_admin_login.html';
 });
 
@@ -118,6 +131,8 @@ async function loadCosts() {
   const list = document.getElementById('list');
   list.innerHTML = '<div class="empty-state">불러오는 중…</div>';
   try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) return;
     const resp = await fetch(POINT_COSTS_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
     const data = await resp.json();
     if (resp.status === 401 || resp.status === 403) {
@@ -187,6 +202,8 @@ async function saveCost(actionKey, idPrefix) {
   const originalText = btn.textContent;
   btn.textContent = '저장 중…';
   try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) return;
     const resp = await fetch(POINT_COSTS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken, 'x-admin-key': adminKey },
