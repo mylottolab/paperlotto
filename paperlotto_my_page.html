@@ -111,10 +111,12 @@ main{ max-width:920px; margin:0 auto; padding:28px 24px 90px; }
     <div class="brand-name">Paper<em>Lotto</em></div>
   </a>
   <nav>
-    <a href="index.html" data-i18n="navGames">전체 게임</a>
+    <a href="index.html#board" data-i18n="navGames">전체 게임</a>
     <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="paperlotto_checker.html" data-i18n="navChecker">당첨확인</a>
+    <a href="paperlotto_round_stats.html" data-i18n="navStats">통계</a>
     <a href="paperlotto_racetrack_mockup.html" data-i18n="navRacetrack">경마장</a>
-    <a href="paperlotto_my_bets.html" data-i18n="navMyBets">내 베팅현황</a>
+    <a href="paperlotto_battles_mockup.html" data-i18n="navBattles">무제한 대결</a>
     <div class="lang-toggle">
       <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" class="active" type="button">EN</button>
@@ -169,8 +171,8 @@ main{ max-width:920px; margin:0 auto; padding:28px 24px 90px; }
   <div class="section-card">
     <div class="section-head">
       <div class="section-title">⚔️ <span data-i18n="secBattle">무제한대결 참여내역</span></div>
-      <!-- ⚠ 정확한 페이지 파일명 확인 필요 — 우선 추정 파일명으로 연결해둠 -->
-      <a class="section-link" href="paperlotto_battle_mockup.html" data-i18n="secBattleLink">전체보기 →</a>
+      <!-- 2026-08-15 수정: 실제 파일명 확인됨 (index.html 헤더 nav 참조) -->
+      <a class="section-link" href="paperlotto_battles_mockup.html" data-i18n="secBattleLink">전체보기 →</a>
     </div>
     <div id="battleList" class="loading-note" data-i18n="loading">불러오는 중…</div>
   </div>
@@ -189,6 +191,7 @@ main{ max-width:920px; margin:0 auto; padding:28px 24px 90px; }
 const i18n = {
   ko: {
     navGames:"전체 게임", navMyEntries:"내 등록번호", navRacetrack:"경마장", navMyBets:"내 베팅현황",
+    navChecker:"당첨확인", navStats:"통계", navBattles:"무제한 대결",
     pageTitle:"마이페이지", pageDesc:"등록번호, 마이 시그니처, 경마장 참여내역, 포인트 사용내역을 한 곳에서 확인하세요.",
     badgePoints:"보유 포인트", badgeEntries:"전체 등록", badgeCollections:"마이 시그니처", badgeRaces:"레이스 참여",
     secEntries:"최근 등록번호", secEntriesLink:"전체보기 →",
@@ -203,6 +206,7 @@ const i18n = {
   },
   en: {
     navGames:"All Games", navMyEntries:"My Entries", navRacetrack:"Racetrack", navMyBets:"My Bets",
+    navChecker:"Check Numbers", navStats:"Stats", navBattles:"Battles",
     pageTitle:"My Page", pageDesc:"Your entries, My Signature collections, racetrack activity, and point history — all in one place.",
     badgePoints:"Points Balance", badgeEntries:"Total Entries", badgeCollections:"My Signature", badgeRaces:"Races Joined",
     secEntries:"Recent Entries", secEntriesLink:"View all →",
@@ -217,6 +221,7 @@ const i18n = {
   },
   ja: {
     navGames:"すべてのゲーム", navMyEntries:"マイ登録番号", navRacetrack:"競馬場", navMyBets:"マイベット",
+    navChecker:"当選確認", navStats:"統計", navBattles:"無制限対決",
     pageTitle:"マイページ", pageDesc:"登録番号、マイシグニチャー、競馬場の参加履歴、ポイント履歴を一箇所で確認できます。",
     badgePoints:"保有ポイント", badgeEntries:"登録合計", badgeCollections:"マイシグニチャー", badgeRaces:"参加レース数",
     secEntries:"最近の登録番号", secEntriesLink:"すべて見る →",
