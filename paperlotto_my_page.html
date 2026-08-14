@@ -253,6 +253,8 @@ document.querySelectorAll('.lang-toggle button').forEach(function(btn){ btn.addE
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const SIGNATURE_URL = SUPABASE_URL + "/functions/v1/signature";
+const POINTS_BALANCE_URL = SUPABASE_URL + "/functions/v1/points-balance";
+const POINT_HISTORY_URL = SUPABASE_URL + "/functions/v1/point-history";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const GAME_LABELS = {
@@ -294,88 +296,53 @@ async function loadAll(){
   loadBattles();
 }
 
-// action_key -> 사람이 읽을 수 있는 라벨 (실제 point_spend_log 스키마 확인 후 2026-08-15 반영)
-const ACTION_LABELS = {
-  entry_future:               { ko:'번호 등록 (추첨예정)', en:'Number entry (upcoming)', ja:'番号登録(抽選予定)' },
-  entry_past:                 { ko:'번호 등록 (과거회차)', en:'Number entry (past round)', ja:'番号登録(過去回)' },
-  signature_collection_create:{ ko:'마이 시그니처 생성', en:'Create My Signature', ja:'マイシグニチャー作成' },
-  export_excel:                { ko:'엑셀 다운로드', en:'Excel export', ja:'エクセルダウンロード' },
-  export_pdf:                  { ko:'PDF 생성', en:'PDF export', ja:'PDF生成' },
-  round_stats_custom:          { ko:'회차통계 커스텀조회', en:'Custom round stats', ja:'回次統計カスタム照会' },
-  battle_entry:                { ko:'무제한대결 참가', en:'Battle entry', ja:'無制限対決参加' },
-};
-function actionLabel(key){
-  const l = ACTION_LABELS[key];
-  if (!l) return key || '-';
-  return l[currentLang] || l.en || key;
-}
-
 // ── 보유 포인트 + 포인트 사용/충전 내역 ──
-// ⚠ 2026-08-15: profiles.points_balance가 실시간 값이 아닌 것으로 확인됨(0으로 고정).
-// 대신 payments(완료된 충전, points 컬럼)와 point_spend_log(사용, amount 컬럼)를 시간순으로 합쳐
-// 누적 잔액을 직접 계산함. payments(order_id, user_id, provider, amount, currency, points, status, created_at)
+// ⚠ 2026-08-15: profiles.points_balance / 테이블 직접합산 모두 실제 값(896,757P)과 안 맞는 것 확인됨.
+// paperlotto_recharge_mockup.html이 쓰는 것과 동일한 Edge Function(points-balance, point-history)을
+// 그대로 재사용 — 이 두 함수가 서버에서 정확한 잔액/내역을 이미 계산해주고 있음.
 async function loadPointsBadgeAndHistory(){
   const t = i18n[currentLang];
   const el = document.getElementById('pointList');
   const badgeEl = document.getElementById('badgePoints');
 
-  let events = [];
-  let hadError = false;
-
   try {
-    const { data, error } = await sb.from('payments')
-      .select('order_id, provider, points, status, created_at')
-      .eq('user_id', userId).eq('status', 'completed')
-      .order('created_at', { ascending: true });
-    if (error) throw error;
-    (data || []).forEach(function(p){
-      events.push({
-        type: 'charge', created_at: p.created_at, amount: Number(p.points) || 0,
-        label: t.chargeLabel + (p.provider ? ' (' + p.provider + ')' : ''),
-      });
-    });
-  } catch (e) { console.error('[my_page] payments 조회 오류', e); hadError = true; }
-
-  try {
-    const { data, error } = await sb.from('point_spend_log')
-      .select('id, action_key, amount, created_at')
-      .eq('user_id', userId).order('created_at', { ascending: true });
-    if (error) throw error;
-    (data || []).forEach(function(r){
-      events.push({
-        type: 'spend', created_at: r.created_at, amount: -(Number(r.amount) || 0),
-        label: actionLabel(r.action_key),
-      });
-    });
-  } catch (e) { console.error('[my_page] point_spend_log 조회 오류', e); hadError = true; }
-
-  if (events.length === 0) {
+    const balResp = await fetch(POINTS_BALANCE_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const balData = await balResp.json();
+    badgeEl.textContent = balResp.ok ? Number(balData.total || 0).toLocaleString() : '–';
+  } catch (e) {
+    console.error('[my_page] points-balance 호출 오류', e);
     badgeEl.textContent = '–';
-    el.innerHTML = hadError
-      ? '<div class="error-note">' + t.errorNote + ' (payments / point_spend_log)</div>'
-      : '<div class="empty-note">' + t.empty + '</div>';
-    return;
   }
 
-  // 시간순(오래된 것부터) 정렬 후 누적 잔액 계산
-  events.sort(function(a,b){ return new Date(a.created_at) - new Date(b.created_at); });
-  let running = 0;
-  events.forEach(function(e){ running += e.amount; e.balanceAfter = running; });
-
-  badgeEl.textContent = running.toLocaleString();
-
-  // 최신순으로 뒤집어서 최근 10건만 표시
-  const recent = events.slice(-10).reverse();
-  el.innerHTML = recent.map(function(e){
-    const sign = e.amount >= 0 ? 'pos' : 'neg';
-    const amtStr = (e.amount >= 0 ? '+' : '') + e.amount.toLocaleString() + 'P';
-    return '<div class="mini-row">' +
-      '<span class="mini-date">' + fmtShortDate(e.created_at) + '</span>' +
-      '<span class="plog-reason">' + e.label + '</span>' +
-      '<span class="plog-amount ' + sign + '">' + amtStr + '</span>' +
-      '<span class="plog-balance">' + t.balanceLabel + ' ' + e.balanceAfter.toLocaleString() + 'P</span>' +
-      '</div>';
-  }).join('');
+  try {
+    const histResp = await fetch(POINT_HISTORY_URL, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    const histData = await histResp.json();
+    if (!histResp.ok) throw new Error(histData.error || 'Failed');
+    const items = (histData.items || []).slice(0, 10);
+    if (items.length === 0) { el.innerHTML = '<div class="empty-note">' + t.empty + '</div>'; return; }
+    el.innerHTML = items.map(function(h){
+      let amt, sign;
+      if (h.kind === 'deposit') {
+        amt = h.points != null ? Number(h.points) : Number(h.amountKrw || 0);
+        sign = 'pos';
+      } else if (h.kind === 'credit') {
+        amt = Number(h.points || 0);
+        sign = 'pos';
+      } else {
+        amt = Number(h.points || 0);
+        sign = 'neg';
+      }
+      const amtStr = (sign === 'pos' ? '+' : '-') + amt.toLocaleString() + 'P';
+      return '<div class="mini-row">' +
+        '<span class="mini-date">' + fmtShortDate(h.at) + '</span>' +
+        '<span class="plog-reason">' + h.label + '</span>' +
+        '<span class="plog-amount ' + sign + '">' + amtStr + '</span>' +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[my_page] point-history 호출 오류', e);
+    el.innerHTML = '<div class="error-note">' + t.errorNote + ' (point-history)</div>';
+  }
 }
 
 // ── 최근 등록번호 + 전체 등록 배지 ──
