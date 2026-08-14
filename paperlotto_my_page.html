@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마이페이지 — PaperLotto</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--board); color:var(--text-hi); min-height:100vh;
+  font-family:'Inter',sans-serif; word-break:keep-all;
+  background-image:linear-gradient(var(--board-line) 1px, transparent 1px), linear-gradient(90deg, var(--board-line) 1px, transparent 1px);
+  background-size:64px 64px;
+}
+h1,h2,h3{ font-family:'Fraunces',serif; margin:0; }
+a{ color:inherit; text-decoration:none; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+
+/* ── 헤더 (기존 PaperLotto 페이지들과 동일한 구조/클래스) ── */
+.site-sticky-top{ position:sticky; top:0; z-index:20; }
+header{
+  position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:18px 32px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.9); backdrop-filter:blur(6px);
+}
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
+.brand-mark{ width:30px; height:30px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:17px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+nav{ display:flex; align-items:center; gap:18px; font-size:13.5px; color:var(--text-mid); flex-wrap:wrap; }
+nav a:hover{ color:var(--text-hi); }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; flex-shrink:0; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 12px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:var(--ink); }
+
+main{ max-width:920px; margin:0 auto; padding:28px 24px 90px; }
+
+.page-title-row{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
+.page-title{ font-size:26px; font-weight:600; }
+.welcome-note{ font-size:13px; color:var(--text-mid); }
+.welcome-note b{ color:var(--gold-bright); }
+.page-desc{ font-size:13px; color:var(--text-dim); margin-bottom:22px; }
+
+/* ── 요약 배지 ── */
+.badge-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:30px; }
+.badge{ background:var(--paper); color:var(--ink); border-radius:12px; padding:16px 20px; flex:1; min-width:130px; }
+.badge .num{ font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:700; color:#8a5b1c; }
+.badge .label{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; }
+
+/* ── 섹션 카드 ── */
+.section-card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:20px 22px; margin-bottom:18px; }
+.section-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.section-title{ font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.section-link{ font-size:12px; font-weight:600; color:#8a5b1c; white-space:nowrap; }
+.section-link:hover{ text-decoration:underline; }
+
+.mini-row{ display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(28,33,48,0.08); font-size:12.5px; flex-wrap:wrap; }
+.mini-row:last-child{ border-bottom:none; }
+.mini-date{ color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; width:64px; flex-shrink:0; }
+.mini-tag{ font-size:10.5px; font-weight:700; background:rgba(28,33,48,0.08); color:var(--ink-dim); border-radius:6px; padding:2px 7px; flex-shrink:0; }
+.mini-nums{ display:flex; gap:4px; flex-wrap:wrap; flex:1; min-width:100px; }
+.pip{ width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; background:rgba(28,33,48,0.07); color:var(--ink-dim); flex-shrink:0; }
+.pip.bonus{ background:var(--gold); color:var(--ink); }
+.mini-grade{ font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:10px; white-space:nowrap; flex-shrink:0; }
+.grade-win{ background:rgba(31,122,79,0.14); color:var(--ok); }
+.grade-lose{ background:rgba(28,33,48,0.08); color:var(--ink-dim); }
+.grade-pending{ background:rgba(184,134,46,0.14); color:#8a5b1c; }
+
+.coll-chip-row{ display:flex; gap:10px; flex-wrap:wrap; }
+.coll-chip{ background:#fff; border:1.5px solid rgba(28,33,48,0.14); border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:600; min-width:110px; }
+.coll-chip .cc-count{ font-size:11px; color:var(--ink-dim); font-weight:400; margin-top:2px; }
+
+.plog-amount{ font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:12.5px; flex-shrink:0; width:80px; text-align:right; }
+.plog-amount.pos{ color:var(--ok); }
+.plog-amount.neg{ color:var(--err); }
+.plog-reason{ flex:1; min-width:120px; color:var(--ink-dim); }
+
+.empty-note{ font-size:12.5px; color:var(--ink-dim); text-align:center; padding:16px 0; }
+.error-note{ font-size:11.5px; color:var(--err); text-align:center; padding:10px 0; }
+.loading-note{ font-size:12.5px; color:var(--ink-dim); text-align:center; padding:16px 0; }
+
+.cta-btn{ display:inline-block; margin-top:6px; padding:9px 16px; border-radius:8px; background:var(--gold); color:var(--ink); font-size:12.5px; font-weight:700; cursor:pointer; border:none; }
+.cta-btn:hover{ background:var(--gold-bright); }
+
+@media (max-width:640px){
+  header{ padding:14px 16px; }
+  main{ padding:20px 14px 70px; }
+  .page-title{ font-size:21px; }
+  .badge{ min-width:0; flex:1 1 42%; padding:12px 14px; }
+  .badge .num{ font-size:18px; }
+  .section-card{ padding:16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-sticky-top">
+<header>
+  <a class="brand" href="index.html" aria-label="PaperLotto — 홈으로">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em></div>
+  </a>
+  <nav>
+    <a href="index.html" data-i18n="navGames">전체 게임</a>
+    <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
+    <a href="paperlotto_racetrack_mockup.html" data-i18n="navRacetrack">경마장</a>
+    <a href="paperlotto_my_bets.html" data-i18n="navMyBets">내 베팅현황</a>
+    <div class="lang-toggle">
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" class="active" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+  </nav>
+</header>
+</div>
+
+<main>
+  <div class="page-title-row">
+    <div class="page-title" data-i18n="pageTitle">마이페이지</div>
+    <div class="welcome-note" id="welcomeNote"></div>
+  </div>
+  <div class="page-desc" data-i18n="pageDesc">등록번호, 마이 시그니처, 경마장 참여내역, 포인트 사용내역을 한 곳에서 확인하세요.</div>
+
+  <div class="badge-row">
+    <div class="badge"><div class="num" id="badgePoints">–</div><div class="label" data-i18n="badgePoints">보유 포인트</div></div>
+    <div class="badge"><div class="num" id="badgeEntries">–</div><div class="label" data-i18n="badgeEntries">전체 등록</div></div>
+    <div class="badge"><div class="num" id="badgeCollections">–</div><div class="label" data-i18n="badgeCollections">마이 시그니처</div></div>
+    <div class="badge"><div class="num" id="badgeRaces">–</div><div class="label" data-i18n="badgeRaces">레이스 참여</div></div>
+  </div>
+
+  <!-- 최근 등록번호 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">📋 <span data-i18n="secEntries">최근 등록번호</span></div>
+      <a class="section-link" href="paperlotto_my_entries_updated.html" data-i18n="secEntriesLink">전체보기 →</a>
+    </div>
+    <div id="entriesList" class="loading-note" data-i18n="loading">불러오는 중…</div>
+  </div>
+
+  <!-- 마이 시그니처 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">⭐ <span data-i18n="secSignature">마이 시그니처</span></div>
+      <a class="section-link" href="paperlotto_my_entries_updated.html" data-i18n="secSignatureLink">등록번호에서 이동 →</a>
+    </div>
+    <div id="signatureList" class="loading-note" data-i18n="loading">불러오는 중…</div>
+  </div>
+
+  <!-- World Jackpot Racetrack 참여내역 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">🏇 <span data-i18n="secRace">경마장 참여내역</span></div>
+      <a class="section-link" href="paperlotto_my_bets.html" data-i18n="secRaceLink">전체보기 →</a>
+    </div>
+    <div id="raceList" class="loading-note" data-i18n="loading">불러오는 중…</div>
+  </div>
+
+  <!-- 무제한대결 참여내역 -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">⚔️ <span data-i18n="secBattle">무제한대결 참여내역</span></div>
+      <!-- ⚠ 정확한 페이지 파일명 확인 필요 — 우선 추정 파일명으로 연결해둠 -->
+      <a class="section-link" href="paperlotto_battle_mockup.html" data-i18n="secBattleLink">전체보기 →</a>
+    </div>
+    <div id="battleList" class="loading-note" data-i18n="loading">불러오는 중…</div>
+  </div>
+
+  <!-- 포인트 사용/충전 내역 (통합 — 엑셀·PDF 다운로드, 회차통계 커스텀조회 등 유료활동이 모두 사유(reason)로 여기 함께 표시됨) -->
+  <div class="section-card">
+    <div class="section-head">
+      <div class="section-title">💰 <span data-i18n="secPoints">포인트 내역</span></div>
+      <a class="section-link" href="paperlotto_recharge_mockup.html" data-i18n="secPointsLink">충전하기 →</a>
+    </div>
+    <div id="pointList" class="loading-note" data-i18n="loading">불러오는 중…</div>
+  </div>
+</main>
+
+<script>
+const i18n = {
+  ko: {
+    navGames:"전체 게임", navMyEntries:"내 등록번호", navRacetrack:"경마장", navMyBets:"내 베팅현황",
+    pageTitle:"마이페이지", pageDesc:"등록번호, 마이 시그니처, 경마장 참여내역, 포인트 사용내역을 한 곳에서 확인하세요.",
+    badgePoints:"보유 포인트", badgeEntries:"전체 등록", badgeCollections:"마이 시그니처", badgeRaces:"레이스 참여",
+    secEntries:"최근 등록번호", secEntriesLink:"전체보기 →",
+    secSignature:"마이 시그니처", secSignatureLink:"등록번호에서 이동 →",
+    secRace:"경마장 참여내역", secRaceLink:"전체보기 →",
+    secBattle:"무제한대결 참여내역", secBattleLink:"전체보기 →",
+    secPoints:"포인트 내역", secPointsLink:"충전하기 →",
+    loading:"불러오는 중…", empty:"아직 내역이 없습니다.", loginNeeded:"로그인이 필요합니다.",
+    errorNote:"불러오지 못했습니다. (테이블/컬럼 확인 필요)",
+    welcome:function(n){ return n + "님, 환영합니다"; },
+    gradeTier:function(n){ return n + "등"; }, gradeLose:"낙첨", gradePending:"채점대기",
+  },
+  en: {
+    navGames:"All Games", navMyEntries:"My Entries", navRacetrack:"Racetrack", navMyBets:"My Bets",
+    pageTitle:"My Page", pageDesc:"Your entries, My Signature collections, racetrack activity, and point history — all in one place.",
+    badgePoints:"Points Balance", badgeEntries:"Total Entries", badgeCollections:"My Signature", badgeRaces:"Races Joined",
+    secEntries:"Recent Entries", secEntriesLink:"View all →",
+    secSignature:"My Signature", secSignatureLink:"Manage on Entries page →",
+    secRace:"Racetrack Activity", secRaceLink:"View all →",
+    secBattle:"Battle Activity", secBattleLink:"View all →",
+    secPoints:"Point History", secPointsLink:"Recharge →",
+    loading:"Loading…", empty:"No activity yet.", loginNeeded:"Please log in.",
+    errorNote:"Couldn't load this section.",
+    welcome:function(n){ return "Welcome, " + n; },
+    gradeTier:function(n){ return "Tier " + n; }, gradeLose:"No win", gradePending:"Pending",
+  },
+  ja: {
+    navGames:"すべてのゲーム", navMyEntries:"マイ登録番号", navRacetrack:"競馬場", navMyBets:"マイベット",
+    pageTitle:"マイページ", pageDesc:"登録番号、マイシグニチャー、競馬場の参加履歴、ポイント履歴を一箇所で確認できます。",
+    badgePoints:"保有ポイント", badgeEntries:"登録合計", badgeCollections:"マイシグニチャー", badgeRaces:"参加レース数",
+    secEntries:"最近の登録番号", secEntriesLink:"すべて見る →",
+    secSignature:"マイシグニチャー", secSignatureLink:"登録番号ページで管理 →",
+    secRace:"競馬場の参加履歴", secRaceLink:"すべて見る →",
+    secBattle:"対戦の参加履歴", secBattleLink:"すべて見る →",
+    secPoints:"ポイント履歴", secPointsLink:"チャージする →",
+    loading:"読み込み中…", empty:"まだ履歴がありません。", loginNeeded:"ログインが必要です。",
+    errorNote:"読み込みに失敗しました。",
+    welcome:function(n){ return n + "様、ようこそ"; },
+    gradeTier:function(n){ return n + "等"; }, gradeLose:"落選", gradePending:"採点待ち",
+  },
+};
+let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
+function applyLang(lang){
+  currentLang = i18n[lang] ? lang : 'en';
+  localStorage.setItem('paperlotto_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  const t = i18n[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    const key = el.getAttribute('data-i18n');
+    if (typeof t[key] === 'string') el.innerHTML = t[key];
+  });
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === currentLang); });
+}
+document.querySelectorAll('.lang-toggle button').forEach(function(btn){ btn.addEventListener('click', function(){ applyLang(btn.dataset.lang); loadAll(); }); });
+
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const SIGNATURE_URL = SUPABASE_URL + "/functions/v1/signature";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const GAME_LABELS = {
+  kr_lotto645:'KR', us_powerball:'US-PB', us_megamillions:'US-MM', eu_euromillions:'EU',
+  jp_miniloto:'JP-MINI', jp_loto7:'JP-L7', jp_loto6:'JP-L6', ca_lottomax:'CA-MAX',
+  ca_lotto649:'CA-649', au_powerball:'AU-PB', au_ozlotto:'AU-OZ', au_tattslotto:'AU-TATTS',
+};
+
+let accessToken = null;
+let userId = null;
+
+function fmtShortDate(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return String(d.getFullYear()).slice(2) + '.' + String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+}
+
+async function loadAll(){
+  const t = i18n[currentLang];
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    ['entriesList','signatureList','raceList','battleList','pointList'].forEach(function(id){
+      document.getElementById(id).innerHTML = '<div class="empty-note">' + t.loginNeeded + '</div>';
+    });
+    document.getElementById('welcomeNote').textContent = '';
+    return;
+  }
+  accessToken = session.access_token;
+  userId = session.user.id;
+
+  const nickname = session.user.user_metadata && session.user.user_metadata.nickname;
+  document.getElementById('welcomeNote').innerHTML = t.welcome(nickname || session.user.email || '');
+
+  loadPointsBadgeAndHistory();
+  loadEntries();
+  loadSignature();
+  loadRaces();
+  loadBattles();
+}
+
+// ── 보유 포인트 + 포인트 내역 (통합: 충전/사용 모두, 다운로드·회차통계 등 유료활동도 사유로 함께 노출) ──
+async function loadPointsBadgeAndHistory(){
+  const t = i18n[currentLang];
+  const el = document.getElementById('pointList');
+  const badgeEl = document.getElementById('badgePoints');
+  let rows = [];
+  let hadAnySuccess = false;
+
+  // ⚠ 정확한 컬럼명 확인 필요: point_ledger(id, amount, reason, balance_after, created_at) 가정
+  try {
+    const { data, error } = await sb.from('point_ledger')
+      .select('id, amount, reason, balance_after, created_at')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(10);
+    if (!error && data) { rows = rows.concat(data); hadAnySuccess = true; }
+  } catch (e) { console.error('[my_page] point_ledger 조회 오류', e); }
+
+  // ⚠ point_spend_log(id, amount, reason, created_at) 가정 — 위 테이블과 중복될 수 있음, 있는 쪽만 사용됨
+  if (!hadAnySuccess) {
+    try {
+      const { data, error } = await sb.from('point_spend_log')
+        .select('id, amount, reason, created_at')
+        .eq('user_id', userId).order('created_at', { ascending: false }).limit(10);
+      if (!error && data) { rows = rows.concat(data); hadAnySuccess = true; }
+    } catch (e) { console.error('[my_page] point_spend_log 조회 오류', e); }
+  }
+
+  // 보유 포인트 잔액 — payments/point_ledger 어느 쪽이든 balance_after가 있는 최신 1건으로 추정
+  try {
+    const latestWithBalance = rows.find(function(r){ return r.balance_after !== undefined && r.balance_after !== null; });
+    badgeEl.textContent = latestWithBalance ? Number(latestWithBalance.balance_after).toLocaleString() : '–';
+  } catch (e) { badgeEl.textContent = '–'; }
+
+  if (!hadAnySuccess) {
+    el.innerHTML = '<div class="error-note">' + t.errorNote + ' (point_ledger / point_spend_log)</div>';
+    return;
+  }
+  if (rows.length === 0) {
+    el.innerHTML = '<div class="empty-note">' + t.empty + '</div>';
+    return;
+  }
+  rows.sort(function(a,b){ return new Date(b.created_at) - new Date(a.created_at); });
+  el.innerHTML = rows.slice(0,10).map(function(r){
+    const amt = Number(r.amount) || 0;
+    const sign = amt >= 0 ? 'pos' : 'neg';
+    const amtStr = (amt >= 0 ? '+' : '') + amt.toLocaleString() + 'P';
+    return '<div class="mini-row">' +
+      '<span class="mini-date">' + fmtShortDate(r.created_at) + '</span>' +
+      '<span class="plog-reason">' + (r.reason || '-') + '</span>' +
+      '<span class="plog-amount ' + sign + '">' + amtStr + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+// ── 최근 등록번호 + 전체 등록 배지 ──
+async function loadEntries(){
+  const t = i18n[currentLang];
+  const el = document.getElementById('entriesList');
+  try {
+    const { count } = await sb.from('entries').select('id', { count: 'exact', head: true })
+      .eq('user_id', userId).eq('confirmed', true);
+    document.getElementById('badgeEntries').textContent = (count !== null && count !== undefined) ? count : '–';
+
+    const { data, error } = await sb.from('entries')
+      .select('id, game_id, round_no, main_numbers, bonus_numbers, grade, created_at')
+      .eq('user_id', userId).eq('confirmed', true)
+      .order('created_at', { ascending: false }).limit(5);
+    if (error) throw error;
+    if (!data || data.length === 0) { el.innerHTML = '<div class="empty-note">' + t.empty + '</div>'; return; }
+    el.innerHTML = data.map(function(e){
+      const mainPips = (e.main_numbers||[]).map(function(n){ return '<span class="pip">' + n + '</span>'; }).join('');
+      const bonusPips = (e.bonus_numbers||[]).map(function(n){ return '<span class="pip bonus">' + n + '</span>'; }).join('');
+      let gradeHtml = '';
+      if (e.grade !== null && e.grade !== undefined) {
+        gradeHtml = e.grade === 0
+          ? '<span class="mini-grade grade-lose">' + t.gradeLose + '</span>'
+          : '<span class="mini-grade grade-win">' + t.gradeTier(e.grade) + '</span>';
+      } else {
+        gradeHtml = '<span class="mini-grade grade-pending">' + t.gradePending + '</span>';
+      }
+      return '<div class="mini-row">' +
+        '<span class="mini-date">' + fmtShortDate(e.created_at) + '</span>' +
+        '<span class="mini-tag">' + (GAME_LABELS[e.game_id] || e.game_id) + '</span>' +
+        '<span class="mini-nums">' + mainPips + bonusPips + '</span>' +
+        gradeHtml +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[my_page] entries 조회 오류', e);
+    el.innerHTML = '<div class="error-note">' + t.errorNote + '</div>';
+  }
+}
+
+// ── 마이 시그니처 (컬렉션) ──
+async function loadSignature(){
+  const t = i18n[currentLang];
+  const el = document.getElementById('signatureList');
+  try {
+    const resp = await fetch(SIGNATURE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+      body: JSON.stringify({ action: 'list_collections' }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Failed');
+    const collections = (data && data.collections) ? data.collections : [];
+    document.getElementById('badgeCollections').textContent = collections.length;
+    if (collections.length === 0) { el.innerHTML = '<div class="empty-note">' + t.empty + '</div>'; return; }
+    el.innerHTML = '<div class="coll-chip-row">' + collections.map(function(c){
+      return '<div class="coll-chip">' + c.name + '<div class="cc-count">' + (c.entry_count || 0) + '</div></div>';
+    }).join('') + '</div>';
+  } catch (e) {
+    console.error('[my_page] signature 조회 오류', e);
+    el.innerHTML = '<div class="error-note">' + t.errorNote + '</div>';
+  }
+}
+
+// ── 경마장(World Jackpot Racetrack) 참여내역 ──
+async function loadRaces(){
+  const t = i18n[currentLang];
+  const el = document.getElementById('raceList');
+  try {
+    const { data: bets, error } = await sb.from('race_bets')
+      .select('id, race_id, horse_no, units, status, created_at')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
+    if (error) throw error;
+    document.getElementById('badgeRaces').textContent = bets ? bets.length : '–';
+    if (!bets || bets.length === 0) { el.innerHTML = '<div class="empty-note">' + t.empty + '</div>'; return; }
+
+    const raceIds = [...new Set(bets.map(function(b){ return b.race_id; }))];
+    const { data: races } = await sb.from('races').select('id, game_id, round_no, status').in('id', raceIds);
+    const raceById = {};
+    (races || []).forEach(function(r){ raceById[r.id] = r; });
+
+    el.innerHTML = bets.map(function(b){
+      const r = raceById[b.race_id] || {};
+      const statusHtml = b.status === 'won'
+        ? '<span class="mini-grade grade-win">WON</span>'
+        : b.status === 'lost'
+          ? '<span class="mini-grade grade-lose">LOST</span>'
+          : '<span class="mini-grade grade-pending">' + t.gradePending + '</span>';
+      return '<div class="mini-row">' +
+        '<span class="mini-date">' + fmtShortDate(b.created_at) + '</span>' +
+        '<span class="mini-tag">' + (GAME_LABELS[r.game_id] || r.game_id || '-') + '</span>' +
+        '<span class="plog-reason">#' + (r.round_no || '-') + ' · Horse ' + b.horse_no + ' · ' + b.units + ' units</span>' +
+        statusHtml +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[my_page] race_bets 조회 오류', e);
+    el.innerHTML = '<div class="error-note">' + t.errorNote + ' (race_bets)</div>';
+  }
+}
+
+// ── 무제한대결 참여내역 ──
+// ⚠ 컬럼명 확인 필요: lotto_battle_participants(battle_id, user_id, status, result, points_earned, created_at) 가정
+async function loadBattles(){
+  const t = i18n[currentLang];
+  const el = document.getElementById('battleList');
+  try {
+    const { data, error } = await sb.from('lotto_battle_participants')
+      .select('id, battle_id, status, result, points_earned, created_at')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
+    if (error) throw error;
+    if (!data || data.length === 0) { el.innerHTML = '<div class="empty-note">' + t.empty + '</div>'; return; }
+    el.innerHTML = data.map(function(b){
+      const resultHtml = b.result === 'win'
+        ? '<span class="mini-grade grade-win">WIN</span>'
+        : b.result === 'lose'
+          ? '<span class="mini-grade grade-lose">LOSE</span>'
+          : '<span class="mini-grade grade-pending">' + (b.status || t.gradePending) + '</span>';
+      return '<div class="mini-row">' +
+        '<span class="mini-date">' + fmtShortDate(b.created_at) + '</span>' +
+        '<span class="plog-reason">Battle #' + (b.battle_id || '-') + (b.points_earned ? ' · ' + Number(b.points_earned).toLocaleString() + 'P' : '') + '</span>' +
+        resultHtml +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[my_page] lotto_battle_participants 조회 오류', e);
+    el.innerHTML = '<div class="error-note">' + t.errorNote + ' (lotto_battle_participants)</div>';
+  }
+}
+
+applyLang(currentLang);
+loadAll();
+</script>
+
+<script src="auth-widget.js"></script>
+</body>
+</html>
