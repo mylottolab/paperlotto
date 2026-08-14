@@ -120,20 +120,28 @@ tr:last-child td{ border-bottom:none; }
 
 <script>
 const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
 const REPORTS_URL = SUPABASE_URL + "/functions/v1/admin-business-reports";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-const accessToken = sessionStorage.getItem('pl_admin_token');
-const adminEmail = sessionStorage.getItem('pl_admin_email');
+// ⚠️ 2026-08-14 수정: sessionStorage에 저장해둔 access_token 문자열을 그대로
+// 쓰면 1시간(JWT 만료시간) 뒤 죽어버려서 매번 재로그인해야 했음. 이제 supabase-js가
+// localStorage에 저장·자동갱신하는 세션에서 그때그때 최신 토큰을 가져온다.
+const adminEmail = localStorage.getItem('pl_admin_email');
 
-if (!accessToken) {
-  window.location.href = 'paperlotto_admin_login.html';
+async function getAccessToken(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'paperlotto_admin_login.html'; return null; }
+  return session.access_token;
 }
 
+(async () => { const t = await getAccessToken(); if (!t) return; })();
+
 document.getElementById('adminEmail').textContent = adminEmail || '';
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('pl_admin_token');
-  sessionStorage.removeItem('pl_admin_key');
-  sessionStorage.removeItem('pl_admin_email');
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await sb.auth.signOut();
+  localStorage.removeItem('pl_admin_key');
+  localStorage.removeItem('pl_admin_email');
   window.location.href = 'paperlotto_admin_login.html';
 });
 
@@ -179,6 +187,8 @@ async function loadReport() {
   const to = document.getElementById('toDate').value;
 
   try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) return;
     const resp = await fetch(REPORTS_URL + '?report=' + currentReport + '&from=' + from + '&to=' + to, {
       headers: { 'Authorization': 'Bearer ' + accessToken },
     });
