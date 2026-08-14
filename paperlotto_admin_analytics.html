@@ -54,6 +54,8 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
 .bar-track{ flex:1; min-width:24px; background:rgba(28,33,48,0.08); border-radius:5px; height:16px; overflow:hidden; }
 .bar-fill{ background:var(--gold); height:100%; border-radius:5px; min-width:2px; }
 .bar-value{ width:56px; text-align:right; flex-shrink:0; font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.bar-row:has(.bar-uniq) .bar-value{ width:180px; }
+.bar-uniq{ color:var(--ink-dim); font-weight:400; font-size:11px; }
 
 /* 국가별 막대 (라벨이 길어서 별도 클래스) */
 .cbar-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; }
@@ -70,6 +72,8 @@ main{ max-width:960px; margin:0 auto; padding:28px 20px 90px; }
   .bar-value{ width:44px; font-size:11px; }
   .cbar-label{ width:76px; font-size:11px; }
   .cbar-value{ width:48px; font-size:11px; }
+  .bar-row:has(.bar-uniq){ flex-wrap:wrap; }
+  .bar-row:has(.bar-uniq) .bar-value{ width:100%; text-align:left; padding-left:58px; }
 }
 </style>
 </head>
@@ -185,7 +189,7 @@ function fmtDate(iso) {
   return (d.getMonth() + 1) + '/' + d.getDate();
 }
 
-function renderBarChart(containerId, rows, labelFn, valueKey) {
+function renderBarChart(containerId, rows, labelFn, valueKey, showUniques) {
   const el = document.getElementById(containerId);
   if (!rows || rows.length === 0) {
     el.innerHTML = '<div class="empty-state">데이터가 없습니다.</div>';
@@ -196,10 +200,11 @@ function renderBarChart(containerId, rows, labelFn, valueKey) {
     const val = r.sum?.[valueKey] ?? 0;
     const pct = Math.max(Math.round((val / max) * 100), val > 0 ? 3 : 0);
     const label = labelFn(r);
+    const uniqTxt = showUniques ? ' <span class="bar-uniq">· 순방문자 ' + (r.uniq?.uniques ?? 0).toLocaleString() + '명</span>' : '';
     return '<div class="bar-row">' +
       '<div class="bar-label">' + label + '</div>' +
       '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;"></div></div>' +
-      '<div class="bar-value">' + val.toLocaleString() + '</div>' +
+      '<div class="bar-value">' + val.toLocaleString() + uniqTxt + '</div>' +
     '</div>';
   }).join('');
 }
@@ -255,7 +260,7 @@ async function loadAnalytics() {
     if (data.errors?.daily) {
       document.getElementById('dailyChart').innerHTML = '<div class="err-note">일자별 통계 오류: ' + data.errors.daily + '</div>';
     } else {
-      renderBarChart('dailyChart', data.daily, r => fmtDate(r.dimensions.date), 'pageViews');
+      renderBarChart('dailyChart', data.daily, r => fmtDate(r.dimensions.date), 'pageViews', true);
     }
 
     if (data.errors?.countriesToday) {
