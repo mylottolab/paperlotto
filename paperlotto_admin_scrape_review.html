@@ -168,6 +168,22 @@ tr:last-child td{ border-bottom:none; }
 .status-msg{ margin-top:14px; padding:12px 16px; border-radius:8px; font-size:13px; display:none; }
 .status-msg.ok{ display:block; background:rgba(31,122,79,0.12); color:var(--ok); }
 .status-msg.err{ display:block; background:rgba(198,90,46,0.12); color:var(--err); }
+
+/* ── 2026-08-15 신규: 최근 등록 기록 목록 + 수정/삭제 ── */
+.records-list{ display:flex; flex-direction:column; gap:8px; max-height:420px; overflow-y:auto; }
+.record-row{
+  display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:8px;
+  background:rgba(28,33,48,0.04); font-size:12.5px; flex-wrap:wrap;
+}
+.record-row .r-round{ font-family:'IBM Plex Mono',monospace; font-weight:700; width:60px; flex-shrink:0; }
+.record-row .r-date{ color:var(--ink-dim); width:88px; flex-shrink:0; font-family:'IBM Plex Mono',monospace; }
+.record-row .r-nums{ flex:1; min-width:140px; font-family:'IBM Plex Mono',monospace; color:var(--ink-dim); }
+.record-row .r-badge{ font-size:10px; font-weight:700; padding:2px 7px; border-radius:6px; background:rgba(184,134,46,0.14); color:#8a5b1c; flex-shrink:0; }
+.record-row .r-btns{ display:flex; gap:6px; flex-shrink:0; margin-left:auto; }
+.record-row button{ border:none; border-radius:6px; padding:6px 10px; font-size:11.5px; font-weight:600; cursor:pointer; }
+.record-row .r-edit{ background:rgba(31,122,79,0.12); color:var(--ok); }
+.record-row .r-del{ background:rgba(198,90,46,0.12); color:var(--err); }
+.records-empty{ font-size:12.5px; color:var(--ink-dim); padding:14px 0; text-align:center; }
 </style>
 </head>
 <body>
@@ -291,9 +307,16 @@ tr:last-child td{ border-bottom:none; }
   <div id="tab-manual" class="section-panel">
     <div class="narrow-panel-wrap">
 
+      <!-- 2026-08-15 신규: 최근 등록 기록 조회 + 수정/삭제 -->
+      <div class="panel" id="recordsPanel">
+        <h2>📜 최근 등록 기록</h2>
+        <div class="desc">게임을 선택하면 최근 20건이 표시됩니다. 중복입력·회차오류 등은 여기서 바로 수정하거나 삭제하세요.</div>
+        <div id="recordsList" class="records-list">게임을 먼저 선택해주세요.</div>
+      </div>
+
       <div class="panel">
         <h2>📋 당첨결과 수동 입력</h2>
-        <div class="desc">자동 수집이 아직 안 되는 게임의 결과를 여기서 직접 입력합니다. 입력한 내용은 Edge Function을 통해 draw_results 테이블에 저장됩니다.</div>
+        <div class="desc">자동 수집이 아직 안 되는 게임의 결과를 여기서 직접 입력합니다. 입력한 내용은 Edge Function을 통해 draw_results 테이블에 저장됩니다. <span id="editModeNote" style="display:none;color:var(--gold-bright);font-weight:700;">✎ 지금 수정 모드입니다 — 저장하면 기존 회차가 갱신됩니다.</span></div>
 
         <label>게임 선택</label>
         <select id="gameSelect"></select>
@@ -322,6 +345,7 @@ tr:last-child td{ border-bottom:none; }
       </div>
 
       <button class="btn-primary" id="submitBtn">결과 저장하기</button>
+      <button class="btn-primary" id="cancelEditBtn" style="display:none;background:transparent;border:1px solid var(--board-line);color:var(--text-mid);">수정 취소</button>
       <div class="status-msg" id="statusMsg"></div>
 
       <div class="panel" style="margin-top:20px;">
@@ -858,6 +882,7 @@ async function loadRaceStatus(){
 //    제거함. 가격 설정은 paperlotto_admin_point_costs.html에서 합니다.
 // ══════════════════════════════════════════════════════════════
 const SAVE_DRAW_RESULT_URL = SUPABASE_URL + '/functions/v1/admin-save-draw-result';
+const DELETE_DRAW_RESULT_URL = SUPABASE_URL + '/functions/v1/admin-delete-draw-result';
 const EXPORT_FUNCTION_URL = SUPABASE_URL + '/functions/v1/export-draw-results';
 
 const GAMES_MANUAL = [
@@ -881,8 +906,99 @@ function updateMainHint(){
   const g = GAMES_MANUAL.find(x => x.id === gameSelect.value);
   document.getElementById('mainHint').textContent = `이 게임은 메인 번호 ${g.main}개가 필요합니다.`;
 }
-gameSelect.addEventListener('change', updateMainHint);
+gameSelect.addEventListener('change', () => { updateMainHint(); loadRecords(); });
 updateMainHint();
+loadRecords();
+
+// ── 2026-08-15 신규: 최근 등록 기록 조회 + 수정/삭제 ──
+let editingRoundNo = null;  // null이면 신규입력 모드, 값이 있으면 수정 모드
+
+async function loadRecords(){
+  const gameId = gameSelect.value;
+  const listEl = document.getElementById('recordsList');
+  listEl.innerHTML = '<div class="records-empty">불러오는 중…</div>';
+
+  const { data, error } = await sb.from('draw_results')
+    .select('round_no, draw_date, main_numbers, bonus_numbers, collection_type')
+    .eq('game_id', gameId)
+    .order('round_no', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    listEl.innerHTML = '<div class="records-empty">불러오기 실패: ' + error.message + '</div>';
+    return;
+  }
+  if (!data || data.length === 0) {
+    listEl.innerHTML = '<div class="records-empty">등록된 기록이 없습니다.</div>';
+    return;
+  }
+
+  listEl.innerHTML = data.map(r => `
+    <div class="record-row" data-round="${r.round_no}">
+      <span class="r-round">${r.round_no}회</span>
+      <span class="r-date">${r.draw_date || '-'}</span>
+      <span class="r-nums">${(r.main_numbers||[]).join(',')}${r.bonus_numbers && r.bonus_numbers.length ? ' + ' + r.bonus_numbers.join(',') : ''}</span>
+      <span class="r-badge">${r.collection_type === 'manual' ? '수동' : '자동'}</span>
+      <span class="r-btns">
+        <button type="button" class="r-edit" data-round="${r.round_no}">수정</button>
+        <button type="button" class="r-del" data-round="${r.round_no}">삭제</button>
+      </span>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.r-edit').forEach(btn => {
+    btn.addEventListener('click', () => startEditRecord(Number(btn.dataset.round), data));
+  });
+  listEl.querySelectorAll('.r-del').forEach(btn => {
+    btn.addEventListener('click', () => deleteRecord(Number(btn.dataset.round)));
+  });
+}
+
+function startEditRecord(roundNo, data){
+  const r = data.find(x => x.round_no === roundNo);
+  if (!r) return;
+  editingRoundNo = roundNo;
+
+  document.getElementById('roundNo').value = r.round_no;
+  document.getElementById('drawDate').value = r.draw_date || '';
+  document.getElementById('mainNumbers').value = (r.main_numbers||[]).join(',');
+  document.getElementById('bonusNumbers').value = (r.bonus_numbers||[]).join(',');
+  document.getElementById('sourceUrl').value = '';
+
+  document.getElementById('editModeNote').style.display = 'inline';
+  document.getElementById('submitBtn').textContent = '수정 저장하기';
+  document.getElementById('cancelEditBtn').style.display = 'block';
+  document.getElementById('roundNo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('cancelEditBtn').addEventListener('click', () => {
+  editingRoundNo = null;
+  document.getElementById('editModeNote').style.display = 'none';
+  document.getElementById('submitBtn').textContent = '결과 저장하기';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  document.getElementById('roundNo').value = '';
+  document.getElementById('drawDate').value = '';
+  document.getElementById('mainNumbers').value = '';
+  document.getElementById('bonusNumbers').value = '';
+});
+
+async function deleteRecord(roundNo){
+  const gameId = gameSelect.value;
+  if (!confirm(gameId + ' ' + roundNo + '회차 기록을 삭제할까요? 되돌릴 수 없습니다.')) return;
+
+  try {
+    const resp = await fetch(DELETE_DRAW_RESULT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ game_id: gameId, round_no: roundNo }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || '삭제 실패');
+    loadRecords();
+  } catch (e) {
+    alert('삭제 실패: ' + e.message);
+  }
+}
 
 const exportGameSelect = document.getElementById('exportGameSelect');
 exportGameSelect.innerHTML += GAMES_MANUAL.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
@@ -951,6 +1067,13 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
     statusEl.textContent = `✅ ${gameId} ${roundNo}회차 결과가 저장되었습니다.`;
     statusEl.className = 'status-msg ok';
+
+    // 2026-08-15: 저장 성공 후 수정모드 해제 + 기록목록 갱신
+    editingRoundNo = null;
+    document.getElementById('editModeNote').style.display = 'none';
+    btn.textContent = '결과 저장하기';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    loadRecords();
   } catch (e) {
     statusEl.textContent = `저장 실패: ${e.message}`;
     statusEl.className = 'status-msg err';
