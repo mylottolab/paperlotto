@@ -409,8 +409,20 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
 .dp-plus{ align-self:center; font-size:12px; color:#9a9088; font-weight:700; }
 .dp-go{ display:block; text-align:center; background:var(--ink,#1a1a1a); color:var(--paper,#F4EFE4);
   border-radius:9px; padding:9px; font-size:12.5px; font-weight:700; text-decoration:none; }
+/* 2026-08-29: 방금 닫은 것 되돌리기 */
+#dpUndo{
+  position:fixed; right:18px; bottom:18px; z-index:960; display:none;
+  background:#1a1a1a; color:#F4EFE4; border-radius:11px;
+  padding:11px 13px; box-shadow:0 10px 30px rgba(0,0,0,.36);
+  font-size:12px; align-items:center; gap:11px; max-width:calc(100vw - 36px);
+}
+#dpUndo.show{ display:flex; }
+#dpUndo .u-txt{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#dpUndo button{ background:none; border:none; color:#E8B45A; font-size:12px; font-weight:800;
+  cursor:pointer; padding:2px 4px; flex-shrink:0; text-decoration:underline; }
 @media (max-width:420px){
   #drawPopupWrap{ right:10px; left:10px; bottom:10px; width:auto; }
+  #dpUndo{ right:10px; left:10px; }
 }
 .ld-pip.bonus{ background:var(--accent,var(--gold)); color:var(--paper); }
 
@@ -795,6 +807,7 @@ async function loadLastDraws(){
 const i18n = {
   ko: {
     dpCheck:"내 번호 당첨확인 →", dpClose:"닫기", dpMore:"+{n}건 더",
+    dpClosed:"{name} 닫음", dpUndo:"되돌리기",
     navGames:"전체 게임", navMyEntries:"내 등록번호", navMyPage:"마이페이지", navGuide:"전략 가이드", navChecker:"당첨확인", navStats:"통계", navRacetrack:"경마장", navBattles:"무제한 대결", navNotice:"공지", navBoardGuide:"사용법",
     liveBoard:"LIVE BOARD",
     heroTitle:'세계 12개 복권을,<br><span class="accent">실제 돈 없이</span> 종이 위에서 실험하세요',
@@ -827,6 +840,7 @@ const i18n = {
   },
   en: {
     dpCheck:"Check my numbers →", dpClose:"Close", dpMore:"+{n} more",
+    dpClosed:"Closed {name}", dpUndo:"Undo",
     navGames:"All Games", navMyEntries:"My Entries", navMyPage:"My Page", navGuide:"Strategy Guide", navChecker:"Check Numbers", navStats:"Stats", navRacetrack:"Racetrack", navBattles:"Battles", navNotice:"Notice", navBoardGuide:"How",
     liveBoard:"LIVE BOARD",
     heroTitle:'Try 12 lotteries from around the world<br><span class="accent">with no real money</span>, on paper',
@@ -859,6 +873,7 @@ const i18n = {
   },
   ja: {
     dpCheck:"当選を確認する →", dpClose:"閉じる", dpMore:"他{n}件",
+    dpClosed:"{name} を閉じました", dpUndo:"元に戻す",
     navGames:"すべてのゲーム", navMyEntries:"登録した番号", navMyPage:"マイページ", navGuide:"攻略ガイド", navChecker:"当選確認", navStats:"統計", navRacetrack:"競馬場", navBattles:"無制限対決", navNotice:"お知らせ", navBoardGuide:"使い方",
     liveBoard:"LIVE BOARD",
     heroTitle:'世界12の宝くじを、<br><span class="accent">実際のお金を使わず</span>紙の上で体験',
@@ -1115,6 +1130,7 @@ applyLang(currentLang);
 Promise.all([loadJackpots(), loadLastDraws()]).then(() => {
   renderCards(); renderTicker();
   // 2026-08-29: 새 당첨번호 팝업 — 최신 회차를 다 읽은 뒤에 띄웁니다.
+  if (typeof dpLoadPos === 'function') dpLoadPos();
   if (typeof renderDrawPopups === 'function') renderDrawPopups();
 });
 setInterval(() => { loadJackpots().then(renderCards); }, JACKPOT_REFRESH_MS);
@@ -1198,6 +1214,7 @@ function closeChecker(){
 
 <!-- 2026-08-29 신설: 새 당첨번호 팝업 -->
 <div id="drawPopupWrap"><div class="dp-stack" id="dpStack"></div></div>
+<div id="dpUndo"><span class="u-txt" id="dpUndoTxt"></span><button type="button" id="dpUndoBtn">되돌리기</button></div>
 
 <script>
 // =====================================================
@@ -1218,6 +1235,8 @@ function closeChecker(){
 const DP_RECENT_DAYS = 7;   // 며칠 이내 추첨분까지 띄울지
 const DP_MAX_CARDS   = 6;   // 한 번에 보일 최대 장수
 const DP_SEEN_KEY    = 'paperlotto_draw_seen';
+const DP_POS_KEY     = 'paperlotto_draw_pos';    // 옮겨둔 자리
+const DP_UNDO_MS     = 7000;                     // 되돌리기가 떠 있는 시간
 
 function dpSeen(){
   try { const v = JSON.parse(localStorage.getItem(DP_SEEN_KEY) || '[]'); return Array.isArray(v) ? v : []; }
@@ -1230,6 +1249,59 @@ function dpMarkSeen(key){
     // 무한정 쌓이지 않게 최근 것만 남깁니다.
     localStorage.setItem(DP_SEEN_KEY, JSON.stringify(list.slice(-300)));
   } catch(e){}
+}
+// 2026-08-29: 잘못 닫았을 때 되돌리기
+function dpUnmarkSeen(key){
+  try {
+    localStorage.setItem(DP_SEEN_KEY, JSON.stringify(dpSeen().filter((k) => k !== key)));
+  } catch(e){}
+}
+
+// ── 옮겨둔 자리 저장 ──
+// ⚠ 화면 크기가 바뀌면 저장된 좌표가 화면 밖이 될 수 있습니다.
+//   불러올 때 가장자리로 끌어당깁니다(dpClampPos).
+function dpLoadPos(){
+  try {
+    const o = JSON.parse(localStorage.getItem(DP_POS_KEY) || '{}');
+    if (o && typeof o === 'object') Object.keys(o).forEach((k) => {
+      const v = o[k];
+      if (v && isFinite(v.x) && isFinite(v.y)) dpFreed.set(k, { x: v.x, y: v.y });
+    });
+  } catch(e){}
+}
+function dpSavePos(){
+  try {
+    const o = {};
+    dpFreed.forEach((v, k) => { o[k] = v; });
+    localStorage.setItem(DP_POS_KEY, JSON.stringify(o));
+  } catch(e){}
+}
+function dpClampPos(pos, w, h){
+  return {
+    x: Math.min(Math.max(pos.x, 4), Math.max(4, window.innerWidth - w - 4)),
+    y: Math.min(Math.max(pos.y, 4), Math.max(4, window.innerHeight - h - 4)),
+  };
+}
+
+// ── 되돌리기 막대 ──
+let dpUndoTimer = null;
+function dpShowUndo(key, name){
+  const bar = document.getElementById('dpUndo');
+  const txt = document.getElementById('dpUndoTxt');
+  const btn = document.getElementById('dpUndoBtn');
+  if (!bar || !txt || !btn) return;
+  const t = i18n[currentLang] || i18n.en;
+  txt.textContent = (t.dpClosed || '{name} 닫음').replace('{name}', name);
+  btn.textContent = t.dpUndo || '되돌리기';
+  bar.classList.add('show');
+  if (dpUndoTimer) clearTimeout(dpUndoTimer);
+  dpUndoTimer = setTimeout(() => bar.classList.remove('show'), DP_UNDO_MS);
+  btn.onclick = () => {
+    dpUnmarkSeen(key);
+    bar.classList.remove('show');
+    if (dpUndoTimer) { clearTimeout(dpUndoTimer); dpUndoTimer = null; }
+    renderDrawPopups();
+  };
 }
 
 function dpGameName(g){
@@ -1333,6 +1405,7 @@ function dpMakeDraggable(card, key){
     if (holding) {
       const r = card.getBoundingClientRect();
       dpFreed.set(key, { x: r.left, y: r.top });
+      dpSavePos();   // 2026-08-29: 옮긴 자리를 기억합니다
     }
     holding = false;
     card.classList.remove('dp-hold', 'dp-lift');
@@ -1422,7 +1495,10 @@ function renderDrawPopups(){
       ev.stopPropagation();
       dpMarkSeen(it.key);
       dpFreed.delete(it.key);        // 꺼내둔 자리 기록도 함께 정리
+      dpSavePos();
       card.classList.add('dp-gone');
+      // ⚠ 잘못 닫았을 수 있습니다. 잠깐 되돌릴 기회를 줍니다.
+      dpShowUndo(it.key, dpGameName(it.g));
       setTimeout(renderDrawPopups, 180);
     });
     head.appendChild(x);
@@ -1445,13 +1521,18 @@ function renderDrawPopups(){
 
     // 이미 꺼내둔 카드는 그 자리에 그대로 되돌려 놓습니다.
     if (isFree) {
-      const pos = dpFreed.get(it.key);
       card.classList.add('dp-free');
-      card.style.left = pos.x + 'px';
-      card.style.top = pos.y + 'px';
       card.style.right = 'auto';
       card.style.bottom = 'auto';
       card.style.zIndex = '940';
+      // ⚠ 저장된 자리가 지금 화면 밖일 수 있습니다(PC에서 두고 폰에서 열기 등).
+      //   그리고 나서 크기를 재야 하므로 붙인 뒤에 계산합니다.
+      requestAnimationFrame(() => {
+        const pos = dpClampPos(dpFreed.get(it.key) || { x: 0, y: 0 }, card.offsetWidth, card.offsetHeight);
+        card.style.left = pos.x + 'px';
+        card.style.top = pos.y + 'px';
+        dpFreed.set(it.key, pos);
+      });
     }
 
     stack.appendChild(card);
