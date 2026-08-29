@@ -354,6 +354,76 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
 .ticket-lastdraw .tld-label{ font-size:10px; letter-spacing:.3px; margin-bottom:4px; }
 .ticket-lastdraw .tld-numbers{ display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
 .ld-pip{ width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;background:var(--ink);color:var(--paper);}
+
+/* =====================================================
+   2026-08-29 신설: 새 당첨번호 팝업 (책갈피처럼 겹쳐 쌓임)
+   · 관리자가 승인하면 draw_results에 회차가 쌓이고, 이 화면이 그것을 읽습니다.
+   · 한 번 닫은 회차는 다시 뜨지 않습니다 (localStorage).
+   · 다음 회차가 올라오면 그것이 새로 뜹니다.
+   ⚠ 토요일처럼 5건이 겹치는 날이 있어 "쌓기"가 필요합니다.
+   ===================================================== */
+#drawPopupWrap{ position:fixed; right:18px; bottom:18px; z-index:900; width:312px; max-width:calc(100vw - 36px); display:none; }
+#drawPopupWrap.show{ display:block; }
+.dp-stack{ position:relative; }
+.dp-card{
+  position:absolute; left:0; right:0; bottom:0;
+  background:var(--paper,#F4EFE4); color:var(--ink,#1a1a1a);
+  border:1.5px solid rgba(0,0,0,.18); border-radius:14px;
+  box-shadow:0 8px 26px rgba(0,0,0,.28);
+  padding:14px 15px 13px;
+  transition:transform .18s ease, opacity .18s ease;
+}
+/* 겹친 카드는 살짝 위로 밀어 "책갈피"처럼 보이게 합니다.
+   ⚠ 6px씩만 내밉니다. 더 내밀면 뒤 카드 제목이 통째로 보여
+     앞 카드와 시선을 다툽니다. */
+.dp-card[data-depth="1"]{ transform:translateY(-6px) scale(.978); }
+.dp-card[data-depth="2"]{ transform:translateY(-12px) scale(.956); }
+.dp-card[data-depth="3"]{ transform:translateY(-18px) scale(.934); }
+.dp-card[data-depth="4"]{ transform:translateY(-24px) scale(.912); }
+.dp-card[data-depth="5"]{ transform:translateY(-30px) scale(.89); }
+.dp-card.dp-gone{ transform:translateX(20px) scale(.95); opacity:0; }
+
+/* ⚠ 맨 앞 카드가 아니면 ✕를 숨깁니다.
+   겹쳐 있으면 뒤 카드의 ✕가 눌려, 보이지도 않던 것이 닫힙니다. */
+.dp-card:not([data-depth="0"]) .dp-x{ visibility:hidden; pointer-events:none; }
+
+/* 더미에서 꺼낸 카드 — 사용자가 원하는 자리에 둡니다 */
+.dp-card.dp-free{ position:fixed; transform:none; transition:none; box-shadow:0 12px 34px rgba(0,0,0,.34); }
+.dp-card.dp-free .dp-x{ visibility:visible; pointer-events:auto; }
+.dp-card.dp-grab{ cursor:grab; }
+.dp-card.dp-hold{ cursor:grabbing; box-shadow:0 18px 44px rgba(0,0,0,.42); }
+/* 집는 순간 살짝 들어 올려 "잡혔다"는 것을 알려줍니다 */
+.dp-card.dp-lift{ transform:scale(1.04) !important; }
+/* ⚠ 아래에 두었더니 화면 끝에 잘려 보여 위로 옮겼습니다. */
+.dp-more{ position:absolute; left:0; right:0; top:-16px; text-align:center; font-size:10.5px; color:#9a9088; }
+
+.dp-head{ display:flex; align-items:center; gap:7px; margin-bottom:3px; }
+.dp-game{ flex:1; min-width:0; font-size:13px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dp-x{ background:none; border:none; font-size:16px; line-height:1; color:#8a8a8a; cursor:pointer; padding:2px 3px; flex-shrink:0; }
+.dp-x:hover{ color:#000; }
+.dp-meta{ font-size:11px; color:#7a7268; margin-bottom:9px; }
+.dp-nums{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:11px; }
+.dp-n{ width:27px; height:27px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700; background:var(--ink,#1a1a1a); color:var(--paper,#F4EFE4); }
+.dp-n.bonus{ background:#C8843A; }
+.dp-plus{ align-self:center; font-size:12px; color:#9a9088; font-weight:700; }
+.dp-go{ display:block; text-align:center; background:var(--ink,#1a1a1a); color:var(--paper,#F4EFE4);
+  border-radius:9px; padding:9px; font-size:12.5px; font-weight:700; text-decoration:none; }
+/* 2026-08-29: 방금 닫은 것 되돌리기 */
+#dpUndo{
+  position:fixed; right:18px; bottom:18px; z-index:960; display:none;
+  background:#1a1a1a; color:#F4EFE4; border-radius:11px;
+  padding:11px 13px; box-shadow:0 10px 30px rgba(0,0,0,.36);
+  font-size:12px; align-items:center; gap:11px; max-width:calc(100vw - 36px);
+}
+#dpUndo.show{ display:flex; }
+#dpUndo .u-txt{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#dpUndo button{ background:none; border:none; color:#E8B45A; font-size:12px; font-weight:800;
+  cursor:pointer; padding:2px 4px; flex-shrink:0; text-decoration:underline; }
+@media (max-width:420px){
+  #drawPopupWrap{ right:10px; left:10px; bottom:10px; width:auto; }
+  #dpUndo{ right:10px; left:10px; }
+}
 .ld-pip.bonus{ background:var(--accent,var(--gold)); color:var(--paper); }
 
 .ticket-jackpot{ margin-top:10px; padding:9px 11px; background:rgba(184,134,46,0.1); border-radius:8px; }
@@ -736,6 +806,8 @@ async function loadLastDraws(){
 // =====================================================
 const i18n = {
   ko: {
+    dpCheck:"내 번호 당첨확인 →", dpClose:"닫기", dpMore:"+{n}건 더",
+    dpClosed:"{name} 닫음", dpUndo:"되돌리기",
     navGames:"전체 게임", navMyEntries:"내 등록번호", navMyPage:"마이페이지", navGuide:"전략 가이드", navChecker:"당첨확인", navStats:"통계", navRacetrack:"경마장", navBattles:"무제한 대결", navNotice:"공지", navBoardGuide:"사용법",
     liveBoard:"LIVE BOARD",
     heroTitle:'세계 12개 복권을,<br><span class="accent">실제 돈 없이</span> 종이 위에서 실험하세요',
@@ -767,6 +839,8 @@ const i18n = {
     lastDrawLabel:"최근 당첨번호", jackpotLabel:"현재 예상 잭팟", cashValueLabel:"현금가치", noDrawYet:"아직 등록된 당첨정보가 없어요",
   },
   en: {
+    dpCheck:"Check my numbers →", dpClose:"Close", dpMore:"+{n} more",
+    dpClosed:"Closed {name}", dpUndo:"Undo",
     navGames:"All Games", navMyEntries:"My Entries", navMyPage:"My Page", navGuide:"Strategy Guide", navChecker:"Check Numbers", navStats:"Stats", navRacetrack:"Racetrack", navBattles:"Battles", navNotice:"Notice", navBoardGuide:"How",
     liveBoard:"LIVE BOARD",
     heroTitle:'Try 12 lotteries from around the world<br><span class="accent">with no real money</span>, on paper',
@@ -798,6 +872,8 @@ const i18n = {
     lastDrawLabel:"Latest Winning Numbers", jackpotLabel:"Current Est. Jackpot", cashValueLabel:"Cash Value", noDrawYet:"No draw result yet",
   },
   ja: {
+    dpCheck:"当選を確認する →", dpClose:"閉じる", dpMore:"他{n}件",
+    dpClosed:"{name} を閉じました", dpUndo:"元に戻す",
     navGames:"すべてのゲーム", navMyEntries:"登録した番号", navMyPage:"マイページ", navGuide:"攻略ガイド", navChecker:"当選確認", navStats:"統計", navRacetrack:"競馬場", navBattles:"無制限対決", navNotice:"お知らせ", navBoardGuide:"使い方",
     liveBoard:"LIVE BOARD",
     heroTitle:'世界12の宝くじを、<br><span class="accent">実際のお金を使わず</span>紙の上で体験',
@@ -847,6 +923,7 @@ function applyLang(lang){
   renderCards();
   renderTicker();
   renderJackpotPanel();
+  if (typeof renderDrawPopups === 'function') renderDrawPopups();   // 2026-08-29
 }
 
 document.querySelectorAll('.lang-toggle button').forEach(btn => {
@@ -1050,7 +1127,12 @@ setInterval(() => {
 applyLang(currentLang);
 
 // ─── 잭팟 + 최근당첨번호: 최초 로드 후 카드 다시 그리기, 잭팟은 5분마다 갱신 ───
-Promise.all([loadJackpots(), loadLastDraws()]).then(() => { renderCards(); renderTicker(); });
+Promise.all([loadJackpots(), loadLastDraws()]).then(() => {
+  renderCards(); renderTicker();
+  // 2026-08-29: 새 당첨번호 팝업 — 최신 회차를 다 읽은 뒤에 띄웁니다.
+  if (typeof dpLoadPos === 'function') dpLoadPos();
+  if (typeof renderDrawPopups === 'function') renderDrawPopups();
+});
 setInterval(() => { loadJackpots().then(renderCards); }, JACKPOT_REFRESH_MS);
 
 // ─── 주간/야간 테마 토글 ───────────────────────────────────────────────
@@ -1127,6 +1209,369 @@ function openChecker(gameId){
 }
 function closeChecker(){
   document.getElementById('plckModalOverlay').classList.remove('show');
+}
+</script>
+
+<!-- 2026-08-29 신설: 새 당첨번호 팝업 -->
+<div id="drawPopupWrap"><div class="dp-stack" id="dpStack"></div></div>
+<div id="dpUndo"><span class="u-txt" id="dpUndoTxt"></span><button type="button" id="dpUndoBtn">되돌리기</button></div>
+
+<script>
+// =====================================================
+// 새 당첨번호 팝업 (2026-08-29 신설)
+//
+// 관리자가 "승인하고 저장"을 누르면 draw_results에 회차가 쌓입니다.
+// 이 화면은 이미 loadLastDraws()로 게임별 최신 회차를 읽고 있으므로,
+// 서버를 다시 부르지 않고 그 값(LAST_DRAWS)을 그대로 씁니다.
+//
+// 규칙
+//  · 한 번 닫은 회차는 다시 뜨지 않습니다.
+//  · 다음 회차가 올라오면 그것이 새 카드로 뜹니다.
+//  · 여러 건이면 책갈피처럼 겹쳐 쌓고, 위에서부터 닫습니다.
+//
+// ⚠ DP_RECENT_DAYS가 없으면 처음 온 사람에게 12장이 한꺼번에 뜹니다.
+//   주 1회 게임까지 담으려면 7일이 적당합니다. 필요하면 이 숫자만 고치세요.
+// =====================================================
+const DP_RECENT_DAYS = 7;   // 며칠 이내 추첨분까지 띄울지
+const DP_MAX_CARDS   = 6;   // 한 번에 보일 최대 장수
+const DP_SEEN_KEY    = 'paperlotto_draw_seen';
+const DP_POS_KEY     = 'paperlotto_draw_pos';    // 옮겨둔 자리
+const DP_UNDO_MS     = 7000;                     // 되돌리기가 떠 있는 시간
+
+function dpSeen(){
+  try { const v = JSON.parse(localStorage.getItem(DP_SEEN_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch(e){ return []; }
+}
+function dpMarkSeen(key){
+  try {
+    const list = dpSeen();
+    if (!list.includes(key)) list.push(key);
+    // 무한정 쌓이지 않게 최근 것만 남깁니다.
+    localStorage.setItem(DP_SEEN_KEY, JSON.stringify(list.slice(-300)));
+  } catch(e){}
+}
+// 2026-08-29: 잘못 닫았을 때 되돌리기
+function dpUnmarkSeen(key){
+  try {
+    localStorage.setItem(DP_SEEN_KEY, JSON.stringify(dpSeen().filter((k) => k !== key)));
+  } catch(e){}
+}
+
+// ── 옮겨둔 자리 저장 ──
+// ⚠ 화면 크기가 바뀌면 저장된 좌표가 화면 밖이 될 수 있습니다.
+//   불러올 때 가장자리로 끌어당깁니다(dpClampPos).
+function dpLoadPos(){
+  try {
+    const o = JSON.parse(localStorage.getItem(DP_POS_KEY) || '{}');
+    if (o && typeof o === 'object') Object.keys(o).forEach((k) => {
+      const v = o[k];
+      if (v && isFinite(v.x) && isFinite(v.y)) dpFreed.set(k, { x: v.x, y: v.y });
+    });
+  } catch(e){}
+}
+function dpSavePos(){
+  try {
+    const o = {};
+    dpFreed.forEach((v, k) => { o[k] = v; });
+    localStorage.setItem(DP_POS_KEY, JSON.stringify(o));
+  } catch(e){}
+}
+function dpClampPos(pos, w, h){
+  return {
+    x: Math.min(Math.max(pos.x, 4), Math.max(4, window.innerWidth - w - 4)),
+    y: Math.min(Math.max(pos.y, 4), Math.max(4, window.innerHeight - h - 4)),
+  };
+}
+
+// ── 되돌리기 막대 ──
+let dpUndoTimer = null;
+function dpShowUndo(key, name){
+  const bar = document.getElementById('dpUndo');
+  const txt = document.getElementById('dpUndoTxt');
+  const btn = document.getElementById('dpUndoBtn');
+  if (!bar || !txt || !btn) return;
+  const t = i18n[currentLang] || i18n.en;
+  txt.textContent = (t.dpClosed || '{name} 닫음').replace('{name}', name);
+  btn.textContent = t.dpUndo || '되돌리기';
+  bar.classList.add('show');
+  if (dpUndoTimer) clearTimeout(dpUndoTimer);
+  dpUndoTimer = setTimeout(() => bar.classList.remove('show'), DP_UNDO_MS);
+  btn.onclick = () => {
+    dpUnmarkSeen(key);
+    bar.classList.remove('show');
+    if (dpUndoTimer) { clearTimeout(dpUndoTimer); dpUndoTimer = null; }
+    renderDrawPopups();
+  };
+}
+
+// 2026-08-29: 회차번호 대신 추첨일을 언어에 맞게 보여줍니다.
+// ⚠ draw_date는 'YYYY-MM-DD' 문자열입니다. 그냥 new Date()에 넣으면
+//   UTC로 읽혀 하루 밀릴 수 있어, KST를 명시해 붙입니다.
+function dpDateLabel(dateStr){
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00+09:00');
+  if (isNaN(d)) return dateStr;
+  const loc = currentLang === 'ko' ? 'ko-KR' : (currentLang === 'ja' ? 'ja-JP' : 'en-US');
+  try {
+    return new Intl.DateTimeFormat(loc, {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric', month: currentLang === 'en' ? 'short' : 'long',
+      day: 'numeric', weekday: 'short',
+    }).format(d);
+  } catch (e) { return dateStr; }
+}
+
+function dpGameName(g){
+  if (currentLang === 'ko') return g.nameKr;
+  if (currentLang === 'ja') return g.nameJa || g.nameEn;
+  return g.nameEn;
+}
+
+// 띄울 회차 고르기
+function dpPick(){
+  const seen = dpSeen();
+  const now = Date.now();
+  const out = [];
+  GAMES.forEach((g) => {
+    const d = LAST_DRAWS[g.id];
+    if (!d || !d.round_no) return;
+    const key = g.id + ':' + d.round_no;
+    if (seen.includes(key)) return;
+    if (d.draw_date) {
+      const t = new Date(d.draw_date + 'T00:00:00+09:00').getTime();
+      if (isFinite(t) && (now - t) > DP_RECENT_DAYS * 86400000) return;   // 너무 오래된 것은 제외
+    }
+    out.push({ g, d, key, ts: d.draw_date ? new Date(d.draw_date + 'T00:00:00+09:00').getTime() : 0 });
+  });
+  // 최근 것이 맨 위에 오도록
+  out.sort((a, b) => b.ts - a.ts || String(b.d.round_no).localeCompare(String(a.d.round_no)));
+  return out;
+}
+
+function dpBalls(d){
+  const wrap = document.createElement('div');
+  wrap.className = 'dp-nums';
+  // ⚠ 게임마다 저장 순서가 다릅니다(호주는 추첨 순서, 한국은 오름차순).
+  //   팝업에서는 모두 오름차순으로 맞춰 보여줍니다.
+  const asc = (arr) => (Array.isArray(arr) ? arr.slice().sort((a, b) => Number(a) - Number(b)) : []);
+  const main = asc(d.main_numbers);
+  const bonus = asc(d.bonus_numbers);
+  main.forEach((n) => {
+    const b = document.createElement('div'); b.className = 'dp-n'; b.textContent = n; wrap.appendChild(b);
+  });
+  if (bonus.length) {
+    const plus = document.createElement('span'); plus.className = 'dp-plus'; plus.textContent = '+';
+    wrap.appendChild(plus);
+    bonus.forEach((n) => {
+      const b = document.createElement('div'); b.className = 'dp-n bonus'; b.textContent = n; wrap.appendChild(b);
+    });
+  }
+  return wrap;
+}
+
+// ── 2026-08-29: 카드를 집어서 원하는 자리에 두기 ──
+// ⚠ 꺼낸 카드는 더미에서 빠져나와 독립합니다(서류 더미에서 한 장 꺼내는 식).
+//   나머지는 그대로 쌓여 있습니다.
+// ⚠ 휴대폰에서는 "길게 누르기"로 집습니다. 그냥 스치면 화면이 그대로 스크롤됩니다.
+//   손가락으로 바로 끌리게 하면 스크롤을 못 하게 됩니다.
+const DP_HOLD_MS = 400;    // 길게 누르기 판정 시간
+const DP_MOVE_TOL = 10;    // 이만큼 움직이면 "누르기"가 아니라 "스크롤"로 봅니다
+const dpFreed = new Map(); // key → {x, y}  꺼내둔 카드의 자리 (새로고침하면 사라집니다)
+
+function dpMakeDraggable(card, key){
+  let holdTimer = null, holding = false, startX = 0, startY = 0, baseX = 0, baseY = 0;
+
+  const clamp = (x, y) => {
+    const w = card.offsetWidth, h = card.offsetHeight;
+    return [
+      Math.min(Math.max(x, 4), Math.max(4, window.innerWidth - w - 4)),
+      Math.min(Math.max(y, 4), Math.max(4, window.innerHeight - h - 4)),
+    ];
+  };
+
+  // 더미에서 꺼내 화면 좌표로 고정합니다.
+  const detach = () => {
+    if (card.classList.contains('dp-free')) return;
+    const r = card.getBoundingClientRect();
+    card.classList.add('dp-free');
+    card.style.left = r.left + 'px';
+    card.style.top = r.top + 'px';
+    card.style.right = 'auto';
+    card.style.bottom = 'auto';
+    card.style.width = r.width + 'px';
+    card.style.zIndex = '950';
+  };
+
+  const begin = (px, py) => {
+    holding = true;
+    detach();
+    const r = card.getBoundingClientRect();
+    baseX = r.left; baseY = r.top;
+    startX = px; startY = py;
+    card.classList.add('dp-hold');
+    card.classList.remove('dp-lift');
+  };
+
+  const moveTo = (px, py) => {
+    const [x, y] = clamp(baseX + (px - startX), baseY + (py - startY));
+    card.style.left = x + 'px';
+    card.style.top = y + 'px';
+  };
+
+  const end = () => {
+    if (holding) {
+      const r = card.getBoundingClientRect();
+      dpFreed.set(key, { x: r.left, y: r.top });
+      dpSavePos();   // 2026-08-29: 옮긴 자리를 기억합니다
+    }
+    holding = false;
+    card.classList.remove('dp-hold', 'dp-lift');
+    if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+  };
+
+  // ── 마우스 ──
+  card.classList.add('dp-grab');
+  card.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.dp-x, .dp-go')) return;   // 닫기·링크는 그대로 동작
+    e.preventDefault();
+    begin(e.clientX, e.clientY);
+  });
+  window.addEventListener('mousemove', (e) => { if (holding) moveTo(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', end);
+
+  // ── 손가락: 길게 눌러야 집힙니다 ──
+  card.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.dp-x, .dp-go')) return;
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    holdTimer = setTimeout(() => {
+      card.classList.add('dp-lift');
+      // 살짝 진동으로 "집혔다"를 알려줍니다(지원하는 기기만).
+      try { if (navigator.vibrate) navigator.vibrate(15); } catch (_e) {}
+      begin(startX, startY);
+    }, DP_HOLD_MS);
+  }, { passive: true });
+
+  card.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (!holding) {
+      // 아직 안 집혔는데 움직이면 스크롤로 보고 취소합니다.
+      if (Math.abs(t.clientX - startX) > DP_MOVE_TOL || Math.abs(t.clientY - startY) > DP_MOVE_TOL) {
+        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      }
+      return;
+    }
+    e.preventDefault();          // 집은 뒤에는 화면이 안 움직이게
+    moveTo(t.clientX, t.clientY);
+  }, { passive: false });
+
+  card.addEventListener('touchend', end);
+  card.addEventListener('touchcancel', end);
+}
+
+function renderDrawPopups(){
+  const wrap = document.getElementById('drawPopupWrap');
+  const stack = document.getElementById('dpStack');
+  if (!wrap || !stack) return;
+
+  const items = dpPick();
+  stack.textContent = '';
+  if (items.length === 0) { wrap.classList.remove('show'); return; }
+  wrap.classList.add('show');
+
+  // ⚠ 이미 꺼내둔 카드는 더미에서 빼고 셉니다.
+  //   안 그러면 다시 그릴 때마다 더미로 되돌아갑니다.
+  const freed = items.filter((it) => dpFreed.has(it.key));
+  const stacked = items.filter((it) => !dpFreed.has(it.key));
+
+  const shown = stacked.slice(0, DP_MAX_CARDS);
+  const t = i18n[currentLang] || i18n.en;
+
+  // ⚠ 뒤쪽 카드를 먼저 그려야 앞 카드가 위에 옵니다.
+  //   꺼내둔 카드는 뒤에 따로 붙입니다.
+  const toDraw = shown.slice().reverse().concat(freed);
+  toDraw.forEach((it, drawIdx) => {
+    const isFree = dpFreed.has(it.key);
+    const depth = isFree ? 0 : (shown.length - 1 - drawIdx);   // 0이 맨 앞
+    const card = document.createElement('div');
+    card.className = 'dp-card';
+    card.setAttribute('data-depth', String(depth));
+    card.style.zIndex = String(100 - depth);
+
+    const head = document.createElement('div');
+    head.className = 'dp-head';
+    const name = document.createElement('div');
+    name.className = 'dp-game';
+    name.textContent = dpGameName(it.g);
+    head.appendChild(name);
+
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'dp-x'; x.textContent = '✕';
+    x.setAttribute('aria-label', t.dpClose || 'Close');
+    x.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      dpMarkSeen(it.key);
+      dpFreed.delete(it.key);        // 꺼내둔 자리 기록도 함께 정리
+      dpSavePos();
+      card.classList.add('dp-gone');
+      // ⚠ 잘못 닫았을 수 있습니다. 잠깐 되돌릴 기회를 줍니다.
+      dpShowUndo(it.key, dpGameName(it.g));
+      setTimeout(renderDrawPopups, 180);
+    });
+    head.appendChild(x);
+    card.appendChild(head);
+
+    const meta = document.createElement('div');
+    meta.className = 'dp-meta';
+    // 회차번호는 링크에만 쓰고, 화면에는 추첨일을 보여줍니다.
+    meta.textContent = dpDateLabel(it.d.draw_date);
+    card.appendChild(meta);
+
+    card.appendChild(dpBalls(it.d));
+
+    const go = document.createElement('a');
+    go.className = 'dp-go';
+    // ⚠ href를 그대로 둡니다. 새 탭으로 열기·주소 복사가 됩니다.
+    go.href = 'paperlotto_checker.html?game=' + encodeURIComponent(it.g.id) + '&round=' + encodeURIComponent(it.d.round_no);
+    go.textContent = t.dpCheck || '내 번호 당첨확인 →';
+    // 2026-08-30: 별도 창으로 엽니다. 카드를 띄워둔 채 번호를 맞춰볼 수 있습니다.
+    go.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      window.open(go.href, 'plChecker', 'width=460,height=800,resizable=yes,scrollbars=yes');
+    });
+    card.appendChild(go);
+
+    dpMakeDraggable(card, it.key);   // 2026-08-29: 집어서 옮기기
+
+    // 이미 꺼내둔 카드는 그 자리에 그대로 되돌려 놓습니다.
+    if (isFree) {
+      card.classList.add('dp-free');
+      card.style.right = 'auto';
+      card.style.bottom = 'auto';
+      card.style.zIndex = '940';
+      // ⚠ 저장된 자리가 지금 화면 밖일 수 있습니다(PC에서 두고 폰에서 열기 등).
+      //   그리고 나서 크기를 재야 하므로 붙인 뒤에 계산합니다.
+      requestAnimationFrame(() => {
+        const pos = dpClampPos(dpFreed.get(it.key) || { x: 0, y: 0 }, card.offsetWidth, card.offsetHeight);
+        card.style.left = pos.x + 'px';
+        card.style.top = pos.y + 'px';
+        dpFreed.set(it.key, pos);
+      });
+    }
+
+    stack.appendChild(card);
+  });
+
+  // 쌓인 높이만큼 자리를 잡아줍니다(카드가 absolute라 부모 높이가 0이 됩니다).
+  const first = stack.querySelector('.dp-card[data-depth="0"]:not(.dp-free)');
+  stack.style.height = (first ? first.offsetHeight : 150) + Math.max(0, shown.length - 1) * 6 + 'px';
+
+  if (stacked.length > shown.length) {
+    const more = document.createElement('div');
+    more.className = 'dp-more';
+    more.textContent = (t.dpMore || '+{n}건 더').replace('{n}', stacked.length - shown.length);
+    stack.appendChild(more);
+  }
 }
 </script>
 </body>
