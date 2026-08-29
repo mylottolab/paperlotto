@@ -1247,8 +1247,11 @@ function dpPick(){
 function dpBalls(d){
   const wrap = document.createElement('div');
   wrap.className = 'dp-nums';
-  const main = Array.isArray(d.main_numbers) ? d.main_numbers : [];
-  const bonus = Array.isArray(d.bonus_numbers) ? d.bonus_numbers : [];
+  // ⚠ 게임마다 저장 순서가 다릅니다(호주는 추첨 순서, 한국은 오름차순).
+  //   팝업에서는 모두 오름차순으로 맞춰 보여줍니다.
+  const asc = (arr) => (Array.isArray(arr) ? arr.slice().sort((a, b) => Number(a) - Number(b)) : []);
+  const main = asc(d.main_numbers);
+  const bonus = asc(d.bonus_numbers);
   main.forEach((n) => {
     const b = document.createElement('div'); b.className = 'dp-n'; b.textContent = n; wrap.appendChild(b);
   });
