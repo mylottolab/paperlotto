@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>사용설명 — PaperLotto</title>
+<script src="paperlotto_lang.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -117,7 +118,7 @@ nav a{ text-decoration:none; } nav a:hover{ color:var(--text-hi); }
     <a href="paperlotto_board_guide.html" data-i18n="navBoardGuide" style="color:var(--gold-bright);">사용법</a>
     <div id="authWidget"></div>
     <div class="lang-toggle">
-      <button data-lang="ko" class="active" type="button">KR</button>
+      <button data-lang="ko" type="button">KR</button>
       <button data-lang="en" type="button">EN</button>
       <button data-lang="ja" type="button">JA</button>
     </div>
@@ -184,12 +185,26 @@ const i18n = {
   },
 };
 
-let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
+// 🔴 2026-08-31: 화면마다 기본 언어가 달랐던 것을 공용 파일로 통일했습니다.
+//   주소 ?lang= → 손님이 고른 값 → 브라우저 언어 순으로 정합니다.
+let currentLang = (function () {
+  // 공용 파일이 있으면 그것을 씁니다 (주소 ?lang= 까지 함께 처리)
+  if (typeof window.getPaperLottoLang === 'function') return window.getPaperLottoLang();
+  // 대비책 — 공용 파일을 못 불러왔을 때
+  try {
+    var q = new URLSearchParams(location.search).get('lang');
+    if (q) { var c = q.toLowerCase(); return c.indexOf('ko') === 0 ? 'ko' : (c.indexOf('ja') === 0 ? 'ja' : 'en'); }
+  } catch (e) {}
+  try { var v = localStorage.getItem('paperlotto_lang'); if (v) return v; } catch (e) {}
+  var nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  var l = String(nav).toLowerCase();
+  return l.indexOf('ko') === 0 ? 'ko' : (l.indexOf('ja') === 0 ? 'ja' : 'en');
+})();
 let posts = [];
 const openIds = new Set();
 
 function applyLang(lang){
-  currentLang = i18n[lang] ? lang : 'ko';
+  currentLang = i18n[lang] ? lang : 'en';
   localStorage.setItem('paperlotto_lang', currentLang);
   document.documentElement.lang = currentLang; // auth-widget.js가 언어 변경을 감지하도록
   document.querySelectorAll('[data-i18n]').forEach(el => {
