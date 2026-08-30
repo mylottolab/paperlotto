@@ -12,11 +12,13 @@
   --gold:#b8862e; --gold-bright:#e0aa4e;
   --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
   --ok:#3f9d6d; --bad:#d15b48;
+  --hit-ring:#e03e2d;   /* 맞은 번호를 두르는 빨간색 */
 }
 body.light-mode{
   --board:#f2efe4; --board-2:#e8e2d0; --board-line:#d9d1ba;
   --gold:#a8781f; --gold-bright:#c9932e;
   --text-hi:#1c2130; --text-mid:#4c5372; --text-dim:#7a7f9a;
+  --hit-ring:#c8321f;
 }
 *{box-sizing:border-box;}
 body{ margin:0; background:var(--board); color:var(--text-hi); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
@@ -60,8 +62,12 @@ main{ max-width:720px; margin:0 auto; padding:24px 16px 80px; }
 .ball{ width:32px; height:32px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
        font-size:13px; font-weight:600; font-family:'IBM Plex Mono',monospace;
        background:transparent; border:1.5px solid var(--board-line); color:var(--text-dim); }
-.ball.hit{ background:var(--gold); border:2px solid var(--gold); color:#fff; font-weight:800; }
-.ball.bonushit{ background:transparent; border:2px dashed var(--gold-bright); color:var(--gold-bright); font-weight:800; }
+/* 🔴 맞은 번호는 금색 채우기 + 빨간 테두리로 두 겹 표시합니다.
+   색 하나에만 기대지 않도록 채우기·테두리색·굵기를 함께 바꿉니다(색약 대비). */
+.ball.hit{ background:var(--gold); border:2.5px solid var(--hit-ring); color:#fff; font-weight:800;
+           box-shadow:0 0 0 2px rgba(224,62,45,.28); }
+.ball.bonushit{ background:transparent; border:2.5px dashed var(--hit-ring); color:var(--gold-bright); font-weight:800;
+                box-shadow:0 0 0 2px rgba(224,62,45,.18); }
 .ball.sep{ border-style:dashed; }
 
 .line-row{ display:flex; align-items:center; gap:6px; padding:9px 0; border-bottom:1px solid var(--board-line); flex-wrap:wrap; }
@@ -194,6 +200,7 @@ const T = {
     subNone:'등록하신 {total}줄을 모두 확인해드렸습니다. 이번엔 아쉽네요.',
     chipGrade:'{g}등 {n}줄', chipLose:'나머지 {n}줄',
     winTitle:'당첨번호', myTitle:'내 번호',
+    noDraw:'당첨번호를 아직 불러오지 못했습니다.',
     sortByGrade:'등록순으로 보기', sortByOrder:'당첨순으로 보기',
     lose:'—', gradeTag:'{g}등',
     metaGame:'종목', metaRound:'추첨', metaLines:'줄 수', metaPoints:'차감 포인트', metaWhen:'등록일',
@@ -213,6 +220,7 @@ const T = {
     subNone:'We checked all {total} of your line(s). No luck this time.',
     chipGrade:'Tier {g} × {n}', chipLose:'{n} no win',
     winTitle:'Winning numbers', myTitle:'Your numbers',
+    noDraw:'Winning numbers are not available yet.',
     sortByGrade:'Show in entry order', sortByOrder:'Show winners first',
     lose:'—', gradeTag:'Tier {g}',
     metaGame:'Game', metaRound:'Draw', metaLines:'Lines', metaPoints:'Points', metaWhen:'Registered',
@@ -232,6 +240,7 @@ const T = {
     subNone:'ご登録の{total}行すべてを確認しました。今回は残念でした。',
     chipGrade:'{g}等 {n}行', chipLose:'残り{n}行',
     winTitle:'当選番号', myTitle:'自分の番号',
+    noDraw:'当選番号をまだ読み込めていません。',
     sortByGrade:'登録順で見る', sortByOrder:'当選順で見る',
     lose:'—', gradeTag:'{g}等',
     metaGame:'種目', metaRound:'抽選', metaLines:'行数', metaPoints:'消費ポイント', metaWhen:'登録日',
@@ -416,6 +425,12 @@ function renderVerdict(){
 function renderWinning(){
   const mains = (draw && draw.main_numbers) || [];
   const bonuses = (draw && draw.bonus_numbers) || [];
+  // ⚠ 당첨번호를 못 불러오면(그 회차 결과가 지워졌거나 아직 없으면)
+  //   어느 번호가 맞았는지 칠할 수 없습니다. 빈 칸으로 두지 말고 알려줍니다.
+  if (!mains.length) {
+    $('winNums').innerHTML = '<span style="font-size:12.5px;color:var(--text-dim);">' + t().noDraw + '</span>';
+    return;
+  }
   let html = mains.map(n => ball(n, 'hit')).join('');
   if (bonuses.length) html += '<span class="plus">+</span>' + bonuses.map(n => ball(n, 'bonushit')).join('');
   $('winNums').innerHTML = html;
