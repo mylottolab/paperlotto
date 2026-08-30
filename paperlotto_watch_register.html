@@ -210,16 +210,54 @@ const SUPABASE_ANON = 'sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC';
 //   paperlotto_checker.js처럼 REST를 직접 부르는 방식으로 통일했습니다.
 
 // 로그인 토큰을 브라우저 저장소에서 직접 읽습니다.
-function getAccessToken(){
+// 🔴 2026-08-31: 토큰 만료 처리
+//   supabase-js를 쓰지 않으므로(인증 충돌 때문에 걷어냈습니다) 토큰이 저절로
+//   갱신되지 않습니다. 저장된 토큰은 한 시간쯤 지나면 못 쓰고, 그대로 보내면
+//   함수가 401을 돌려줍니다. 만료가 가까우면 여기서 직접 갱신합니다.
+function readSession(){
   try {
     const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
     if (!key) return null;
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const obj = JSON.parse(raw);
-    return obj.access_token || (obj.currentSession && obj.currentSession.access_token) || null;
+    const s = obj.currentSession || obj;   // 저장 형태가 두 가지입니다
+    return { key, obj, s };
   } catch (e) {
     console.error('[watch] 토큰을 읽지 못했습니다', e);
+    return null;
+  }
+}
+
+async function ensureToken(){
+  const info = readSession();
+  if (!info) return null;
+  const { key, obj, s } = info;
+
+  const now = Math.floor(Date.now() / 1000);
+  // 만료 1분 전부터 미리 갱신합니다. 요청 도중에 만료되는 것을 막습니다.
+  if (s.access_token && s.expires_at && Number(s.expires_at) - 60 > now) return s.access_token;
+  if (!s.refresh_token) return s.access_token || null;
+
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON },
+      body: JSON.stringify({ refresh_token: s.refresh_token }),
+    });
+    if (!res.ok) {
+      console.warn('[watch] 토큰 갱신 실패 — 다시 로그인이 필요합니다', res.status);
+      return null;
+    }
+    const fresh = await res.json();
+    // 저장 형태를 그대로 유지하며 갱신합니다 (다른 화면도 같은 값을 씁니다)
+    const merged = obj.currentSession
+      ? Object.assign({}, obj, { currentSession: Object.assign({}, obj.currentSession, fresh) })
+      : Object.assign({}, obj, fresh);
+    try { localStorage.setItem(key, JSON.stringify(merged)); } catch (e) {}
+    return fresh.access_token || null;
+  } catch (e) {
+    console.error('[watch] 토큰 갱신 중 오류', e);
     return null;
   }
 }
@@ -387,7 +425,7 @@ function clearMsg(){ $('msgBox').style.display = 'none'; }
 
 // ── 잔액 ──
 async function loadBalance(){
-  const token = getAccessToken();
+  const token = await ensureToken();
   if (!token){ balance = null; $('balanceLabel').textContent = '—'; return; }
   try {
     // 🔴 point_ledger를 화면에서 직접 읽지 않습니다.
@@ -737,7 +775,7 @@ async function submit(){
   //   확인 화면의 단추가 "등록하는 중…" 상태로 잠겨 있었습니다.
   //   눌러도 아무 일이 없어 멈춘 것처럼 보였습니다. finally로 항상 되돌립니다.
   try {
-    const token = getAccessToken();
+    const token = await ensureToken();
     if (!token){ showMsg(t().errLogin); return; }
 
     const spec = GAMES[gameId];

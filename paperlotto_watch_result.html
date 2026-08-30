@@ -256,13 +256,44 @@ const $ = (id) => document.getElementById(id);
 const t = () => T[lang];
 function fill(tpl, v){ return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? v[k] : '')); }
 
-function getAccessToken(){
+// 🔴 2026-08-31: 토큰 만료 처리
+//   supabase-js를 쓰지 않으므로 토큰이 저절로 갱신되지 않습니다.
+//   저장된 토큰은 한 시간쯤 지나면 못 쓰고, 그대로 보내면 401이 옵니다.
+function readSession(){
   try {
     const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
     if (!key) return null;
-    const obj = JSON.parse(localStorage.getItem(key));
-    return obj.access_token || (obj.currentSession && obj.currentSession.access_token) || null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return { key, obj, s: obj.currentSession || obj };
   } catch (e) { return null; }
+}
+
+async function ensureToken(){
+  const info = readSession();
+  if (!info) return null;
+  const { key, obj, s } = info;
+  const now = Math.floor(Date.now() / 1000);
+  if (s.access_token && s.expires_at && Number(s.expires_at) - 60 > now) return s.access_token;
+  if (!s.refresh_token) return s.access_token || null;
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON },
+      body: JSON.stringify({ refresh_token: s.refresh_token }),
+    });
+    if (!res.ok) { console.warn('[watch-result] 토큰 갱신 실패', res.status); return null; }
+    const fresh = await res.json();
+    const merged = obj.currentSession
+      ? Object.assign({}, obj, { currentSession: Object.assign({}, obj.currentSession, fresh) })
+      : Object.assign({}, obj, fresh);
+    try { localStorage.setItem(key, JSON.stringify(merged)); } catch (e) {}
+    return fresh.access_token || null;
+  } catch (e) {
+    console.error('[watch-result] 토큰 갱신 중 오류', e);
+    return null;
+  }
 }
 
 async function rest(path, token){
@@ -445,7 +476,7 @@ async function load(){
 
   if (!entryId) { showError(t().errNoEntry); return; }
 
-  const token = getAccessToken();
+  const token = await ensureToken();
   if (!token) { showError(t().errLogin); return; }
 
   try {
