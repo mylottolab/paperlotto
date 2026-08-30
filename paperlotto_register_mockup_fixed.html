@@ -6,6 +6,7 @@
 <title>번호 등록 — PaperLotto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="paperlotto_lang.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -525,7 +526,21 @@ const i18n = {
   },
 };
 
-let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
+// 🔴 2026-08-31: 화면마다 기본 언어가 달랐던 것을 공용 파일로 통일했습니다.
+//   주소 ?lang= → 손님이 고른 값 → 브라우저 언어 순으로 정합니다.
+let currentLang = (function () {
+  // 공용 파일이 있으면 그것을 씁니다 (주소 ?lang= 까지 함께 처리)
+  if (typeof window.getPaperLottoLang === 'function') return window.getPaperLottoLang();
+  // 대비책 — 공용 파일을 못 불러왔을 때
+  try {
+    var q = new URLSearchParams(location.search).get('lang');
+    if (q) { var c = q.toLowerCase(); return c.indexOf('ko') === 0 ? 'ko' : (c.indexOf('ja') === 0 ? 'ja' : 'en'); }
+  } catch (e) {}
+  try { var v = localStorage.getItem('paperlotto_lang'); if (v) return v; } catch (e) {}
+  var nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  var l = String(nav).toLowerCase();
+  return l.indexOf('ko') === 0 ? 'ko' : (l.indexOf('ja') === 0 ? 'ja' : 'en');
+})();
 
 function applyLang(lang){
   currentLang = i18n[lang] ? lang : 'en';

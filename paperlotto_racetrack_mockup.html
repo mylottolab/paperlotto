@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>World Jackpot Racetrack — PaperLotto</title>
+<script src="paperlotto_lang.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -634,7 +635,21 @@ const I18N = {
     statusLine:(n)=>`${n}頭を表示中`,
   },
 };
-let currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
+// 🔴 2026-08-31: 화면마다 기본 언어가 달랐던 것을 공용 파일로 통일했습니다.
+//   주소 ?lang= → 손님이 고른 값 → 브라우저 언어 순으로 정합니다.
+let currentLang = (function () {
+  // 공용 파일이 있으면 그것을 씁니다 (주소 ?lang= 까지 함께 처리)
+  if (typeof window.getPaperLottoLang === 'function') return window.getPaperLottoLang();
+  // 대비책 — 공용 파일을 못 불러왔을 때
+  try {
+    var q = new URLSearchParams(location.search).get('lang');
+    if (q) { var c = q.toLowerCase(); return c.indexOf('ko') === 0 ? 'ko' : (c.indexOf('ja') === 0 ? 'ja' : 'en'); }
+  } catch (e) {}
+  try { var v = localStorage.getItem('paperlotto_lang'); if (v) return v; } catch (e) {}
+  var nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  var l = String(nav).toLowerCase();
+  return l.indexOf('ko') === 0 ? 'ko' : (l.indexOf('ja') === 0 ? 'ja' : 'en');
+})();
 let currentGame = GAMES[0].id;
 let currentTypeFilter = 'all';
 let sortKey = 'recentRank';
