@@ -9,68 +9,87 @@
 <style>
 :root{
   --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
-  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
-  --gold:#b8862e; --gold-bright:#e0aa4e; --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
   --ok:#3f9d6d; --bad:#d15b48;
 }
 body.light-mode{
-  --board:#f2efe4; --board-2:#e8e2d0; --board-line:#d9d1ba; --paper:#ffffff; --paper-2:#f7f3e8;
-  --ink:#1c2130; --ink-dim:#5b5646; --gold:#a8781f; --gold-bright:#c9932e;
+  --board:#f2efe4; --board-2:#e8e2d0; --board-line:#d9d1ba;
+  --gold:#a8781f; --gold-bright:#c9932e;
   --text-hi:#1c2130; --text-mid:#4c5372; --text-dim:#7a7f9a;
 }
 *{box-sizing:border-box;}
 body{ margin:0; background:var(--board); color:var(--text-hi); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
-h1,h2{ font-family:'Fraunces',serif; margin:0; }
-.header{ display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:12px; }
+
+.header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px; }
 .brand{ display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
-.brand-mark{ width:34px; height:34px; border-radius:9px; background:var(--gold); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Fraunces',serif; }
-.brand-name{ font-size:16px; font-weight:700; }
-.header-right{ display:flex; align-items:center; gap:10px; }
+.brand-mark{ width:32px; height:32px; border-radius:9px; background:var(--gold); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Fraunces',serif; }
+.brand-name{ font-size:15px; font-weight:700; }
+.header-right{ display:flex; align-items:center; gap:8px; }
 .lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
-.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:6px 12px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif; }
 .lang-toggle button.active{ background:var(--gold); color:#fff; }
-.theme-toggle{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px; }
+.theme-toggle{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:13px; }
 .balance{ font-size:13px; font-weight:600; color:var(--gold-bright); font-family:'IBM Plex Mono',monospace; }
 
-main{ max-width:720px; margin:0 auto; padding:28px 20px 80px; }
-.page-title{ font-size:26px; font-weight:700; margin-bottom:6px; font-family:'Fraunces',serif; }
-.page-sub{ font-size:13px; color:var(--text-dim); margin-bottom:22px; line-height:1.6; }
+main{ max-width:720px; margin:0 auto; padding:24px 16px 80px; }
+.page-title{ font-size:24px; font-weight:700; margin-bottom:6px; font-family:'Fraunces',serif; }
+.page-sub{ font-size:13px; color:var(--text-dim); margin-bottom:20px; line-height:1.6; }
 
-.game-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
-.game-tab-btn{ padding:8px 14px; border-radius:999px; border:1px solid var(--board-line); background:var(--board-2); color:var(--text-mid); font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; }
+.game-tabs{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:16px; }
+.game-tab-btn{ padding:7px 13px; border-radius:999px; border:1px solid var(--board-line); background:var(--board-2); color:var(--text-mid); font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit; }
 .game-tab-btn.active{ background:var(--gold); border-color:var(--gold); color:#fff; }
 
-.card{ background:var(--board-2); border:1px solid var(--board-line); border-radius:16px; padding:20px; margin-bottom:16px; }
+.card{ background:var(--board-2); border:1px solid var(--board-line); border-radius:16px; padding:18px; margin-bottom:14px; }
 .round-line{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
-.round-no{ font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600; color:var(--gold-bright); }
-.round-note{ font-size:12px; color:var(--text-dim); }
+.round-no{ font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:600; color:var(--gold-bright); }
 .round-sub{ font-size:12.5px; color:var(--text-mid); font-family:'IBM Plex Mono',monospace; margin-top:4px; }
+.round-note{ font-size:12px; color:var(--text-dim); margin-top:4px; }
 
-label.field-label{ display:block; font-size:13px; font-weight:600; margin-bottom:8px; }
-textarea{ width:100%; min-height:150px; background:var(--board); border:1px solid var(--board-line); border-radius:12px; color:var(--text-hi); font-family:'IBM Plex Mono',monospace; font-size:14px; line-height:1.9; padding:12px 14px; resize:vertical; }
+.field-label{ display:block; font-size:13px; font-weight:600; margin-bottom:4px; }
+.rule-line{ font-size:12px; color:var(--text-dim); margin-bottom:14px; line-height:1.6; }
+
+.entry-row{ display:flex; align-items:center; gap:6px; margin-bottom:6px; flex-wrap:wrap; }
+.row-tag{ width:18px; flex-shrink:0; font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; }
+.cells{ display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+.cell{
+  width:44px; height:44px; text-align:center; border-radius:50%;
+  background:var(--board); border:1.5px solid var(--board-line); color:var(--text-hi);
+  font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600; padding:0;
+}
+.cell:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(184,134,46,.18); }
+.cell.bonus{ border:2px dashed var(--gold); background:transparent; color:var(--gold-bright); font-weight:700; }
+.cell.err{ border-color:var(--bad) !important; box-shadow:0 0 0 3px rgba(209,91,72,.18); }
+.plus{ color:var(--text-dim); font-size:16px; padding:0 3px; }
+.bonus-wrap{ display:flex; flex-direction:column; }
+.bonus-cells{ display:flex; gap:5px; }
+.bonus-tag{ font-size:10.5px; color:var(--gold-bright); text-align:center; margin-top:3px; }
+.row-msg{ font-size:11.5px; color:var(--bad); margin:0 0 8px 24px; min-height:14px; }
+.row-clear{ border:none; background:transparent; color:var(--text-dim); cursor:pointer; font-size:15px; padding:4px 6px; }
+
+button.add-row{ width:100%; border:1px dashed var(--board-line); background:transparent; color:var(--text-mid); border-radius:12px; padding:11px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; margin-top:4px; }
+button.add-row:disabled{ opacity:.4; cursor:not-allowed; }
+
+.bulk-toggle{ border:none; background:transparent; color:var(--gold-bright); font-size:12.5px; font-weight:600; cursor:pointer; padding:12px 0 0; font-family:inherit; }
+textarea{ width:100%; min-height:110px; background:var(--board); border:1px solid var(--board-line); border-radius:12px; color:var(--text-hi); font-family:'IBM Plex Mono',monospace; font-size:14px; line-height:1.9; padding:12px 14px; resize:vertical; margin-top:10px; }
 textarea:focus{ outline:none; border-color:var(--gold); }
-.hint{ font-size:12px; color:var(--text-dim); margin-top:8px; line-height:1.6; }
-.hint b{ color:var(--text-mid); }
+.bulk-hint{ font-size:12px; color:var(--text-dim); margin-top:8px; line-height:1.6; }
+button.bulk-apply{ width:100%; border:none; border-radius:10px; padding:11px; font-size:13.5px; font-weight:700; cursor:pointer; background:var(--board-line); color:var(--text-hi); font-family:inherit; margin-top:10px; }
 
-.status-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; flex-wrap:wrap; }
+.status-row{ margin-top:12px; }
 .count-badge{ font-size:12.5px; font-family:'IBM Plex Mono',monospace; color:var(--text-mid); }
 .count-badge.over{ color:var(--bad); font-weight:700; }
 
-.err-list{ margin-top:10px; }
-.err-item{ font-size:12.5px; color:var(--bad); margin-bottom:4px; }
-
-.preview{ margin-top:4px; }
-.pv-line{ display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--board-line); flex-wrap:wrap; }
+.pv-line{ display:flex; align-items:center; gap:6px; padding:7px 0; border-bottom:1px solid var(--board-line); flex-wrap:wrap; }
 .pv-line:last-child{ border-bottom:none; }
-.pv-idx{ font-size:11px; color:var(--text-dim); width:26px; font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
+.pv-idx{ font-size:11px; color:var(--text-dim); width:22px; font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
 .ball{ width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; font-family:'IBM Plex Mono',monospace; background:var(--board); border:1.5px solid var(--board-line); color:var(--text-hi); }
 .ball.bonus{ background:transparent; border:2px dashed var(--gold); color:var(--gold-bright); }
-.pv-sep{ color:var(--text-dim); font-size:14px; margin:0 2px; }
 
 .summary{ font-size:13.5px; line-height:2; }
 .summary .row{ display:flex; justify-content:space-between; gap:12px; }
 .summary .k{ color:var(--text-dim); }
-.summary .v{ font-weight:600; font-family:'IBM Plex Mono',monospace; }
+.summary .v{ font-weight:600; font-family:'IBM Plex Mono',monospace; text-align:right; }
 
 button.primary{ width:100%; border:none; border-radius:12px; padding:15px; font-size:15px; font-weight:700; cursor:pointer; background:var(--gold); color:#fff; font-family:inherit; }
 button.primary:disabled{ opacity:.45; cursor:not-allowed; }
@@ -81,6 +100,11 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
 .msg.bad{ background:rgba(209,91,72,.12); color:var(--bad); border:1px solid rgba(209,91,72,.3); }
 .msg.ok{ background:rgba(63,157,109,.12); color:var(--ok); border:1px solid rgba(63,157,109,.3); }
 .hidden{ display:none !important; }
+
+@media (max-width:430px){
+  .cell{ width:38px; height:38px; font-size:14px; }
+  .cells{ gap:4px; }
+}
 </style>
 </head>
 <body>
@@ -105,16 +129,13 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
 <main>
   <div class="page-title" id="pageTitle">🔔 당첨결과 알림받기</div>
   <div class="page-sub" id="pageSub"></div>
-
   <div class="msg" id="msgBox"></div>
-
   <div class="game-tabs" id="gameTabs"></div>
 
-  <!-- ── 입력 단계 ── -->
   <div id="stepInput">
     <div class="card">
       <div class="round-line">
-        <span id="roundLabelTxt" style="font-size:13px;color:var(--text-dim);">감시할 회차</span>
+        <span id="roundLabelTxt" style="font-size:13px;color:var(--text-dim);"></span>
         <span class="round-no" id="roundNoTxt">—</span>
       </div>
       <div class="round-sub" id="roundSubTxt"></div>
@@ -122,44 +143,37 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
     </div>
 
     <div class="card">
-      <label class="field-label" for="linesInput" id="inputLabel">번호 입력</label>
-      <textarea id="linesInput" spellcheck="false" inputmode="numeric"></textarea>
-      <div class="hint" id="inputHint"></div>
-      <div class="status-row">
-        <span class="count-badge" id="countBadge">0 / 50</span>
+      <span class="field-label" id="inputLabel"></span>
+      <div class="rule-line" id="ruleLine"></div>
+      <div id="rowsBox"></div>
+      <button class="add-row" id="addRowBtn"></button>
+
+      <button class="bulk-toggle" id="bulkToggle"></button>
+      <div id="bulkBox" class="hidden">
+        <textarea id="bulkInput" spellcheck="false"></textarea>
+        <div class="bulk-hint" id="bulkHint"></div>
+        <button class="bulk-apply" id="bulkApplyBtn"></button>
       </div>
-      <div class="err-list" id="errList"></div>
+
+      <div class="status-row"><span class="count-badge" id="countBadge"></span></div>
     </div>
 
-    <div class="card hidden" id="previewCard">
-      <label class="field-label" id="previewLabel">확인</label>
-      <div class="preview" id="previewBox"></div>
-    </div>
-
-    <button class="primary" id="toConfirmBtn" disabled>다음</button>
+    <button class="primary" id="toConfirmBtn" disabled></button>
     <div class="notice" id="inputNotice"></div>
   </div>
 
-  <!-- ── 확인 단계 ── -->
   <div id="stepConfirm" class="hidden">
-    <div class="card">
-      <div class="summary" id="confirmSummary"></div>
-    </div>
-    <div class="card">
-      <div class="preview" id="confirmPreview"></div>
-    </div>
-    <button class="primary" id="submitBtn">등록하기</button>
-    <button class="ghost" id="backBtn">뒤로</button>
+    <div class="card"><div class="summary" id="confirmSummary"></div></div>
+    <div class="card"><div id="confirmPreview"></div></div>
+    <button class="primary" id="submitBtn"></button>
+    <button class="ghost" id="backBtn"></button>
     <div class="notice" id="confirmNotice"></div>
   </div>
 
-  <!-- ── 완료 단계 ── -->
   <div id="stepDone" class="hidden">
-    <div class="card">
-      <div class="summary" id="doneSummary"></div>
-    </div>
+    <div class="card"><div class="summary" id="doneSummary"></div></div>
     <div class="notice" id="doneNotice"></div>
-    <button class="ghost" id="againBtn" style="margin-top:14px;">다른 종목 등록하기</button>
+    <button class="ghost" id="againBtn" style="margin-top:14px;"></button>
   </div>
 </main>
 
@@ -167,14 +181,24 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
 <script>
 // =====================================================
 // PaperLotto — 당첨결과 알림 등록 화면
-// 2026-08-30 (15차) 신설
+// 2026-08-30 (15차) · v2 — 종목별 입력칸 방식
 //
-// 🔴 회차는 손님이 고를 수 없습니다. 서버(watch-register)가 draw_results의
-//   마지막 회차+1로 정합니다. 이 화면은 같은 계산을 미리 보여줄 뿐이고,
-//   실제 등록된 회차는 응답의 roundNo를 다시 표시합니다.
-//   (화면을 열어둔 사이 사장님이 결과를 입력하시면 둘이 어긋날 수 있습니다)
+// v1은 붙여넣기 칸 하나뿐이라 규칙을 설명문으로 알려야 했습니다.
+// 설명문은 읽히지 않으므로, 화면 자체가 규칙이 되도록 칸으로 바꿨습니다.
+//   - 칸 개수 = 그 종목의 번호 개수 (더 넣을 수 없음)
+//   - 칸마다 최대값이 다름 (미국 파워볼: 본번호 1~69, 파워볼칸 1~26)
+//   - 숫자가 아닌 글자는 아예 안 들어가고, 범위 밖·중복은 즉시 붉게 표시
+//   - 보너스 칸은 점선 테두리로 떼어놓고 이름표를 붙임
+// 붙여넣기는 [여러 장 한꺼번에]로 접어두었습니다(50줄 넣는 분용).
 //
-// ⚠ GAME_RULES는 submit-entries.ts / watch-register.ts와 같아야 합니다.
+// 🔴 손님이 보너스를 직접 넣는 종목은 넷뿐입니다.
+//   us_powerball · us_megamillions · eu_euromillions · au_powerball
+//   오즈로또의 서플리멘터리 3개, 로또7의 보너스 2개 등은 운영사가 본번호 풀에서
+//   뽑는 것이라 복권에 적혀 있지 않고 손님이 고를 수도 없습니다 → 칸을 만들지 않습니다.
+//   (paperlotto_checker.js의 SEPARATE_BONUS_GAMES와 같은 기준)
+//
+// ⚠ GAMES는 submit-entries.ts의 GAME_SPECS,
+//   watch-register.ts의 GAME_RULES와 반드시 같아야 합니다.
 // =====================================================
 
 const SUPABASE_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co';
@@ -182,11 +206,9 @@ const SUPABASE_ANON = 'sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const MAX_LINES = 50;
+const START_ROWS = 5;   // 복권 한 장이 보통 5줄이라 그대로 옮길 수 있게
 
-// 🔴 submit-entries.ts의 GAME_SPECS와 반드시 같아야 합니다.
-// roundLabel:false — 회차를 쓰지 않는 종목입니다. 그 나라 손님들은 회차를 아예 모릅니다.
-//   (paperlotto_checker.js의 GAME_META와 같은 표시입니다)
-//   이 종목은 추첨일을 크게, 회차를 작게 보여줍니다.
+// roundLabel:false — 회차를 쓰지 않는 종목 (그 나라 손님은 회차를 모릅니다)
 const GAMES = {
   kr_lotto645:     { main:6, range:45, bonus:0, bonusRange:0,  roundLabel:true,  ko:'한국 로또 6/45',   en:'Korea Lotto 6/45',   ja:'韓国ロト6/45' },
   us_powerball:    { main:5, range:69, bonus:1, bonusRange:26, roundLabel:false, ko:'미국 파워볼',       en:'US Powerball',       ja:'アメリカ・パワーボール' },
@@ -203,36 +225,38 @@ const GAMES = {
 };
 const GAME_ORDER = Object.keys(GAMES);
 
+const BONUS_NAME = {
+  us_powerball:    { ko:'파워볼',   en:'Powerball',   ja:'パワーボール' },
+  us_megamillions: { ko:'메가볼',   en:'Mega Ball',   ja:'メガボール' },
+  eu_euromillions: { ko:'럭키스타', en:'Lucky Stars', ja:'ラッキースター' },
+  au_powerball:    { ko:'파워볼',   en:'Powerball',   ja:'パワーボール' },
+};
+
 const T = {
   ko: {
     title:'🔔 당첨결과 알림받기',
     sub:'사신 복권의 번호를 맡겨두시면, 추첨 결과가 확인되는 대로 가장 빠르게 알려드립니다.',
-    roundLabel:'감시할 추첨',
-    roundLabelDate:'다음 추첨',
+    roundLabel:'감시할 추첨', roundLabelDate:'다음 추첨',
     roundNote:'다음 추첨만 등록할 수 있습니다. 자동으로 정해집니다.',
-    roundValue:'{n}회차',
-    roundSub:'({r})',
-    dateSub:'추첨 예정 · {d}',
+    roundValue:'{n}회차', roundSub:'({r})', dateSub:'추첨 예정 · {d}',
     inputLabel:'번호 입력',
-    hint:'한 줄에 한 조합씩 넣어주세요. 숫자 사이는 <b>공백</b>으로 띄웁니다.<br>여러 줄을 한꺼번에 붙여넣으셔도 됩니다.',
-    hintBonus:'한 줄에 한 조합씩, 본번호 {main}개 다음에 {bname} {bonus}개를 이어서 넣어주세요.<br>예: {ex}',
-    placeholder:'3 12 25 34 41 45\n7 19 22 30 38 44',
-    count:'{n} / {max}줄',
-    next:'다음',
-    preview:'확인',
-    submit:'등록하기',
-    back:'뒤로',
-    again:'다른 종목 등록하기',
+    rule:'{main}개 · 1~{range}',
+    ruleBonus:'{main}개(1~{range}) + {bname} {bonus}개(1~{brange})',
+    addRow:'+ 줄 더 만들기',
+    bulkOpen:'여러 장 한꺼번에 넣기 ▾', bulkClose:'접기 ▴',
+    bulkHint:'한 줄에 한 조합씩 넣고 아래 단추를 누르세요. 숫자 사이는 공백입니다.',
+    bulkHintBonus:'한 줄에 한 조합씩, {main}개 다음에 {bname} {bonus}개를 이어서 넣으세요.',
+    bulkApply:'칸에 채우기',
+    bulkNone:'넣을 수 있는 줄이 없습니다. 숫자 개수를 확인해주세요.',
+    bulkDone:'{n}줄을 칸에 채웠습니다. 맞는지 확인해주세요.',
+    count:'{n}줄 입력됨 · 최대 {max}줄',
+    dup:'같은 숫자가 두 번 들어갔습니다',
+    next:'다음', submit:'등록하기', back:'뒤로', again:'다른 종목 등록하기',
     confirmGame:'종목', confirmRound:'추첨', confirmLines:'줄 수', confirmCost:'차감 포인트', confirmAfter:'등록 후 잔액',
     notice:'• 한 회차에 최대 50줄까지 100P입니다.<br>• 남은 줄은 다음 회차로 넘어가지 않습니다.<br>• 종목마다 따로 등록하셔야 합니다.',
     confirmNotice:'등록하시면 100P가 차감됩니다. 번호를 다시 한 번 확인해주세요.',
     doneNotice:'추첨 결과가 확인되는 대로 이메일로 알려드립니다.<br>당첨 여부와 상관없이 확인해드린 결과를 보내드립니다.',
     doneTitle:'등록이 끝났습니다',
-    errCount:'{i}번째 줄: 숫자가 {need}개여야 합니다 (지금 {got}개)',
-    errRange:'{i}번째 줄: 1~{max} 범위를 벗어난 숫자가 있습니다',
-    errDup:'{i}번째 줄: 같은 숫자가 두 번 들어갔습니다',
-    errBonusRange:'{i}번째 줄: {bname}는 1~{max} 범위여야 합니다',
-    errOver:'최대 {max}줄까지 등록할 수 있습니다. 지금 {n}줄입니다.',
     errLogin:'로그인이 필요합니다.',
     errDup2:'이 회차는 이미 등록하셨습니다. (등록번호 {id})',
     errPoints:'포인트가 부족합니다. {short}P가 더 필요합니다. (현재 {bal}P)',
@@ -242,32 +266,27 @@ const T = {
   en: {
     title:'🔔 Get notified of results',
     sub:'Leave us the numbers on your ticket and we will tell you as soon as the draw result is confirmed.',
-    roundLabel:'Draw to watch',
-    roundLabelDate:'Next draw',
+    roundLabel:'Draw to watch', roundLabelDate:'Next draw',
     roundNote:'Only the next draw can be registered. It is set automatically.',
-    roundValue:'Draw #{n}',
-    roundSub:'({r})',
-    dateSub:'Expected · {d}',
-    inputLabel:'Enter your numbers',
-    hint:'One line per set. Separate numbers with a <b>space</b>.<br>You can paste several lines at once.',
-    hintBonus:'One line per set — {main} main numbers followed by {bonus} {bname}.<br>Example: {ex}',
-    placeholder:'3 12 25 34 41 45\n7 19 22 30 38 44',
-    count:'{n} / {max} lines',
-    next:'Next',
-    preview:'Check',
-    submit:'Register',
-    back:'Back',
-    again:'Register another game',
+    roundValue:'Draw #{n}', roundSub:'({r})', dateSub:'Expected · {d}',
+    inputLabel:'Your numbers',
+    rule:'{main} numbers · 1–{range}',
+    ruleBonus:'{main} numbers (1–{range}) + {bonus} {bname} (1–{brange})',
+    addRow:'+ Add more lines',
+    bulkOpen:'Paste several tickets ▾', bulkClose:'Collapse ▴',
+    bulkHint:'One line per set, then press the button below. Separate numbers with a space.',
+    bulkHintBonus:'One line per set — {main} numbers followed by {bonus} {bname}.',
+    bulkApply:'Fill in the cells',
+    bulkNone:'No usable lines found. Please check how many numbers each line has.',
+    bulkDone:'Filled in {n} line(s). Please check them.',
+    count:'{n} line(s) · up to {max}',
+    dup:'the same number appears twice',
+    next:'Next', submit:'Register', back:'Back', again:'Register another game',
     confirmGame:'Game', confirmRound:'Draw', confirmLines:'Lines', confirmCost:'Points', confirmAfter:'Balance after',
     notice:'• Up to 50 lines per draw for 100P.<br>• Unused lines do not carry over.<br>• Each game is registered separately.',
     confirmNotice:'100P will be deducted. Please check your numbers once more.',
     doneNotice:'We will email you as soon as the result is confirmed.<br>You will hear from us whether you won or not.',
     doneTitle:'Registered',
-    errCount:'Line {i}: needs {need} numbers (got {got})',
-    errRange:'Line {i}: a number is outside 1–{max}',
-    errDup:'Line {i}: the same number appears twice',
-    errBonusRange:'Line {i}: {bname} must be within 1–{max}',
-    errOver:'You can register up to {max} lines. You have {n}.',
     errLogin:'Please sign in.',
     errDup2:'You have already registered for this draw. (entry {id})',
     errPoints:'Not enough points. {short}P more needed. (balance {bal}P)',
@@ -277,32 +296,27 @@ const T = {
   ja: {
     title:'🔔 当選結果のお知らせ',
     sub:'お買いになった宝くじの番号をお預けいただければ、抽選結果が確認でき次第すぐにお知らせします。',
-    roundLabel:'対象の抽選',
-    roundLabelDate:'次回の抽選',
+    roundLabel:'対象の抽選', roundLabelDate:'次回の抽選',
     roundNote:'次回の抽選のみ登録できます。自動で決まります。',
-    roundValue:'第{n}回',
-    roundSub:'({r})',
-    dateSub:'抽選予定 · {d}',
+    roundValue:'第{n}回', roundSub:'({r})', dateSub:'抽選予定 · {d}',
     inputLabel:'番号の入力',
-    hint:'1行に1組ずつ入力してください。数字の間は<b>スペース</b>で区切ります。<br>複数行をまとめて貼り付けることもできます。',
-    hintBonus:'1行に1組ずつ、本数字{main}個のあとに{bname}を{bonus}個続けて入力してください。<br>例: {ex}',
-    placeholder:'3 12 25 34 41 45\n7 19 22 30 38 44',
-    count:'{n} / {max}行',
-    next:'次へ',
-    preview:'確認',
-    submit:'登録する',
-    back:'戻る',
-    again:'ほかの種目を登録する',
+    rule:'{main}個 · 1〜{range}',
+    ruleBonus:'{main}個(1〜{range}) + {bname}{bonus}個(1〜{brange})',
+    addRow:'+ 行を増やす',
+    bulkOpen:'まとめて入力 ▾', bulkClose:'閉じる ▴',
+    bulkHint:'1行に1組ずつ入力し、下のボタンを押してください。数字の間はスペースです。',
+    bulkHintBonus:'1行に1組ずつ、{main}個のあとに{bname}を{bonus}個続けて入力してください。',
+    bulkApply:'入力する',
+    bulkNone:'使える行がありません。数字の個数をご確認ください。',
+    bulkDone:'{n}行を入力しました。ご確認ください。',
+    count:'{n}行 · 最大{max}行',
+    dup:'同じ数字が2回入っています',
+    next:'次へ', submit:'登録する', back:'戻る', again:'ほかの種目を登録する',
     confirmGame:'種目', confirmRound:'抽選', confirmLines:'行数', confirmCost:'消費ポイント', confirmAfter:'登録後の残高',
     notice:'• 1回につき最大50行まで100Pです。<br>• 残りの行は次の回に繰り越されません。<br>• 種目ごとに登録が必要です。',
     confirmNotice:'登録すると100Pが引かれます。番号をもう一度ご確認ください。',
     doneNotice:'抽選結果が確認でき次第、メールでお知らせします。<br>当選・落選にかかわらず結果をお送りします。',
     doneTitle:'登録が完了しました',
-    errCount:'{i}行目: 数字は{need}個必要です（現在{got}個）',
-    errRange:'{i}行目: 1〜{max}の範囲外の数字があります',
-    errDup:'{i}行目: 同じ数字が2回入っています',
-    errBonusRange:'{i}行目: {bname}は1〜{max}の範囲です',
-    errOver:'最大{max}行まで登録できます。現在{n}行です。',
     errLogin:'ログインが必要です。',
     errDup2:'この回はすでに登録済みです。（登録番号 {id}）',
     errPoints:'ポイントが不足しています。あと{short}P必要です。（残高{bal}P）',
@@ -311,41 +325,35 @@ const T = {
   },
 };
 
-const BONUS_NAME = {
-  us_powerball:    { ko:'파워볼',    en:'Powerball',   ja:'パワーボール' },
-  us_megamillions: { ko:'메가볼',    en:'Mega Ball',   ja:'メガボール' },
-  eu_euromillions: { ko:'럭키스타',  en:'Lucky Stars', ja:'ラッキースター' },
-  au_powerball:    { ko:'파워볼',    en:'Powerball',   ja:'パワーボール' },
-};
-
 let lang = localStorage.getItem('paperlotto_lang') || 'ko';
 if (!T[lang]) lang = 'ko';
 let gameId = new URLSearchParams(location.search).get('game') || 'kr_lotto645';
 if (!GAMES[gameId]) gameId = 'kr_lotto645';
 
-let nextRound = null;   // 화면이 미리 계산한 회차 (참고용 — 실제 값은 서버가 정합니다)
-let nextDate = null;    // 추첨 예정일 (YYYY-MM-DD)
-let parsed = [];        // [{ main:[], bonus:[] }]
+let nextRound = null;
+let nextDate = null;
 let balance = null;
+let rowCount = START_ROWS;
+let parsed = [];
 
 const $ = (id) => document.getElementById(id);
-function fill(tpl, vals){ return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (vals[k] !== undefined ? vals[k] : '')); }
-function t(){ return T[lang]; }
+const t = () => T[lang];
+function fill(tpl, v){ return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? v[k] : '')); }
 function gameName(id){ return GAMES[id][lang]; }
 function bonusName(id){ const b = BONUS_NAME[id]; return b ? b[lang] : ''; }
 
-function showMsg(text, kind){
+function showMsg(html, kind){
   const box = $('msgBox');
   box.className = 'msg ' + (kind || 'bad');
-  box.innerHTML = text;
+  box.innerHTML = html;
   box.style.display = 'block';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top:0, behavior:'smooth' });
 }
 function clearMsg(){ $('msgBox').style.display = 'none'; }
 
 // ── 잔액 ──
 async function loadBalance(){
-  const { data: { session } } = await sb.auth.getSession();
+  const { data:{ session } } = await sb.auth.getSession();
   if (!session) { $('balanceLabel').textContent = '—'; return; }
   const { data, error } = await sb.from('point_ledger').select('remaining').eq('user_id', session.user.id).gt('remaining', 0);
   if (error) { console.error('[watch] 잔액 조회 오류', error); return; }
@@ -353,29 +361,23 @@ async function loadBalance(){
   $('balanceLabel').textContent = balance.toLocaleString() + ' P';
 }
 
-// ── 다음 회차와 추첨 예정일 ──
+// ── 다음 회차 · 추첨 예정일 ──
 // 🔴 서버(watch-register)와 같은 계산입니다.
-//   회차 = draw_results의 마지막 회차 + 1
-//   추첨일 = 최근 추첨일들에서 요일을 읽어내 마지막 추첨일 다음의 그 요일
-//   (요일표를 코드에 박지 않습니다. 운영사가 요일을 바꾸면 저절로 따라갑니다)
+//   회차 = 마지막 회차 + 1
+//   추첨일 = 최근 추첨일들의 요일에서 추론 (요일표를 코드에 박지 않습니다)
 function ymdUTC(d){ return d.toISOString().slice(0,10); }
-
 function inferNextDate(rows){
   const dates = rows.map(r => r.draw_date).filter(Boolean)
     .map(s => new Date(String(s).slice(0,10) + 'T00:00:00Z'))
-    .filter(d => !isNaN(d.getTime()))
-    .sort((a,b) => b - a);
+    .filter(d => !isNaN(d.getTime())).sort((a,b) => b - a);
   if (!dates.length) return null;
-  const last = dates[0];
-  const days = new Set(dates.map(d => d.getUTCDay()));
-  for (let i = 1; i <= 14; i++) {
+  const last = dates[0], days = new Set(dates.map(d => d.getUTCDay()));
+  for (let i = 1; i <= 14; i++){
     const c = new Date(last.getTime() + i * 86400000);
     if (days.has(c.getUTCDay())) return ymdUTC(c);
   }
   return null;
 }
-
-// 손님의 언어로 날짜를 씁니다. 요일까지 보여야 "다음 토요일"이 바로 이해됩니다.
 function formatDate(ymd){
   if (!ymd) return null;
   const d = new Date(ymd + 'T00:00:00Z');
@@ -387,27 +389,22 @@ function formatDate(ymd){
 async function loadNextRound(){
   $('roundNoTxt').textContent = '—';
   $('roundSubTxt').textContent = '';
-  nextRound = null;
-  nextDate = null;
-
+  nextRound = null; nextDate = null;
   const { data, error } = await sb.from('draw_results')
     .select('round_no, draw_date').eq('game_id', gameId)
-    .order('round_no', { ascending: false }).limit(12);
+    .order('round_no', { ascending:false }).limit(12);
   if (error) { console.error('[watch] 회차 조회 오류', error); return; }
-
   const rows = data || [];
   nextRound = ((rows[0] && rows[0].round_no) || 0) + 1;
   nextDate = inferNextDate(rows);
   renderRound();
 }
 
-// 회차를 쓰지 않는 종목은 날짜를 크게, 회차를 작게. 나머지는 반대로.
 function renderRound(){
   const spec = GAMES[gameId];
   const dateTxt = formatDate(nextDate);
   const roundTxt = nextRound === null ? '—' : fill(t().roundValue, { n: nextRound.toLocaleString() });
-
-  if (!spec.roundLabel) {
+  if (!spec.roundLabel){
     $('roundNoTxt').textContent = dateTxt || roundTxt;
     $('roundSubTxt').textContent = dateTxt ? fill(t().roundSub, { r: roundTxt }) : '';
   } else {
@@ -415,8 +412,6 @@ function renderRound(){
     $('roundSubTxt').textContent = dateTxt ? fill(t().dateSub, { d: dateTxt }) : '';
   }
 }
-
-// 확인·완료 화면에서 "회차" 칸에 넣을 값
 function roundDisplay(round, date){
   const spec = GAMES[gameId];
   const dateTxt = formatDate(date);
@@ -425,147 +420,280 @@ function roundDisplay(round, date){
   return dateTxt ? roundTxt + ' · ' + dateTxt : roundTxt;
 }
 
-// ── 번호 해석 ──
-// checker의 parseNums와 같은 방식: 공백·쉼표·전각쉼표·읽점을 모두 받아들입니다.
-// 손님이 쉼표를 쓰셔도 막지 않고 조용히 받습니다.
-function parseNums(str){
-  return String(str || '').split(/[\s,，、]+/).filter(Boolean).map(Number);
+// ─────────────────────────────────────────────────────
+// 입력 칸
+// ─────────────────────────────────────────────────────
+function rowTag(i){ return i < 26 ? String.fromCharCode(65 + i) : String(i + 1); }
+
+function buildRows(){
+  const spec = GAMES[gameId];
+  let html = '';
+  for (let r = 0; r < rowCount; r++){
+    let cells = '';
+    for (let c = 0; c < spec.main; c++){
+      cells += '<input class="cell" type="text" inputmode="numeric" maxlength="2" data-row="' + r + '" data-kind="main">';
+    }
+    if (spec.bonus > 0){
+      cells += '<span class="plus">+</span><div class="bonus-wrap"><div class="bonus-cells">';
+      for (let b = 0; b < spec.bonus; b++){
+        cells += '<input class="cell bonus" type="text" inputmode="numeric" maxlength="2" data-row="' + r + '" data-kind="bonus">';
+      }
+      cells += '</div><div class="bonus-tag">' + bonusName(gameId) + '</div></div>';
+    }
+    html += '<div class="entry-row" data-row="' + r + '">'
+          + '<span class="row-tag">' + rowTag(r) + '</span>'
+          + '<div class="cells">' + cells + '</div>'
+          + '<button class="row-clear" data-clear="' + r + '" title="clear">&#10005;</button>'
+          + '</div><div class="row-msg" data-msg="' + r + '"></div>';
+  }
+  $('rowsBox').innerHTML = html;
+  validateAll();
 }
 
-// 보너스가 있는 종목은 "본번호 다음에 보너스"가 실물 복권 표기 순서와 같습니다.
-// 예: 파워볼 → 3 12 25 34 41 15  (마지막 1개가 파워볼)
-function parseAll(){
+function cellsOf(row, kind){
+  return Array.from(document.querySelectorAll('#rowsBox .cell[data-row="' + row + '"][data-kind="' + kind + '"]'));
+}
+function msgOf(row){ return document.querySelector('#rowsBox [data-msg="' + row + '"]'); }
+
+function readRow(r){
   const spec = GAMES[gameId];
-  const need = spec.main + spec.bonus;
-  const raw = $('linesInput').value.split(/\n+/).map(s => s.trim()).filter(Boolean);
-  const out = [];
-  const errs = [];
+  const main = cellsOf(r, 'main').map(el => el.value.trim());
+  const bonus = spec.bonus > 0 ? cellsOf(r, 'bonus').map(el => el.value.trim()) : [];
+  if (main.every(v => v === '') && bonus.every(v => v === '')) return null;
+  return { main, bonus };
+}
 
-  raw.forEach((line, i) => {
-    const nums = parseNums(line);
-    const idx = i + 1;
+// 🔴 검사 결과는 칸 단위로 보여줍니다. 어느 칸이 문제인지 손님이 바로 봅니다.
+//   빈 줄은 오류가 아닙니다 — 그냥 등록에서 빠집니다.
+function validateRow(r){
+  const spec = GAMES[gameId];
+  const mainEls = cellsOf(r, 'main');
+  const bonusEls = spec.bonus > 0 ? cellsOf(r, 'bonus') : [];
+  mainEls.concat(bonusEls).forEach(el => el.classList.remove('err'));
+  const msgEl = msgOf(r);
+  if (msgEl) msgEl.textContent = '';
 
-    if (nums.some(n => !Number.isInteger(n))) {
-      errs.push(fill(t().errCount, { i: idx, need, got: nums.length }));
-      return;
-    }
-    if (nums.length !== need) {
-      errs.push(fill(t().errCount, { i: idx, need, got: nums.length }));
-      return;
-    }
+  if (!readRow(r)) return null;
 
-    const main = nums.slice(0, spec.main);
-    const bonus = nums.slice(spec.main);
+  let ok = true;
+  const mainNums = [];
+  const seen = new Set();
 
-    if (main.some(n => n < 1 || n > spec.range)) {
-      errs.push(fill(t().errRange, { i: idx, max: spec.range }));
+  mainEls.forEach((el) => {
+    const v = el.value.trim();
+    if (v === ''){ ok = false; return; }
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 1 || n > spec.range){ el.classList.add('err'); ok = false; return; }
+    if (seen.has(n)){
+      el.classList.add('err'); ok = false;
+      if (msgEl) msgEl.textContent = t().dup;
       return;
     }
-    if (new Set(main).size !== main.length) {
-      errs.push(fill(t().errDup, { i: idx }));
-      return;
-    }
-    if (spec.bonus > 0 && bonus.some(n => n < 1 || n > spec.bonusRange)) {
-      errs.push(fill(t().errBonusRange, { i: idx, bname: bonusName(gameId), max: spec.bonusRange }));
-      return;
-    }
-    out.push({ main, bonus });
+    seen.add(n);
+    mainNums.push(n);
   });
 
-  return { out, errs, rawCount: raw.length };
+  const bonusNums = [];
+  const bseen = new Set();
+  bonusEls.forEach((el) => {
+    const v = el.value.trim();
+    if (v === ''){ ok = false; return; }
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 1 || n > spec.bonusRange){ el.classList.add('err'); ok = false; return; }
+    // 럭키스타처럼 보너스가 2개인 종목은 그 안에서도 중복이 안 됩니다
+    if (spec.bonus > 1 && bseen.has(n)){
+      el.classList.add('err'); ok = false;
+      if (msgEl) msgEl.textContent = t().dup;
+      return;
+    }
+    bseen.add(n);
+    bonusNums.push(n);
+  });
+
+  if (!ok || mainNums.length !== spec.main || bonusNums.length !== spec.bonus) return null;
+  return { main: mainNums, bonus: bonusNums };
 }
 
-function ballHtml(n, isBonus){
-  return '<span class="ball' + (isBonus ? ' bonus' : '') + '">' + n + '</span>';
+function validateAll(){
+  parsed = [];
+  for (let r = 0; r < rowCount; r++){
+    const v = validateRow(r);
+    if (v) parsed.push(v);
+  }
+  $('countBadge').textContent = fill(t().count, { n: parsed.length, max: MAX_LINES });
+  $('countBadge').classList.toggle('over', parsed.length > MAX_LINES);
+  $('addRowBtn').disabled = rowCount >= MAX_LINES;
+  $('toConfirmBtn').disabled = !(parsed.length > 0 && parsed.length <= MAX_LINES);
 }
+
+function writeRow(r, main, bonus){
+  cellsOf(r, 'main').forEach((el, i) => { el.value = (main && main[i] !== undefined && main[i] !== '') ? String(main[i]) : ''; });
+  if (GAMES[gameId].bonus > 0){
+    cellsOf(r, 'bonus').forEach((el, i) => { el.value = (bonus && bonus[i] !== undefined && bonus[i] !== '') ? String(bonus[i]) : ''; });
+  }
+}
+
+// ── 칸 사이 이동 ──
+// ⚠ 1~45처럼 한 자리와 두 자리가 섞이면 "자동으로만" 넘기는 것은 불가능합니다.
+//   (4를 치면 넘겨야 하나? 45가 있으니 기다려야 합니다)
+//   두 자리를 채우면 자동으로, 한 자리는 공백·Enter로 넘어가게 했습니다.
+function allCells(){ return Array.from(document.querySelectorAll('#rowsBox .cell')); }
+function focusNext(el){ const a = allCells(), i = a.indexOf(el); if (i >= 0 && i + 1 < a.length) a[i + 1].focus(); }
+function focusPrev(el){ const a = allCells(), i = a.indexOf(el); if (i > 0) a[i - 1].focus(); }
+
+$('rowsBox').addEventListener('input', (e) => {
+  const el = e.target.closest('.cell');
+  if (!el) return;
+  // 숫자가 아닌 글자는 아예 남기지 않습니다
+  const cleaned = el.value.replace(/[^0-9]/g, '').slice(0, 2);
+  if (cleaned !== el.value) el.value = cleaned;
+  clearMsg();
+  validateAll();
+  if (el.value.length === 2 && !el.classList.contains('err')) focusNext(el);
+});
+
+$('rowsBox').addEventListener('keydown', (e) => {
+  const el = e.target.closest('.cell');
+  if (!el) return;
+  if (e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); focusNext(el); return; }
+  if (e.key === 'Backspace' && el.value === ''){ e.preventDefault(); focusPrev(el); return; }
+  if (e.key === 'ArrowRight') focusNext(el);
+  if (e.key === 'ArrowLeft') focusPrev(el);
+});
+
+// 한 칸에 여러 숫자를 붙여넣으면 뒤 칸으로 나눠 담습니다
+$('rowsBox').addEventListener('paste', (e) => {
+  const el = e.target.closest('.cell');
+  if (!el) return;
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  const nums = String(text).split(/[\s,，、]+/).filter(Boolean);
+  if (nums.length <= 1) return;
+  e.preventDefault();
+  const a = allCells();
+  let i = a.indexOf(el);
+  nums.forEach((n) => {
+    if (i < 0 || i >= a.length) return;
+    a[i].value = String(n).replace(/[^0-9]/g, '').slice(0, 2);
+    i++;
+  });
+  clearMsg();
+  validateAll();
+});
+
+$('rowsBox').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-clear]');
+  if (!btn) return;
+  const r = btn.dataset.clear;
+  document.querySelectorAll('#rowsBox .cell[data-row="' + r + '"]').forEach(el => { el.value = ''; el.classList.remove('err'); });
+  clearMsg();
+  validateAll();
+});
+
+$('addRowBtn').addEventListener('click', () => {
+  if (rowCount >= MAX_LINES) return;
+  const keep = [];
+  for (let r = 0; r < rowCount; r++) keep.push(readRow(r));
+  rowCount = Math.min(MAX_LINES, rowCount + 5);
+  buildRows();
+  keep.forEach((v, r) => { if (v) writeRow(r, v.main, v.bonus); });
+  validateAll();
+});
+
+// ── 여러 장 한꺼번에 (접힘) ──
+$('bulkToggle').addEventListener('click', () => {
+  const hidden = $('bulkBox').classList.toggle('hidden');
+  $('bulkToggle').textContent = hidden ? t().bulkOpen : t().bulkClose;
+});
+
+$('bulkApplyBtn').addEventListener('click', () => {
+  const spec = GAMES[gameId];
+  const need = spec.main + spec.bonus;
+  const lines = $('bulkInput').value.split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const got = [];
+  lines.forEach((line) => {
+    const nums = line.split(/[\s,，、]+/).filter(Boolean).map(Number).filter(n => Number.isInteger(n));
+    if (nums.length === need) got.push({ main: nums.slice(0, spec.main), bonus: nums.slice(spec.main) });
+  });
+  if (!got.length){ showMsg(t().bulkNone); return; }
+
+  const use = got.slice(0, MAX_LINES);
+  rowCount = Math.max(START_ROWS, Math.min(MAX_LINES, use.length));
+  buildRows();
+  use.forEach((v, r) => writeRow(r, v.main, v.bonus));
+  validateAll();
+  $('bulkBox').classList.add('hidden');
+  $('bulkToggle').textContent = t().bulkOpen;
+  showMsg(fill(t().bulkDone, { n: use.length }), 'ok');
+});
+
+// ─────────────────────────────────────────────────────
+// 확인 · 등록
+// ─────────────────────────────────────────────────────
+function ballHtml(n, isBonus){ return '<span class="ball' + (isBonus ? ' bonus' : '') + '">' + n + '</span>'; }
 
 function renderPreview(list, mountId){
   const spec = GAMES[gameId];
   $(mountId).innerHTML = list.map((c, i) => {
     const main = c.main.map(n => ballHtml(n, false)).join('');
-    // ⚠ 보너스는 반드시 떼어놓아 보여줍니다. 본번호와 나란히 그리면 헷갈립니다.
-    const bonus = spec.bonus > 0
-      ? '<span class="pv-sep">+</span>' + c.bonus.map(n => ballHtml(n, true)).join('')
-      : '';
-    return '<div class="pv-line"><span class="pv-idx">' + (i + 1) + '</span>' + main + bonus + '</div>';
+    const bonus = spec.bonus > 0 ? '<span class="plus">+</span>' + c.bonus.map(n => ballHtml(n, true)).join('') : '';
+    return '<div class="pv-line"><span class="pv-idx">' + rowTag(i) + '</span>' + main + bonus + '</div>';
   }).join('');
 }
 
-function onInput(){
-  clearMsg();
-  const { out, errs, rawCount } = parseAll();
-  parsed = out;
-
-  const badge = $('countBadge');
-  badge.textContent = fill(t().count, { n: rawCount, max: MAX_LINES });
-  badge.classList.toggle('over', rawCount > MAX_LINES);
-
-  const list = errs.slice(0, 6);
-  if (rawCount > MAX_LINES) list.unshift(fill(t().errOver, { max: MAX_LINES, n: rawCount }));
-  $('errList').innerHTML = list.map(e => '<div class="err-item">' + e + '</div>').join('');
-
-  if (out.length > 0) {
-    $('previewCard').classList.remove('hidden');
-    renderPreview(out, 'previewBox');
-  } else {
-    $('previewCard').classList.add('hidden');
-  }
-
-  $('toConfirmBtn').disabled = !(out.length > 0 && errs.length === 0 && rawCount <= MAX_LINES);
+function summaryHtml(rows){
+  return rows.map(function(kv){
+    return '<div class="row"><span class="k">' + t()[kv[0]] + '</span><span class="v">' + kv[1] + '</span></div>';
+  }).join('');
 }
 
-// ── 화면 전환 ──
 function goStep(name){
   ['stepInput','stepConfirm','stepDone'].forEach(s => $(s).classList.toggle('hidden', s !== name));
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top:0, behavior:'smooth' });
 }
 
 function showConfirm(){
   clearMsg();
   const cost = 100;
   const after = (balance === null) ? null : balance - cost;
-  $('confirmSummary').innerHTML = [
+  $('confirmSummary').innerHTML = summaryHtml([
     ['confirmGame', gameName(gameId)],
     ['confirmRound', roundDisplay(nextRound, nextDate)],
     ['confirmLines', parsed.length],
     ['confirmCost', cost.toLocaleString() + ' P'],
     ['confirmAfter', after === null ? '—' : after.toLocaleString() + ' P'],
-  ].map(([k, v]) => '<div class="row"><span class="k">' + t()[k] + '</span><span class="v">' + v + '</span></div>').join('');
+  ]);
   renderPreview(parsed, 'confirmPreview');
   goStep('stepConfirm');
 }
 
-// ── 등록 ──
 async function submit(){
   clearMsg();
   const btn = $('submitBtn');
   btn.disabled = true;
   const original = btn.textContent;
   btn.textContent = t().loading;
-
   try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { showMsg(t().errLogin); btn.disabled = false; btn.textContent = original; return; }
+    const { data:{ session } } = await sb.auth.getSession();
+    if (!session){ showMsg(t().errLogin); btn.disabled = false; btn.textContent = original; return; }
 
     const spec = GAMES[gameId];
     const body = {
-      gameId,
+      gameId: gameId,
       lines: parsed.map(c => c.main),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Seoul',
     };
-    // 보너스를 직접 입력받는 4종만 함께 보냅니다.
     if (spec.bonus > 0) body.bonusLines = parsed.map(c => c.bonus);
 
     const res = await fetch(SUPABASE_URL + '/functions/v1/watch-register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + session.access_token },
       body: JSON.stringify(body),
     });
     const data = await res.json();
 
-    if (!res.ok) {
+    if (!res.ok){
       if (data.error === 'ALREADY_REGISTERED') showMsg(fill(t().errDup2, { id: data.entryId }));
-      else if (data.error === 'INSUFFICIENT_POINTS') showMsg(fill(t().errPoints, { short: (data.shortfall ?? 0).toLocaleString(), bal: (data.balance ?? 0).toLocaleString() }));
+      else if (data.error === 'INSUFFICIENT_POINTS') showMsg(fill(t().errPoints, { short:(data.shortfall || 0).toLocaleString(), bal:(data.balance || 0).toLocaleString() }));
       else if (data.error === 'AUTH_REQUIRED') showMsg(t().errLogin);
       else showMsg(fill(t().errEtc, { msg: data.error || res.status }));
       goStep('stepConfirm');
@@ -573,18 +701,18 @@ async function submit(){
       return;
     }
 
-    // 🔴 실제로 등록된 회차는 서버가 정합니다. 응답 값을 그대로 보여줍니다.
-    $('doneSummary').innerHTML = [
+    // 🔴 실제 등록된 회차·추첨일은 서버가 정합니다. 응답 값을 그대로 보여줍니다.
+    $('doneSummary').innerHTML = summaryHtml([
       ['confirmGame', gameName(gameId)],
       ['confirmRound', roundDisplay(data.roundNo, data.drawDate)],
       ['confirmLines', data.lineCount],
       ['confirmCost', Number(data.pointsCharged).toLocaleString() + ' P'],
-      ['confirmAfter', data.balanceAfter === null || data.balanceAfter === undefined ? '—' : Number(data.balanceAfter).toLocaleString() + ' P'],
-    ].map(([k, v]) => '<div class="row"><span class="k">' + t()[k] + '</span><span class="v">' + v + '</span></div>').join('');
-
-    balance = (typeof data.balanceAfter === 'number') ? data.balanceAfter : balance;
-    if (balance !== null) $('balanceLabel').textContent = balance.toLocaleString() + ' P';
-
+      ['confirmAfter', (data.balanceAfter === null || data.balanceAfter === undefined) ? '—' : Number(data.balanceAfter).toLocaleString() + ' P'],
+    ]);
+    if (typeof data.balanceAfter === 'number'){
+      balance = data.balanceAfter;
+      $('balanceLabel').textContent = balance.toLocaleString() + ' P';
+    }
     showMsg(t().doneTitle, 'ok');
     goStep('stepDone');
   } catch (e) {
@@ -594,7 +722,9 @@ async function submit(){
   }
 }
 
-// ── 언어 적용 ──
+// ─────────────────────────────────────────────────────
+// 언어 · 탭
+// ─────────────────────────────────────────────────────
 function applyLang(){
   const spec = GAMES[gameId];
   document.documentElement.lang = lang;
@@ -603,7 +733,9 @@ function applyLang(){
   $('roundLabelTxt').textContent = spec.roundLabel ? t().roundLabel : t().roundLabelDate;
   $('roundNote').textContent = t().roundNote;
   $('inputLabel').textContent = t().inputLabel;
-  $('previewLabel').textContent = t().preview;
+  $('addRowBtn').textContent = t().addRow;
+  $('bulkToggle').textContent = $('bulkBox').classList.contains('hidden') ? t().bulkOpen : t().bulkClose;
+  $('bulkApplyBtn').textContent = t().bulkApply;
   $('toConfirmBtn').textContent = t().next;
   $('submitBtn').textContent = t().submit;
   $('backBtn').textContent = t().back;
@@ -611,19 +743,18 @@ function applyLang(){
   $('inputNotice').innerHTML = t().notice;
   $('confirmNotice').textContent = t().confirmNotice;
   $('doneNotice').innerHTML = t().doneNotice;
-  $('linesInput').placeholder = t().placeholder;
 
-  if (spec.bonus > 0) {
-    const ex = Array.from({ length: spec.main }, (_, i) => (i + 3)).join(' ') + ' ' + Array.from({ length: spec.bonus }, (_, i) => (i + 5)).join(' ');
-    $('inputHint').innerHTML = fill(t().hintBonus, { main: spec.main, bonus: spec.bonus, bname: bonusName(gameId), ex });
-  } else {
-    $('inputHint').innerHTML = t().hint;
-  }
+  // 규칙은 한 줄로 짧게. 칸이 이미 규칙을 말해주므로 설명문이 길 필요가 없습니다.
+  $('ruleLine').textContent = spec.bonus > 0
+    ? fill(t().ruleBonus, { main:spec.main, range:spec.range, bname:bonusName(gameId), bonus:spec.bonus, brange:spec.bonusRange })
+    : fill(t().rule, { main:spec.main, range:spec.range });
+  $('bulkHint').textContent = spec.bonus > 0
+    ? fill(t().bulkHintBonus, { main:spec.main, bname:bonusName(gameId), bonus:spec.bonus })
+    : t().bulkHint;
 
   document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   renderTabs();
   renderRound();
-  onInput();
 }
 
 function renderTabs(){
@@ -635,41 +766,56 @@ function renderTabs(){
 function selectGame(id){
   gameId = id;
   history.replaceState(null, '', '?game=' + id);
-  $('linesInput').value = '';
-  parsed = [];
+  rowCount = START_ROWS;
+  $('bulkInput').value = '';
+  $('bulkBox').classList.add('hidden');
   clearMsg();
   goStep('stepInput');
   applyLang();
+  buildRows();
   loadNextRound();
 }
 
-// ── 이벤트 ──
 $('gameTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-game]');
-  if (btn) selectGame(btn.dataset.game);
+  if (btn && btn.dataset.game !== gameId) selectGame(btn.dataset.game);
 });
+
 $('langToggle').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-lang]');
-  if (!btn) return;
+  if (!btn || btn.dataset.lang === lang) return;
+  // 언어를 바꿔도 넣으신 번호는 지킵니다
+  const keep = [];
+  for (let r = 0; r < rowCount; r++) keep.push(readRow(r));
   lang = btn.dataset.lang;
   localStorage.setItem('paperlotto_lang', lang);
   applyLang();
+  buildRows();
+  keep.forEach((v, r) => { if (v) writeRow(r, v.main, v.bonus); });
+  validateAll();
 });
+
 $('themeToggleBtn').addEventListener('click', function(){
   document.body.classList.toggle('light-mode');
   const light = document.body.classList.contains('light-mode');
   localStorage.setItem('paperlotto_theme', light ? 'light' : 'dark');
   this.textContent = light ? '☀️' : '🌙';
 });
-$('linesInput').addEventListener('input', onInput);
+
 $('toConfirmBtn').addEventListener('click', showConfirm);
 $('backBtn').addEventListener('click', () => goStep('stepInput'));
 $('submitBtn').addEventListener('click', submit);
-$('againBtn').addEventListener('click', () => { $('linesInput').value = ''; parsed = []; clearMsg(); goStep('stepInput'); onInput(); });
+$('againBtn').addEventListener('click', () => {
+  rowCount = START_ROWS;
+  clearMsg();
+  buildRows();
+  goStep('stepInput');
+});
 
 // ── 시작 ──
 $('themeToggleBtn').textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
 applyLang();
+buildRows();
 loadNextRound();
 loadBalance();
 </script>
