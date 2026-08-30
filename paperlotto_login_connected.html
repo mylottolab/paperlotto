@@ -261,9 +261,32 @@ function applyLang(lang) {
   });
 }
 
+// 🔴 2026-08-31: 손님의 브라우저 언어로 시작합니다.
+//   예전에는 select의 기본값(en)으로 무조건 열려서, 한국어 화면에서 오신 분도
+//   가입할 때 영어로 바뀌고 그 값이 preferred_lang에 그대로 저장됐습니다.
+//   영어권을 주 대상으로 하지만, 한국·일본 손님까지 영어로 만들 이유는 없습니다.
+//   ⚠ 다른 화면과 같은 열쇠(paperlotto_lang)를 씁니다. 여기서 고르신 언어가
+//     로그인 후 화면들에도 그대로 이어집니다.
+function detectSiteLang() {
+  try {
+    const saved = localStorage.getItem("paperlotto_lang");
+    if (saved && i18n[saved]) return saved;
+  } catch (e) {}
+  const nav = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
+  const l = String(nav).toLowerCase();
+  if (l.indexOf("ko") === 0) return "ko";
+  if (l.indexOf("ja") === 0) return "ja";
+  return "en";
+}
+
 const langSelectEl = document.getElementById("langSelect");
-langSelectEl.addEventListener("change", () => applyLang(langSelectEl.value));
-applyLang(langSelectEl.value); // 초기 로드 시 select의 기본값(en)으로 적용
+langSelectEl.value = detectSiteLang();
+langSelectEl.addEventListener("change", () => {
+  applyLang(langSelectEl.value);
+  // 고르신 언어를 다른 화면도 쓰도록 남겨둡니다
+  try { localStorage.setItem("paperlotto_lang", langSelectEl.value); } catch (e) {}
+});
+applyLang(langSelectEl.value);
 
 // =====================================================
 // Supabase 연결
@@ -358,6 +381,9 @@ signupSubmitBtn.addEventListener('click', async () => {
     showMsg(signupMsg, t.errSignupFail + error.message, 'error');
     return;
   }
+
+  // 가입할 때 고르신 언어를 다른 화면도 쓰도록 남겨둡니다
+  try { localStorage.setItem('paperlotto_lang', preferredLang); } catch (e) {}
 
   showMsg(signupMsg, t.msgSignupSuccess, 'success');
   setTimeout(() => { window.location.href = REDIRECT_AFTER_AUTH; }, 1600);
