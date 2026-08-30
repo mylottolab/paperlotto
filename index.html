@@ -10,6 +10,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>PaperLotto — Global Lottery Simulator</title>
+<script src="paperlotto_lang.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -906,7 +907,21 @@ const i18n = {
   },
 };
 
-let currentLang = localStorage.getItem('paperlotto_lang') || 'en';
+// 🔴 2026-08-31: 화면마다 기본 언어가 달랐던 것을 공용 파일로 통일했습니다.
+//   주소 ?lang= → 손님이 고른 값 → 브라우저 언어 순으로 정합니다.
+let currentLang = (function () {
+  // 공용 파일이 있으면 그것을 씁니다 (주소 ?lang= 까지 함께 처리)
+  if (typeof window.getPaperLottoLang === 'function') return window.getPaperLottoLang();
+  // 대비책 — 공용 파일을 못 불러왔을 때
+  try {
+    var q = new URLSearchParams(location.search).get('lang');
+    if (q) { var c = q.toLowerCase(); return c.indexOf('ko') === 0 ? 'ko' : (c.indexOf('ja') === 0 ? 'ja' : 'en'); }
+  } catch (e) {}
+  try { var v = localStorage.getItem('paperlotto_lang'); if (v) return v; } catch (e) {}
+  var nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  var l = String(nav).toLowerCase();
+  return l.indexOf('ko') === 0 ? 'ko' : (l.indexOf('ja') === 0 ? 'ja' : 'en');
+})();
 
 function applyLang(lang){
   currentLang = i18n[lang] ? lang : 'en';
@@ -1199,7 +1214,11 @@ setInterval(() => { loadJackpots().then(renderCards); }, JACKPOT_REFRESH_MS);
 <script>
 function openChecker(gameId){
   var meta = PLChecker.GAME_META[gameId];
-  var lang3 = (typeof currentLang !== 'undefined' && (currentLang === 'en' || currentLang === 'ja')) ? currentLang : 'ko';
+  // ⚠ 2026-08-31: 예전에는 currentLang이 'ko'면 여기서 걸러져 한국어로 떨어졌습니다.
+  //   이제 ko도 그대로 쓰고, 값이 없을 때만 공용 판별을 씁니다.
+  var lang3 = (currentLang === 'en' || currentLang === 'ja' || currentLang === 'ko')
+    ? currentLang
+    : (typeof window.getPaperLottoLang === 'function' ? window.getPaperLottoLang() : 'en');
   var gname = meta ? (lang3 === 'en' ? meta.nameEn : (lang3 === 'ja' ? meta.nameJa : meta.nameKr)) : '';
   var suffix = lang3 === 'en' ? 'Check Numbers' : (lang3 === 'ja' ? '当選確認' : '당첨확인');
   document.getElementById('plckModalTitle').textContent = gname + ' ' + suffix;

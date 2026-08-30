@@ -140,6 +140,7 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
   </div>
 </main>
 
+<script src="paperlotto_lang.js"></script>
 <script>
 // =====================================================
 // PaperLotto — 당첨결과 확인 화면
@@ -252,6 +253,16 @@ const T = {
 //   (Aliascall의 getAliascallLang()과 같은 방식입니다)
 //   ⚠ 한 번이라도 화면에서 언어를 바꾸시면 그 값이 우선합니다.
 function detectLang(){
+  // 공용 파일이 있으면 그것을 씁니다 (주소 ?lang= 까지 함께 처리됩니다)
+  if (typeof window.getPaperLottoLang === 'function') {
+    const v = window.getPaperLottoLang();
+    if (T[v]) return v;
+  }
+  // 대비책 — 공용 파일을 못 불러왔을 때
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q) { const c = q.toLowerCase(); return c.indexOf('ko') === 0 ? 'ko' : (c.indexOf('ja') === 0 ? 'ja' : 'en'); }
+  } catch (e) {}
   const saved = localStorage.getItem('paperlotto_lang');
   if (saved && T[saved]) return saved;
   const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';

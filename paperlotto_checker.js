@@ -159,7 +159,11 @@
 
   function mount(containerId, gameId, opts) {
     opts = opts || {};
-    var lang = (opts.lang === 'en' || opts.lang === 'ja') ? opts.lang : 'ko';
+    // 🔴 2026-08-31: 부르는 쪽이 언어를 안 주면 공용 판별을 씁니다.
+    //   예전에는 무조건 'ko'였습니다. 영어권 손님이 한국어 화면을 보게 되던 자리입니다.
+    var lang = (opts.lang === 'en' || opts.lang === 'ja' || opts.lang === 'ko')
+      ? opts.lang
+      : (typeof window.getPaperLottoLang === 'function' ? window.getPaperLottoLang() : 'en');
     var t = T[lang];
     var meta = GAME_META[gameId];
     var el = document.getElementById(containerId);

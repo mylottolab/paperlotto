@@ -68,6 +68,7 @@ main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
   <div id="checkerMount"></div>
 </main>
 
+<script src="paperlotto_lang.js"></script>
 <script src="paperlotto_checker.js"></script>
 <script>
 var PAGE_TEXT = {
@@ -78,8 +79,18 @@ var PAGE_TEXT = {
 var GAME_ORDER = ['kr_lotto645','us_powerball','us_megamillions','eu_euromillions','jp_miniloto','jp_loto7','jp_loto6','ca_lottomax','ca_lotto649','au_powerball','au_ozlotto','au_tattslotto'];
 var currentGame = new URLSearchParams(location.search).get('game') || 'kr_lotto645';
 if (GAME_ORDER.indexOf(currentGame) === -1) currentGame = 'kr_lotto645';
-var currentLang = localStorage.getItem('paperlotto_lang') || 'ko';
-if (!PAGE_TEXT[currentLang]) currentLang = 'ko';
+// 🔴 2026-08-31: 화면마다 기본 언어가 달랐던 것을 공용 파일로 통일했습니다.
+//   주소의 ?lang= → 손님이 고른 값 → 브라우저 언어 순으로 정합니다.
+//   ⚠ paperlotto_lang.js를 못 불러왔을 때를 대비해 같은 계산을 여기에도 둡니다.
+var currentLang = (function () {
+  if (typeof window.getPaperLottoLang === 'function') return window.getPaperLottoLang();
+  try { var q = new URLSearchParams(location.search).get('lang'); if (q) return q.toLowerCase().indexOf('ko') === 0 ? 'ko' : (q.toLowerCase().indexOf('ja') === 0 ? 'ja' : 'en'); } catch (e) {}
+  try { var v = localStorage.getItem('paperlotto_lang'); if (v && PAGE_TEXT[v]) return v; } catch (e) {}
+  var nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  var l = String(nav).toLowerCase();
+  return l.indexOf('ko') === 0 ? 'ko' : (l.indexOf('ja') === 0 ? 'ja' : 'en');
+})();
+if (!PAGE_TEXT[currentLang]) currentLang = 'en';
 
 function gameName(meta){ return currentLang === 'en' ? meta.nameEn : (currentLang === 'ja' ? meta.nameJa : meta.nameKr); }
 

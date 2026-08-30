@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>로그인 / 가입 — PaperLotto</title>
+<script src="paperlotto_lang.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -268,6 +269,16 @@ function applyLang(lang) {
 //   ⚠ 다른 화면과 같은 열쇠(paperlotto_lang)를 씁니다. 여기서 고르신 언어가
 //     로그인 후 화면들에도 그대로 이어집니다.
 function detectSiteLang() {
+  // 공용 파일이 있으면 그것을 씁니다 (주소 ?lang= 까지 함께 처리됩니다)
+  if (typeof window.getPaperLottoLang === "function") {
+    const v = window.getPaperLottoLang();
+    if (i18n[v]) return v;
+  }
+  // 대비책 — 공용 파일을 못 불러왔을 때
+  try {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q) { const c = q.toLowerCase(); return c.indexOf("ko") === 0 ? "ko" : (c.indexOf("ja") === 0 ? "ja" : "en"); }
+  } catch (e) {}
   try {
     const saved = localStorage.getItem("paperlotto_lang");
     if (saved && i18n[saved]) return saved;
