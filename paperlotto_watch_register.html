@@ -44,6 +44,7 @@ main{ max-width:720px; margin:0 auto; padding:28px 20px 80px; }
 .round-line{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
 .round-no{ font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600; color:var(--gold-bright); }
 .round-note{ font-size:12px; color:var(--text-dim); }
+.round-sub{ font-size:12.5px; color:var(--text-mid); font-family:'IBM Plex Mono',monospace; margin-top:4px; }
 
 label.field-label{ display:block; font-size:13px; font-weight:600; margin-bottom:8px; }
 textarea{ width:100%; min-height:150px; background:var(--board); border:1px solid var(--board-line); border-radius:12px; color:var(--text-hi); font-family:'IBM Plex Mono',monospace; font-size:14px; line-height:1.9; padding:12px 14px; resize:vertical; }
@@ -116,6 +117,7 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
         <span id="roundLabelTxt" style="font-size:13px;color:var(--text-dim);">감시할 회차</span>
         <span class="round-no" id="roundNoTxt">—</span>
       </div>
+      <div class="round-sub" id="roundSubTxt"></div>
       <div class="round-note" id="roundNote"></div>
     </div>
 
@@ -182,19 +184,22 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 const MAX_LINES = 50;
 
 // 🔴 submit-entries.ts의 GAME_SPECS와 반드시 같아야 합니다.
+// roundLabel:false — 회차를 쓰지 않는 종목입니다. 그 나라 손님들은 회차를 아예 모릅니다.
+//   (paperlotto_checker.js의 GAME_META와 같은 표시입니다)
+//   이 종목은 추첨일을 크게, 회차를 작게 보여줍니다.
 const GAMES = {
-  kr_lotto645:     { main:6, range:45, bonus:0, bonusRange:0,  ko:'한국 로또 6/45',   en:'Korea Lotto 6/45',   ja:'韓国ロト6/45' },
-  us_powerball:    { main:5, range:69, bonus:1, bonusRange:26, ko:'미국 파워볼',       en:'US Powerball',       ja:'アメリカ・パワーボール' },
-  us_megamillions: { main:5, range:70, bonus:1, bonusRange:24, ko:'메가밀리언스',      en:'Mega Millions',      ja:'メガミリオンズ' },
-  eu_euromillions: { main:5, range:50, bonus:2, bonusRange:12, ko:'유로밀리언스',      en:'EuroMillions',       ja:'ユーロミリオンズ' },
-  jp_miniloto:     { main:5, range:31, bonus:0, bonusRange:0,  ko:'일본 미니로또',     en:'Mini Loto',          ja:'ミニロト' },
-  jp_loto7:        { main:7, range:37, bonus:0, bonusRange:0,  ko:'일본 로또7',        en:'Loto 7',             ja:'ロト7' },
-  jp_loto6:        { main:6, range:43, bonus:0, bonusRange:0,  ko:'일본 로또6',        en:'Loto 6',             ja:'ロト6' },
-  ca_lottomax:     { main:7, range:50, bonus:0, bonusRange:0,  ko:'캐나다 로또맥스',   en:'Lotto Max',          ja:'ロトマックス' },
-  ca_lotto649:     { main:6, range:49, bonus:0, bonusRange:0,  ko:'캐나다 로또 6/49',  en:'Lotto 6/49',         ja:'カナダ・ロト6/49' },
-  au_powerball:    { main:7, range:35, bonus:1, bonusRange:20, ko:'호주 파워볼',       en:'Australia Powerball',ja:'豪パワーボール' },
-  au_ozlotto:      { main:7, range:47, bonus:0, bonusRange:0,  ko:'오즈로또',          en:'Oz Lotto',           ja:'オズロト' },
-  au_tattslotto:   { main:6, range:45, bonus:0, bonusRange:0,  ko:'새터데이 로또',     en:'Saturday Lotto',     ja:'サタデーロト' },
+  kr_lotto645:     { main:6, range:45, bonus:0, bonusRange:0,  roundLabel:true,  ko:'한국 로또 6/45',   en:'Korea Lotto 6/45',   ja:'韓国ロト6/45' },
+  us_powerball:    { main:5, range:69, bonus:1, bonusRange:26, roundLabel:false, ko:'미국 파워볼',       en:'US Powerball',       ja:'アメリカ・パワーボール' },
+  us_megamillions: { main:5, range:70, bonus:1, bonusRange:24, roundLabel:false, ko:'메가밀리언스',      en:'Mega Millions',      ja:'メガミリオンズ' },
+  eu_euromillions: { main:5, range:50, bonus:2, bonusRange:12, roundLabel:false, ko:'유로밀리언스',      en:'EuroMillions',       ja:'ユーロミリオンズ' },
+  jp_miniloto:     { main:5, range:31, bonus:0, bonusRange:0,  roundLabel:true,  ko:'일본 미니로또',     en:'Mini Loto',          ja:'ミニロト' },
+  jp_loto7:        { main:7, range:37, bonus:0, bonusRange:0,  roundLabel:true,  ko:'일본 로또7',        en:'Loto 7',             ja:'ロト7' },
+  jp_loto6:        { main:6, range:43, bonus:0, bonusRange:0,  roundLabel:true,  ko:'일본 로또6',        en:'Loto 6',             ja:'ロト6' },
+  ca_lottomax:     { main:7, range:50, bonus:0, bonusRange:0,  roundLabel:true,  ko:'캐나다 로또맥스',   en:'Lotto Max',          ja:'ロトマックス' },
+  ca_lotto649:     { main:6, range:49, bonus:0, bonusRange:0,  roundLabel:true,  ko:'캐나다 로또 6/49',  en:'Lotto 6/49',         ja:'カナダ・ロト6/49' },
+  au_powerball:    { main:7, range:35, bonus:1, bonusRange:20, roundLabel:false, ko:'호주 파워볼',       en:'Australia Powerball',ja:'豪パワーボール' },
+  au_ozlotto:      { main:7, range:47, bonus:0, bonusRange:0,  roundLabel:true,  ko:'오즈로또',          en:'Oz Lotto',           ja:'オズロト' },
+  au_tattslotto:   { main:6, range:45, bonus:0, bonusRange:0,  roundLabel:true,  ko:'새터데이 로또',     en:'Saturday Lotto',     ja:'サタデーロト' },
 };
 const GAME_ORDER = Object.keys(GAMES);
 
@@ -202,8 +207,12 @@ const T = {
   ko: {
     title:'🔔 당첨결과 알림받기',
     sub:'사신 복권의 번호를 맡겨두시면, 추첨 결과가 확인되는 대로 가장 빠르게 알려드립니다.',
-    roundLabel:'감시할 회차',
-    roundNote:'회차는 자동으로 정해집니다. 다음 추첨 회차만 등록할 수 있습니다.',
+    roundLabel:'감시할 추첨',
+    roundLabelDate:'다음 추첨',
+    roundNote:'다음 추첨만 등록할 수 있습니다. 자동으로 정해집니다.',
+    roundValue:'{n}회차',
+    roundSub:'({r})',
+    dateSub:'추첨 예정 · {d}',
     inputLabel:'번호 입력',
     hint:'한 줄에 한 조합씩 넣어주세요. 숫자 사이는 <b>공백</b>으로 띄웁니다.<br>여러 줄을 한꺼번에 붙여넣으셔도 됩니다.',
     hintBonus:'한 줄에 한 조합씩, 본번호 {main}개 다음에 {bname} {bonus}개를 이어서 넣어주세요.<br>예: {ex}',
@@ -214,7 +223,7 @@ const T = {
     submit:'등록하기',
     back:'뒤로',
     again:'다른 종목 등록하기',
-    confirmGame:'종목', confirmRound:'회차', confirmLines:'줄 수', confirmCost:'차감 포인트', confirmAfter:'등록 후 잔액',
+    confirmGame:'종목', confirmRound:'추첨', confirmLines:'줄 수', confirmCost:'차감 포인트', confirmAfter:'등록 후 잔액',
     notice:'• 한 회차에 최대 50줄까지 100P입니다.<br>• 남은 줄은 다음 회차로 넘어가지 않습니다.<br>• 종목마다 따로 등록하셔야 합니다.',
     confirmNotice:'등록하시면 100P가 차감됩니다. 번호를 다시 한 번 확인해주세요.',
     doneNotice:'추첨 결과가 확인되는 대로 이메일로 알려드립니다.<br>당첨 여부와 상관없이 확인해드린 결과를 보내드립니다.',
@@ -234,7 +243,11 @@ const T = {
     title:'🔔 Get notified of results',
     sub:'Leave us the numbers on your ticket and we will tell you as soon as the draw result is confirmed.',
     roundLabel:'Draw to watch',
-    roundNote:'The draw is set automatically. Only the next draw can be registered.',
+    roundLabelDate:'Next draw',
+    roundNote:'Only the next draw can be registered. It is set automatically.',
+    roundValue:'Draw #{n}',
+    roundSub:'({r})',
+    dateSub:'Expected · {d}',
     inputLabel:'Enter your numbers',
     hint:'One line per set. Separate numbers with a <b>space</b>.<br>You can paste several lines at once.',
     hintBonus:'One line per set — {main} main numbers followed by {bonus} {bname}.<br>Example: {ex}',
@@ -264,8 +277,12 @@ const T = {
   ja: {
     title:'🔔 当選結果のお知らせ',
     sub:'お買いになった宝くじの番号をお預けいただければ、抽選結果が確認でき次第すぐにお知らせします。',
-    roundLabel:'対象の回',
-    roundNote:'回は自動で決まります。次回の抽選のみ登録できます。',
+    roundLabel:'対象の抽選',
+    roundLabelDate:'次回の抽選',
+    roundNote:'次回の抽選のみ登録できます。自動で決まります。',
+    roundValue:'第{n}回',
+    roundSub:'({r})',
+    dateSub:'抽選予定 · {d}',
     inputLabel:'番号の入力',
     hint:'1行に1組ずつ入力してください。数字の間は<b>スペース</b>で区切ります。<br>複数行をまとめて貼り付けることもできます。',
     hintBonus:'1行に1組ずつ、本数字{main}個のあとに{bname}を{bonus}個続けて入力してください。<br>例: {ex}',
@@ -276,7 +293,7 @@ const T = {
     submit:'登録する',
     back:'戻る',
     again:'ほかの種目を登録する',
-    confirmGame:'種目', confirmRound:'回', confirmLines:'行数', confirmCost:'消費ポイント', confirmAfter:'登録後の残高',
+    confirmGame:'種目', confirmRound:'抽選', confirmLines:'行数', confirmCost:'消費ポイント', confirmAfter:'登録後の残高',
     notice:'• 1回につき最大50行まで100Pです。<br>• 残りの行は次の回に繰り越されません。<br>• 種目ごとに登録が必要です。',
     confirmNotice:'登録すると100Pが引かれます。番号をもう一度ご確認ください。',
     doneNotice:'抽選結果が確認でき次第、メールでお知らせします。<br>当選・落選にかかわらず結果をお送りします。',
@@ -306,7 +323,8 @@ if (!T[lang]) lang = 'ko';
 let gameId = new URLSearchParams(location.search).get('game') || 'kr_lotto645';
 if (!GAMES[gameId]) gameId = 'kr_lotto645';
 
-let nextRound = null;   // 화면이 미리 계산한 회차 (참고용)
+let nextRound = null;   // 화면이 미리 계산한 회차 (참고용 — 실제 값은 서버가 정합니다)
+let nextDate = null;    // 추첨 예정일 (YYYY-MM-DD)
 let parsed = [];        // [{ main:[], bonus:[] }]
 let balance = null;
 
@@ -335,17 +353,76 @@ async function loadBalance(){
   $('balanceLabel').textContent = balance.toLocaleString() + ' P';
 }
 
-// ── 다음 회차 미리보기 ──
-// 🔴 서버(watch-register)와 같은 계산입니다: draw_results의 마지막 회차 + 1
+// ── 다음 회차와 추첨 예정일 ──
+// 🔴 서버(watch-register)와 같은 계산입니다.
+//   회차 = draw_results의 마지막 회차 + 1
+//   추첨일 = 최근 추첨일들에서 요일을 읽어내 마지막 추첨일 다음의 그 요일
+//   (요일표를 코드에 박지 않습니다. 운영사가 요일을 바꾸면 저절로 따라갑니다)
+function ymdUTC(d){ return d.toISOString().slice(0,10); }
+
+function inferNextDate(rows){
+  const dates = rows.map(r => r.draw_date).filter(Boolean)
+    .map(s => new Date(String(s).slice(0,10) + 'T00:00:00Z'))
+    .filter(d => !isNaN(d.getTime()))
+    .sort((a,b) => b - a);
+  if (!dates.length) return null;
+  const last = dates[0];
+  const days = new Set(dates.map(d => d.getUTCDay()));
+  for (let i = 1; i <= 14; i++) {
+    const c = new Date(last.getTime() + i * 86400000);
+    if (days.has(c.getUTCDay())) return ymdUTC(c);
+  }
+  return null;
+}
+
+// 손님의 언어로 날짜를 씁니다. 요일까지 보여야 "다음 토요일"이 바로 이해됩니다.
+function formatDate(ymd){
+  if (!ymd) return null;
+  const d = new Date(ymd + 'T00:00:00Z');
+  if (isNaN(d.getTime())) return null;
+  const locale = lang === 'ko' ? 'ko-KR' : (lang === 'ja' ? 'ja-JP' : 'en-US');
+  return d.toLocaleDateString(locale, { timeZone:'UTC', year:'numeric', month:'long', day:'numeric', weekday:'short' });
+}
+
 async function loadNextRound(){
   $('roundNoTxt').textContent = '—';
+  $('roundSubTxt').textContent = '';
   nextRound = null;
+  nextDate = null;
+
   const { data, error } = await sb.from('draw_results')
-    .select('round_no').eq('game_id', gameId)
-    .order('round_no', { ascending: false }).limit(1).maybeSingle();
+    .select('round_no, draw_date').eq('game_id', gameId)
+    .order('round_no', { ascending: false }).limit(12);
   if (error) { console.error('[watch] 회차 조회 오류', error); return; }
-  nextRound = (data?.round_no ?? 0) + 1;
-  $('roundNoTxt').textContent = nextRound.toLocaleString();
+
+  const rows = data || [];
+  nextRound = ((rows[0] && rows[0].round_no) || 0) + 1;
+  nextDate = inferNextDate(rows);
+  renderRound();
+}
+
+// 회차를 쓰지 않는 종목은 날짜를 크게, 회차를 작게. 나머지는 반대로.
+function renderRound(){
+  const spec = GAMES[gameId];
+  const dateTxt = formatDate(nextDate);
+  const roundTxt = nextRound === null ? '—' : fill(t().roundValue, { n: nextRound.toLocaleString() });
+
+  if (!spec.roundLabel) {
+    $('roundNoTxt').textContent = dateTxt || roundTxt;
+    $('roundSubTxt').textContent = dateTxt ? fill(t().roundSub, { r: roundTxt }) : '';
+  } else {
+    $('roundNoTxt').textContent = roundTxt;
+    $('roundSubTxt').textContent = dateTxt ? fill(t().dateSub, { d: dateTxt }) : '';
+  }
+}
+
+// 확인·완료 화면에서 "회차" 칸에 넣을 값
+function roundDisplay(round, date){
+  const spec = GAMES[gameId];
+  const dateTxt = formatDate(date);
+  const roundTxt = (round === null || round === undefined) ? '—' : fill(t().roundValue, { n: Number(round).toLocaleString() });
+  if (!spec.roundLabel) return dateTxt || roundTxt;
+  return dateTxt ? roundTxt + ' · ' + dateTxt : roundTxt;
 }
 
 // ── 번호 해석 ──
@@ -449,7 +526,7 @@ function showConfirm(){
   const after = (balance === null) ? null : balance - cost;
   $('confirmSummary').innerHTML = [
     ['confirmGame', gameName(gameId)],
-    ['confirmRound', nextRound === null ? '—' : nextRound.toLocaleString()],
+    ['confirmRound', roundDisplay(nextRound, nextDate)],
     ['confirmLines', parsed.length],
     ['confirmCost', cost.toLocaleString() + ' P'],
     ['confirmAfter', after === null ? '—' : after.toLocaleString() + ' P'],
@@ -499,7 +576,7 @@ async function submit(){
     // 🔴 실제로 등록된 회차는 서버가 정합니다. 응답 값을 그대로 보여줍니다.
     $('doneSummary').innerHTML = [
       ['confirmGame', gameName(gameId)],
-      ['confirmRound', Number(data.roundNo).toLocaleString()],
+      ['confirmRound', roundDisplay(data.roundNo, data.drawDate)],
       ['confirmLines', data.lineCount],
       ['confirmCost', Number(data.pointsCharged).toLocaleString() + ' P'],
       ['confirmAfter', data.balanceAfter === null || data.balanceAfter === undefined ? '—' : Number(data.balanceAfter).toLocaleString() + ' P'],
@@ -523,7 +600,7 @@ function applyLang(){
   document.documentElement.lang = lang;
   $('pageTitle').textContent = t().title;
   $('pageSub').textContent = t().sub;
-  $('roundLabelTxt').textContent = t().roundLabel;
+  $('roundLabelTxt').textContent = spec.roundLabel ? t().roundLabel : t().roundLabelDate;
   $('roundNote').textContent = t().roundNote;
   $('inputLabel').textContent = t().inputLabel;
   $('previewLabel').textContent = t().preview;
@@ -545,6 +622,7 @@ function applyLang(){
 
   document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   renderTabs();
+  renderRound();
   onInput();
 }
 
