@@ -391,8 +391,23 @@ const T = {
   },
 };
 
-let lang = localStorage.getItem('paperlotto_lang') || 'ko';
-if (!T[lang]) lang = 'ko';
+// 🔴 2026-08-31: 손님의 브라우저 언어로 시작합니다.
+//   영어권을 주 대상으로 하지만 기본을 영어로 고정하면 한국 손님이 영어를 봅니다.
+//   반대로 한국어로 고정하면 영어권 손님이 한국어를 봅니다. 둘 다 틀리는 대신
+//   브라우저가 알려주는 언어를 따르면 양쪽 다 맞습니다.
+//   (Aliascall의 getAliascallLang()과 같은 방식입니다)
+//   ⚠ 한 번이라도 화면에서 언어를 바꾸시면 그 값이 우선합니다.
+function detectLang(){
+  const saved = localStorage.getItem('paperlotto_lang');
+  if (saved && T[saved]) return saved;
+  const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  const l = String(nav).toLowerCase();
+  if (l.indexOf('ko') === 0) return 'ko';
+  if (l.indexOf('ja') === 0) return 'ja';
+  return 'en';
+}
+
+let lang = detectLang();
 let gameId = new URLSearchParams(location.search).get('game') || 'kr_lotto645';
 if (!GAMES[gameId]) gameId = 'kr_lotto645';
 
@@ -791,6 +806,9 @@ async function submit(){
       lines: parsed.map(c => c.main),
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Seoul',
       requestId: pendingRequestId,
+      // 🔴 지금 보고 계신 언어를 함께 보냅니다. 알림도 이 언어로 갑니다.
+      //   가입 때의 preferred_lang보다 정확합니다.
+      lang: lang,
     };
     if (spec.bonus > 0) body.bonusLines = parsed.map(c => c.bonus);
 
