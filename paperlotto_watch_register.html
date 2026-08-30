@@ -177,7 +177,6 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
   </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // =====================================================
 // PaperLotto — 당첨결과 알림 등록 화면
@@ -203,7 +202,36 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
 
 const SUPABASE_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+// 🔴 2026-08-30: supabase-js 클라이언트를 쓰지 않습니다.
+//   이 화면에서 클라이언트를 하나 더 만들면 다른 스크립트와 인증이 엉켜
+//   (콘솔의 'Multiple GoTrueClient instances' 경고) 다음 두 증상이 났습니다.
+//     · getSession()이 응답을 안 줘서 등록이 "등록하는 중…"에서 멈춤
+//     · 조회에 로그인 정보가 안 붙어 잔액이 0 P로 나옴 (RLS가 빈 결과를 돌려줌)
+//   paperlotto_checker.js처럼 REST를 직접 부르는 방식으로 통일했습니다.
+
+// 로그인 토큰을 브라우저 저장소에서 직접 읽습니다.
+function getAccessToken(){
+  try {
+    const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    if (!key) return null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj.access_token || (obj.currentSession && obj.currentSession.access_token) || null;
+  } catch (e) {
+    console.error('[watch] 토큰을 읽지 못했습니다', e);
+    return null;
+  }
+}
+
+// REST 호출. token이 있으면 로그인한 사람으로, 없으면 익명으로 나갑니다.
+async function rest(path, token){
+  const headers = { apikey: SUPABASE_ANON };
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, { headers });
+  if (!res.ok) throw new Error('REST ' + res.status + ' ' + (await res.text()).slice(0, 200));
+  return res.json();
+}
 
 const MAX_LINES = 50;
 const START_ROWS = 5;   // 복권 한 장이 보통 5줄이라 그대로 옮길 수 있게
@@ -359,18 +387,29 @@ function clearMsg(){ $('msgBox').style.display = 'none'; }
 
 // ── 잔액 ──
 async function loadBalance(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if (!session) { $('balanceLabel').textContent = '—'; return; }
-  const { data, error } = await sb.from('point_ledger').select('remaining').eq('user_id', session.user.id).gt('remaining', 0);
-  if (error) {
-    // 여기서 실패하면 헤더 잔액이 '—'로 남고, 확인 화면의 '등록 후 잔액' 줄도 빠집니다.
+  const token = getAccessToken();
+  if (!token){ balance = null; $('balanceLabel').textContent = '—'; return; }
+  try {
+    // 🔴 point_ledger를 화면에서 직접 읽지 않습니다.
+    //   RLS에 막혀 200 + 빈 배열이 오고, 그러면 잔액이 조용히 0 P가 됩니다.
+    //   (그 상태로 계산하면 확인 화면에 -100 P 가 나옵니다)
+    //   돈에 해당하는 표라 잠금을 열지 않고, 서버가 값만 내주게 했습니다.
+    const res = await fetch(SUPABASE_URL + '/functions/v1/watch-balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    });
+    if (!res.ok) throw new Error('watch-balance ' + res.status);
+    const data = await res.json();
+    if (typeof data.balance !== 'number') throw new Error('balance 없음');
+    balance = data.balance;
+    $('balanceLabel').textContent = balance.toLocaleString() + ' P';
+  } catch (e) {
+    // 실패하면 '—'로 둡니다. 0 P로 두면 "잔액 없음"으로 오해됩니다.
     // 정확한 잔액은 등록 후 서버 응답(balanceAfter)으로 채워집니다.
-    console.error('[watch] 잔액 조회 오류 (RLS 정책 확인 필요)', error);
+    console.error('[watch] 잔액 조회 실패', e);
     balance = null;
-    return;
+    $('balanceLabel').textContent = '—';
   }
-  balance = (data || []).reduce((s, r) => s + r.remaining, 0);
-  $('balanceLabel').textContent = balance.toLocaleString() + ' P';
 }
 
 // ── 다음 회차 · 추첨 예정일 ──
@@ -402,11 +441,15 @@ async function loadNextRound(){
   $('roundNoTxt').textContent = '—';
   $('roundSubTxt').textContent = '';
   nextRound = null; nextDate = null;
-  const { data, error } = await sb.from('draw_results')
-    .select('round_no, draw_date').eq('game_id', gameId)
-    .order('round_no', { ascending:false }).limit(12);
-  if (error) { console.error('[watch] 회차 조회 오류', error); return; }
-  const rows = data || [];
+  let rows = [];
+  try {
+    // 추첨 결과는 누구나 볼 수 있는 자료라 토큰 없이 부릅니다.
+    rows = await rest('draw_results?select=round_no,draw_date&game_id=eq.' + encodeURIComponent(gameId)
+                      + '&order=round_no.desc&limit=12');
+  } catch (e) {
+    console.error('[watch] 회차 조회 실패', e);
+    return;
+  }
   nextRound = ((rows[0] && rows[0].round_no) || 0) + 1;
   nextDate = inferNextDate(rows);
   renderRound();
@@ -690,8 +733,8 @@ async function submit(){
   const original = btn.textContent;
   btn.textContent = t().loading;
   try {
-    const { data:{ session } } = await sb.auth.getSession();
-    if (!session){ showMsg(t().errLogin); btn.disabled = false; btn.textContent = original; return; }
+    const token = getAccessToken();
+    if (!token){ showMsg(t().errLogin); btn.disabled = false; btn.textContent = original; return; }
 
     const spec = GAMES[gameId];
     // 🔴 이중 차감 방지용 표.
@@ -711,7 +754,7 @@ async function submit(){
 
     const res = await fetch(SUPABASE_URL + '/functions/v1/watch-register', {
       method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + session.access_token },
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
       body: JSON.stringify(body),
     });
     const data = await res.json();
