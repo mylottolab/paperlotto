@@ -68,7 +68,7 @@ input[type=email].err{ border-color:var(--bad); }
 
 button.primary{ width:100%; border:none; border-radius:12px; padding:14px; font-size:14.5px; font-weight:700; cursor:pointer; background:var(--gold); color:#fff; font-family:inherit; }
 button.primary:disabled{ opacity:.45; cursor:not-allowed; }
-button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; background:transparent; color:var(--text-mid); font-family:inherit; margin-top:9px; }
+button.ghost, a.ghost{ display:block; text-align:center; text-decoration:none; width:100%; border:1px solid var(--board-line); border-radius:12px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; background:transparent; color:var(--text-mid); font-family:inherit; margin-top:9px; }
 button.ghost:disabled{ opacity:.4; cursor:not-allowed; }
 
 .msg{ font-size:13px; padding:12px 14px; border-radius:10px; margin-bottom:14px; line-height:1.7; display:none; }
@@ -165,7 +165,7 @@ button.ghost:disabled{ opacity:.4; cursor:not-allowed; }
     </div>
 
     <button class="primary" id="saveAllBtn"></button>
-    <a class="ghost" id="backBtn" href="paperlotto_watch_register.html" style="display:block;text-align:center;text-decoration:none;"></a>
+    <a class="ghost" id="backBtn" href="paperlotto_watch_register.html"></a>
   </div>
 </main>
 
