@@ -173,7 +173,11 @@ button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px
   <div id="stepDone" class="hidden">
     <div class="card"><div class="summary" id="doneSummary"></div></div>
     <div class="notice" id="doneNotice"></div>
-    <button class="ghost" id="againBtn" style="margin-top:14px;"></button>
+    <!-- 🔴 알림이 실제로 도착하는지 지금 확인하게 합니다.
+         추첨 당일에 못 받고 항의하는 것보다 훨씬 낫습니다. -->
+    <a class="ghost" id="settingsBtn" href="paperlotto_watch_settings.html"
+       style="display:block;text-align:center;text-decoration:none;margin-top:14px;"></a>
+    <button class="ghost" id="againBtn"></button>
   </div>
 </main>
 
@@ -882,6 +886,7 @@ function applyLang(){
   $('submitBtn').textContent = t().submit;
   $('backBtn').textContent = t().back;
   $('againBtn').textContent = t().again;
+  $('settingsBtn').textContent = t().settings;
   $('inputNotice').innerHTML = t().notice;
   $('confirmNotice').textContent = t().confirmNotice;
   $('doneNotice').innerHTML = t().doneNotice;

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>알림 설정 — PaperLotto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#3f9d6d; --bad:#d15b48;
+}
+body.light-mode{
+  --board:#f2efe4; --board-2:#e8e2d0; --board-line:#d9d1ba;
+  --gold:#a8781f; --gold-bright:#c9932e;
+  --text-hi:#1c2130; --text-mid:#4c5372; --text-dim:#7a7f9a;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+
+.header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px; }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
+.brand-mark{ width:32px; height:32px; border-radius:9px; background:var(--gold); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-family:'Fraunces',serif; }
+.brand-name{ font-size:15px; font-weight:700; }
+.header-right{ display:flex; align-items:center; gap:8px; }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:12px; font-weight:600; padding:5px 10px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:#fff; }
+.theme-toggle{ border:1px solid var(--board-line); background:transparent; color:var(--text-mid); width:30px; height:30px; border-radius:50%; cursor:pointer; font-size:13px; }
+
+main{ max-width:640px; margin:0 auto; padding:24px 16px 80px; }
+.page-title{ font-size:23px; font-weight:700; margin-bottom:6px; font-family:'Fraunces',serif; }
+.page-sub{ font-size:13px; color:var(--text-dim); margin-bottom:20px; line-height:1.6; }
+
+.card{ background:var(--board-2); border:1px solid var(--board-line); border-radius:16px; padding:18px; margin-bottom:14px; }
+.sec-title{ font-size:13.5px; font-weight:700; margin-bottom:4px; }
+.sec-desc{ font-size:12px; color:var(--text-dim); line-height:1.7; margin-bottom:14px; }
+
+.now-box{ background:var(--board); border:1px solid var(--board-line); border-radius:12px; padding:13px 14px; margin-bottom:14px; }
+.now-label{ font-size:11.5px; color:var(--text-dim); margin-bottom:4px; }
+.now-value{ font-size:14px; font-family:'IBM Plex Mono',monospace; word-break:break-all; }
+.badge{ display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+.badge.ok{ background:rgba(63,157,109,.15); color:var(--ok); border:1px solid rgba(63,157,109,.4); }
+.badge.wait{ background:rgba(224,170,78,.15); color:var(--gold-bright); border:1px solid rgba(224,170,78,.4); }
+
+input[type=email]{ width:100%; background:var(--board); border:1.5px solid var(--board-line); border-radius:12px; color:var(--text-hi);
+  font-family:'IBM Plex Mono',monospace; font-size:14px; padding:12px 14px; }
+input[type=email]:focus{ outline:none; border-color:var(--gold); }
+input[type=email].err{ border-color:var(--bad); }
+
+.row{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:13px 0; border-bottom:1px solid var(--board-line); }
+.row:last-child{ border-bottom:none; }
+.row-text{ flex:1; }
+.row-name{ font-size:13.5px; font-weight:600; margin-bottom:3px; }
+.row-desc{ font-size:11.5px; color:var(--text-dim); line-height:1.6; }
+
+/* 켜고 끄는 단추 */
+.sw{ position:relative; width:46px; height:26px; flex-shrink:0; border:none; border-radius:999px; cursor:pointer;
+     background:var(--board-line); transition:background .15s; padding:0; }
+.sw.on{ background:var(--gold); }
+.sw::after{ content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+            background:#fff; transition:transform .15s; }
+.sw.on::after{ transform:translateX(20px); }
+.sw:disabled{ opacity:.4; cursor:not-allowed; }
+
+button.primary{ width:100%; border:none; border-radius:12px; padding:14px; font-size:14.5px; font-weight:700; cursor:pointer; background:var(--gold); color:#fff; font-family:inherit; }
+button.primary:disabled{ opacity:.45; cursor:not-allowed; }
+button.ghost{ width:100%; border:1px solid var(--board-line); border-radius:12px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; background:transparent; color:var(--text-mid); font-family:inherit; margin-top:9px; }
+button.ghost:disabled{ opacity:.4; cursor:not-allowed; }
+
+.msg{ font-size:13px; padding:12px 14px; border-radius:10px; margin-bottom:14px; line-height:1.7; display:none; }
+.msg.bad{ background:rgba(209,91,72,.12); color:var(--bad); border:1px solid rgba(209,91,72,.3); }
+.msg.ok{ background:rgba(63,157,109,.12); color:var(--ok); border:1px solid rgba(63,157,109,.3); }
+.notice{ font-size:11.5px; color:var(--text-dim); line-height:1.7; margin-top:12px; padding:11px 13px; border:1px dashed var(--board-line); border-radius:10px; }
+.hidden{ display:none !important; }
+.loading{ text-align:center; color:var(--text-dim); font-size:13px; padding:40px 0; }
+</style>
+</head>
+<body>
+<script>(function(){ if (localStorage.getItem('paperlotto_theme') === 'light') document.body.classList.add('light-mode'); })();</script>
+
+<div class="header">
+  <a class="brand" href="index.html">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">PaperLotto</div>
+  </a>
+  <div class="header-right">
+    <div class="lang-toggle" id="langToggle">
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+    <button class="theme-toggle" id="themeToggleBtn">🌙</button>
+  </div>
+</div>
+
+<main>
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
+
+  <div class="loading" id="loadingBox">…</div>
+  <div class="msg" id="msgBox"></div>
+
+  <div id="content" class="hidden">
+    <!-- 받을 주소 -->
+    <div class="card">
+      <div class="sec-title" id="emailTitle"></div>
+      <div class="sec-desc" id="emailDesc"></div>
+
+      <div class="now-box">
+        <div class="now-label" id="nowLabel"></div>
+        <div class="now-value"><span id="nowEmail">—</span><span id="nowBadge"></span></div>
+      </div>
+
+      <input type="email" id="emailInput" autocomplete="email" spellcheck="false" placeholder="">
+      <div class="notice" id="emailNotice"></div>
+
+      <button class="primary" id="saveEmailBtn" style="margin-top:12px;"></button>
+      <button class="ghost" id="testBtn"></button>
+      <button class="ghost" id="verifyBtn"></button>
+    </div>
+
+    <!-- 받을 방법 -->
+    <div class="card">
+      <div class="sec-title" id="chTitle"></div>
+      <div class="sec-desc" id="chDesc"></div>
+
+      <div class="row">
+        <div class="row-text">
+          <div class="row-name" id="emCh"></div>
+          <div class="row-desc" id="emChDesc"></div>
+        </div>
+        <button class="sw" id="swEmail" type="button"></button>
+      </div>
+      <div class="row">
+        <div class="row-text">
+          <div class="row-name" id="puCh"></div>
+          <div class="row-desc" id="puChDesc"></div>
+        </div>
+        <button class="sw" id="swPush" type="button"></button>
+      </div>
+      <div class="row">
+        <div class="row-text">
+          <div class="row-name" id="fcCh"></div>
+          <div class="row-desc" id="fcChDesc"></div>
+        </div>
+        <button class="sw" id="swFcm" type="button"></button>
+      </div>
+    </div>
+
+    <!-- 언제 보낼지 -->
+    <div class="card">
+      <div class="sec-title" id="whenTitle"></div>
+      <div class="sec-desc" id="whenDesc"></div>
+      <div class="row">
+        <div class="row-text">
+          <div class="row-name" id="loseName"></div>
+          <div class="row-desc" id="loseDesc"></div>
+        </div>
+        <button class="sw" id="swLose" type="button"></button>
+      </div>
+    </div>
+
+    <button class="primary" id="saveAllBtn"></button>
+    <a class="ghost" id="backBtn" href="paperlotto_watch_register.html" style="display:block;text-align:center;text-decoration:none;"></a>
+  </div>
+</main>
+
+<script src="paperlotto_lang.js"></script>
+<script>
+// =====================================================
+// PaperLotto — 당첨결과 알림 설정 화면
+// 2026-08-31 (16차) 신설
+//
+// 🔴 가입 주소를 화면에 그대로 보여줍니다.
+//   "비워두면 가입 주소로 갑니다"라고만 하면 손님이 자기 주소를 모른 채 불안해집니다.
+//   보여주면 그 자리에서 안심하거나 고칩니다.
+//
+// 🔴 주소를 바꾸면 시험 알림으로 확인합니다.
+//   확인 메일을 따로 보내지 않습니다. 손님이 하는 일은 같은데,
+//   "확인 메일은 왔는데 정작 알림은 스팸으로 가는" 경우까지 걸러집니다.
+//   ⚠ 확인 전에는 가입 주소로 계속 갑니다. 추첨을 놓치면 안 됩니다.
+// =====================================================
+
+const SUPABASE_URL = 'https://wzrqaozlbfyejsbvnrxk.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC';
+
+const T = {
+  ko: {
+    title:'🔔 알림 설정',
+    sub:'당첨결과를 어디로, 어떻게 받으실지 정하실 수 있습니다.',
+    emailTitle:'받을 주소',
+    emailDesc:'비워두시면 가입하신 주소로 보내드립니다.',
+    nowLabel:'지금 알림이 가는 주소',
+    verified:'확인됨', pending:'확인 전',
+    placeholder:'다른 주소로 받으시려면 입력하세요',
+    emailNotice:'주소를 바꾸시면 시험 알림을 한 번 보내드립니다. 받으신 뒤 <b>“받았습니다”</b>를 눌러주세요.<br>확인하시기 전까지는 가입 주소로 계속 보내드리니 알림이 끊기지 않습니다.',
+    saveEmail:'주소 저장',
+    test:'시험 알림 보내기',
+    testLeft:'시험 알림 보내기 (오늘 {n}번 남음)',
+    verify:'✅ 받았습니다',
+    chTitle:'받을 방법',
+    chDesc:'켜두신 것 중에서 받으실 수 있는 것으로 보내드립니다. 기기에 따라 안 되는 것도 있습니다.',
+    emCh:'이메일', emChDesc:'모든 기기에서 도착합니다. 가장 확실합니다.',
+    puCh:'웹 푸시', puChDesc:'브라우저 알림입니다. 아이폰은 홈 화면에 추가하셔야 받으실 수 있습니다. (준비 중)',
+    fcCh:'앱 알림', fcChDesc:'앱을 쓰시면 당첨 크기에 따라 다른 소리로 알려드립니다. (준비 중)',
+    whenTitle:'언제 보낼까요',
+    whenDesc:'',
+    loseName:'낙첨일 때도 알려주기',
+    loseDesc:'꺼두시면 당첨된 회차만 알려드립니다.<br>⚠ 끄시면 연락이 없을 때 낙첨인지 확인이 안 된 것인지 알 수 없습니다.',
+    saveAll:'저장',
+    back:'등록 화면으로',
+    savedOk:'저장했습니다.',
+    testOk:'{to} 로 시험 알림을 보냈습니다. 메일함을 확인해주세요.',
+    verifyOk:'확인됐습니다. 이제 이 주소로 알림이 갑니다.',
+    errLogin:'로그인이 필요합니다.',
+    errEmail:'메일 주소 형식이 올바르지 않습니다.',
+    errTooSoon:'{n}초 뒤에 다시 시도해주세요.',
+    errLimit:'시험 알림은 하루 {n}번까지 보낼 수 있습니다.',
+    errTestFirst:'먼저 시험 알림을 받아보셔야 합니다.',
+    errExpired:'시험 알림을 보낸 지 오래됐습니다. 다시 보내주세요.',
+    errSend:'시험 알림을 보내지 못했습니다. 주소를 확인해주세요.',
+    errEtc:'문제가 발생했습니다: {msg}',
+    loading:'불러오는 중…',
+    sending:'보내는 중…',
+    saving:'저장하는 중…',
+  },
+  en: {
+    title:'🔔 Notification settings',
+    sub:'Choose where and how you get your results.',
+    emailTitle:'Where to send',
+    emailDesc:'Leave it empty and we will use your account address.',
+    nowLabel:'Notifications currently go to',
+    verified:'verified', pending:'not verified',
+    placeholder:'Enter a different address if you prefer',
+    emailNotice:'If you change the address we will send one test message. Press <b>“I got it”</b> after it arrives.<br>Until then we keep sending to your account address, so nothing is missed.',
+    saveEmail:'Save address',
+    test:'Send a test',
+    testLeft:'Send a test ({n} left today)',
+    verify:'✅ I got it',
+    chTitle:'How to send',
+    chDesc:'We use whichever of these actually reaches you. Some depend on your device.',
+    emCh:'Email', emChDesc:'Arrives on every device. The most reliable one.',
+    puCh:'Web push', puChDesc:'Browser notification. On iPhone you must add the site to your Home Screen. (coming soon)',
+    fcCh:'App notification', fcChDesc:'In the app, a different sound depending on how big the win is. (coming soon)',
+    whenTitle:'When to send',
+    whenDesc:'',
+    loseName:'Tell me even when I did not win',
+    loseDesc:'Turn this off to hear only about wins.<br>⚠ If off, silence could mean either "no win" or "not checked yet".',
+    saveAll:'Save',
+    back:'Back to registration',
+    savedOk:'Saved.',
+    testOk:'Test sent to {to}. Please check your inbox.',
+    verifyOk:'Verified. Notifications will now go to this address.',
+    errLogin:'Please sign in.',
+    errEmail:'That email address does not look right.',
+    errTooSoon:'Please try again in {n} seconds.',
+    errLimit:'You can send up to {n} tests per day.',
+    errTestFirst:'Please receive a test message first.',
+    errExpired:'That test was sent a while ago. Please send a new one.',
+    errSend:'Could not send the test. Please check the address.',
+    errEtc:'Something went wrong: {msg}',
+    loading:'Loading…',
+    sending:'Sending…',
+    saving:'Saving…',
+  },
+  ja: {
+    title:'🔔 通知設定',
+    sub:'当選結果をどこへ、どのように受け取るかを設定できます。',
+    emailTitle:'送り先',
+    emailDesc:'空欄のままにすると、ご登録のアドレスにお送りします。',
+    nowLabel:'現在のお届け先',
+    verified:'確認済み', pending:'未確認',
+    placeholder:'別のアドレスで受け取る場合は入力してください',
+    emailNotice:'アドレスを変更すると、テスト通知を1通お送りします。届いたら<b>「受け取りました」</b>を押してください。<br>確認までは登録アドレスにお送りしますので、通知が途切れることはありません。',
+    saveEmail:'アドレスを保存',
+    test:'テスト通知を送る',
+    testLeft:'テスト通知を送る（本日あと{n}回）',
+    verify:'✅ 受け取りました',
+    chTitle:'受け取り方法',
+    chDesc:'オンにしたもののうち、実際に届く方法でお送りします。端末により届かないものもあります。',
+    emCh:'メール', emChDesc:'すべての端末に届きます。最も確実です。',
+    puCh:'ウェブプッシュ', puChDesc:'ブラウザの通知です。iPhoneではホーム画面に追加が必要です。（準備中）',
+    fcCh:'アプリ通知', fcChDesc:'アプリでは当選の大きさに応じて音が変わります。（準備中）',
+    whenTitle:'送るタイミング',
+    whenDesc:'',
+    loseName:'落選のときも知らせる',
+    loseDesc:'オフにすると当選した回のみお知らせします。<br>⚠ オフの場合、連絡がないときに落選なのか未確認なのか分かりません。',
+    saveAll:'保存',
+    back:'登録画面へ',
+    savedOk:'保存しました。',
+    testOk:'{to} にテスト通知を送りました。メールをご確認ください。',
+    verifyOk:'確認できました。今後はこのアドレスにお送りします。',
+    errLogin:'ログインが必要です。',
+    errEmail:'メールアドレスの形式が正しくありません。',
+    errTooSoon:'{n}秒後にもう一度お試しください。',
+    errLimit:'テスト通知は1日{n}回までです。',
+    errTestFirst:'先にテスト通知をお受け取りください。',
+    errExpired:'テスト通知を送ってから時間が経ちました。もう一度お送りください。',
+    errSend:'テスト通知を送れませんでした。アドレスをご確認ください。',
+    errEtc:'問題が発生しました: {msg}',
+    loading:'読み込み中…',
+    sending:'送信中…',
+    saving:'保存中…',
+  },
+};
+
+function detectLang(){
+  if (typeof window.getPaperLottoLang === 'function') {
+    const v = window.getPaperLottoLang();
+    if (T[v]) return v;
+  }
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q) { const c = q.toLowerCase(); return c.indexOf('ko') === 0 ? 'ko' : (c.indexOf('ja') === 0 ? 'ja' : 'en'); }
+  } catch (e) {}
+  const saved = localStorage.getItem('paperlotto_lang');
+  if (saved && T[saved]) return saved;
+  const nav = (navigator.languages && navigator.languages[0]) || navigator.language || 'en';
+  const l = String(nav).toLowerCase();
+  if (l.indexOf('ko') === 0) return 'ko';
+  if (l.indexOf('ja') === 0) return 'ja';
+  return 'en';
+}
+
+let lang = detectLang();
+let state = null;
+
+const $ = (id) => document.getElementById(id);
+const t = () => T[lang];
+function fill(tpl, v){ return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? v[k] : '')); }
+
+function showMsg(html, kind){
+  const box = $('msgBox');
+  box.className = 'msg ' + (kind || 'bad');
+  box.innerHTML = html;
+  box.style.display = 'block';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+function clearMsg(){ $('msgBox').style.display = 'none'; }
+
+// ── 토큰 (만료되면 갱신) ──
+// ⚠ supabase-js를 쓰지 않으므로 토큰이 저절로 갱신되지 않습니다.
+//   저장된 토큰은 한 시간쯤 지나면 못 쓰고, 그대로 보내면 401이 옵니다.
+function readSession(){
+  try {
+    const key = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    if (!key) return null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return { key, obj, s: obj.currentSession || obj };
+  } catch (e) { return null; }
+}
+
+async function ensureToken(){
+  const info = readSession();
+  if (!info) return null;
+  const { key, obj, s } = info;
+  const now = Math.floor(Date.now() / 1000);
+  if (s.access_token && s.expires_at && Number(s.expires_at) - 60 > now) return s.access_token;
+  if (!s.refresh_token) return s.access_token || null;
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey: SUPABASE_ANON },
+      body: JSON.stringify({ refresh_token: s.refresh_token }),
+    });
+    if (!res.ok) return null;
+    const fresh = await res.json();
+    const merged = obj.currentSession
+      ? Object.assign({}, obj, { currentSession: Object.assign({}, obj.currentSession, fresh) })
+      : Object.assign({}, obj, fresh);
+    try { localStorage.setItem(key, JSON.stringify(merged)); } catch (e) {}
+    return fresh.access_token || null;
+  } catch (e) { return null; }
+}
+
+async function callPrefs(payload){
+  const token = await ensureToken();
+  if (!token) { showMsg(t().errLogin); return null; }
+  const res = await fetch(SUPABASE_URL + '/functions/v1/watch-prefs', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (data.error === 'AUTH_REQUIRED') showMsg(t().errLogin);
+    else if (data.error === 'INVALID_EMAIL') { showMsg(t().errEmail); $('emailInput').classList.add('err'); }
+    else if (data.error === 'TOO_SOON') showMsg(fill(t().errTooSoon, { n: data.waitSeconds }));
+    else if (data.error === 'DAILY_LIMIT') showMsg(fill(t().errLimit, { n: data.max }));
+    else if (data.error === 'TEST_REQUIRED') showMsg(t().errTestFirst);
+    else if (data.error === 'TEST_EXPIRED') showMsg(t().errExpired);
+    else if (data.error === 'SEND_FAILED') showMsg(t().errSend);
+    else showMsg(fill(t().errEtc, { msg: data.error || res.status }));
+    return null;
+  }
+  return data;
+}
+
+// ── 화면 그리기 ──
+function setSwitch(id, on){ $(id).classList.toggle('on', !!on); }
+function getSwitch(id){ return $(id).classList.contains('on'); }
+
+function render(){
+  $('nowEmail').textContent = state.effectiveEmail || '—';
+  $('nowBadge').innerHTML = state.email
+    ? (state.emailVerified
+        ? '<span class="badge ok">' + t().verified + '</span>'
+        : '<span class="badge wait">' + t().pending + '</span>')
+    : '';
+
+  setSwitch('swEmail', state.emailEnabled);
+  setSwitch('swPush', state.pushEnabled);
+  setSwitch('swFcm', state.fcmEnabled);
+  setSwitch('swLose', state.notifyOnLose);
+
+  // 시험 알림 남은 횟수
+  const left = Math.max(0, (state.testMaxPerDay || 3) - (state.testUsedToday || 0));
+  $('testBtn').textContent = left > 0 ? fill(t().testLeft, { n: left }) : t().test;
+  $('testBtn').disabled = left <= 0;
+
+  // "받았습니다"는 시험을 보낸 뒤, 아직 확인 전일 때만
+  $('verifyBtn').classList.toggle('hidden', !state.canVerify);
+  $('verifyBtn').textContent = t().verify;
+}
+
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  $('pageTitle').textContent = t().title;
+  $('pageSub').textContent = t().sub;
+  $('emailTitle').textContent = t().emailTitle;
+  $('emailDesc').textContent = t().emailDesc;
+  $('nowLabel').textContent = t().nowLabel;
+  $('emailInput').placeholder = t().placeholder;
+  $('emailNotice').innerHTML = t().emailNotice;
+  $('saveEmailBtn').textContent = t().saveEmail;
+  $('chTitle').textContent = t().chTitle;
+  $('chDesc').textContent = t().chDesc;
+  $('emCh').textContent = t().emCh;   $('emChDesc').textContent = t().emChDesc;
+  $('puCh').textContent = t().puCh;   $('puChDesc').textContent = t().puChDesc;
+  $('fcCh').textContent = t().fcCh;   $('fcChDesc').textContent = t().fcChDesc;
+  $('whenTitle').textContent = t().whenTitle;
+  $('loseName').textContent = t().loseName;
+  $('loseDesc').innerHTML = t().loseDesc;
+  $('saveAllBtn').textContent = t().saveAll;
+  $('backBtn').textContent = t().back;
+  if (state) render();
+}
+
+// ── 불러오기 ──
+async function load(){
+  $('loadingBox').textContent = t().loading;
+  const data = await callPrefs({ action: 'get' });
+  if (!data) { $('loadingBox').classList.add('hidden'); return; }
+  state = data;
+  $('emailInput').value = data.email || '';
+  $('loadingBox').classList.add('hidden');
+  $('content').classList.remove('hidden');
+  applyLang();
+}
+
+// ── 이벤트 ──
+document.querySelectorAll('.sw').forEach(el => {
+  el.addEventListener('click', () => { if (!el.disabled) el.classList.toggle('on'); });
+});
+
+$('saveEmailBtn').addEventListener('click', async () => {
+  clearMsg();
+  $('emailInput').classList.remove('err');
+  const btn = $('saveEmailBtn');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = t().saving;
+  try {
+    const r = await callPrefs({ action:'save', email: $('emailInput').value });
+    if (r) { showMsg(t().savedOk, 'ok'); await refresh(); }
+  } finally { btn.disabled = false; btn.textContent = orig; }
+});
+
+$('testBtn').addEventListener('click', async () => {
+  clearMsg();
+  const btn = $('testBtn');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = t().sending;
+  try {
+    const r = await callPrefs({ action:'test', lang });
+    if (r) { showMsg(fill(t().testOk, { to: r.sentTo }), 'ok'); await refresh(); }
+  } finally { btn.disabled = false; btn.textContent = orig; }
+});
+
+$('verifyBtn').addEventListener('click', async () => {
+  clearMsg();
+  const btn = $('verifyBtn');
+  btn.disabled = true;
+  try {
+    const r = await callPrefs({ action:'verify' });
+    if (r) { showMsg(t().verifyOk, 'ok'); await refresh(); }
+  } finally { btn.disabled = false; }
+});
+
+$('saveAllBtn').addEventListener('click', async () => {
+  clearMsg();
+  const btn = $('saveAllBtn');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = t().saving;
+  try {
+    const r = await callPrefs({
+      action:'save',
+      emailEnabled: getSwitch('swEmail'),
+      pushEnabled: getSwitch('swPush'),
+      fcmEnabled: getSwitch('swFcm'),
+      notifyOnLose: getSwitch('swLose'),
+      lang: lang,
+    });
+    if (r) { showMsg(t().savedOk, 'ok'); await refresh(); }
+  } finally { btn.disabled = false; btn.textContent = orig; }
+});
+
+async function refresh(){
+  const data = await callPrefs({ action:'get' });
+  if (data) { state = data; render(); }
+}
+
+$('langToggle').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-lang]');
+  if (!btn || btn.dataset.lang === lang) return;
+  lang = btn.dataset.lang;
+  try { localStorage.setItem('paperlotto_lang', lang); } catch (e) {}
+  applyLang();
+});
+$('themeToggleBtn').addEventListener('click', function(){
+  document.body.classList.toggle('light-mode');
+  const light = document.body.classList.contains('light-mode');
+  localStorage.setItem('paperlotto_theme', light ? 'light' : 'dark');
+  this.textContent = light ? '☀️' : '🌙';
+});
+
+$('themeToggleBtn').textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
+applyLang();
+load();
+</script>
+</body>
+</html>
