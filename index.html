@@ -415,6 +415,15 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
 .dp-plus{ align-self:center; font-size:12px; color:#9a9088; font-weight:700; }
 .dp-go{ display:block; text-align:center; background:var(--ink,#1a1a1a); color:var(--paper,#F4EFE4);
   border-radius:9px; padding:9px; font-size:12.5px; font-weight:700; text-decoration:none; }
+/* 🔴 2026-09-02: 손 모양 커서를 직접 그려 넣습니다.
+   윈도우 기본 손 커서는 흰색이라 이 카드(밝은 종이색) 위에서 보이지 않습니다.
+   금색으로 칠하고 짙은 테두리를 둘러, 밝은 바탕과 어두운 단추 양쪽에서 보이게 합니다.
+   ⚠ 마지막 'pointer'는 대비책입니다. 이미지를 못 읽는 브라우저에서는
+     기본 손 커서로 돌아갑니다 — 커서가 통째로 사라지면 안 됩니다.
+   ⚠ 끝의 '6 2'는 손끝 위치입니다. 이걸 빼면 커서가 어긋나 눌리는 곳이 달라 보입니다. */
+.dp-card, .dp-card *, .dp-go, .dp-x{
+  cursor:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M9.5 12.5V5.2a2 2 0 0 1 4 0v6.1m0-1.2a1.8 1.8 0 0 1 3.6 0v1.2m0-.6a1.8 1.8 0 0 1 3.6 0v1.9m0-.9a1.8 1.8 0 0 1 3.5 0v6.4c0 3.6-2.6 6.6-6.4 6.6h-3.2c-3.4 0-4.6-1.5-6.1-4.2l-2.6-4.6a1.9 1.9 0 0 1 3.2-2.1l1.8 2.4' fill='%23e0aa4e' stroke='%231c2130' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 6 2, pointer;
+}
 /* 2026-08-29: 방금 닫은 것 되돌리기 */
 #dpUndo{
   position:fixed; right:18px; bottom:18px; z-index:960; display:none;
@@ -498,6 +507,25 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   var saved = localStorage.getItem('paperlotto_theme');
   if (saved === 'light') document.body.classList.add('light-mode');
 })();
+
+// 🔴 2026-09-02 신설: 메뉴에서 별도 창으로 여는 공용 함수
+//   당첨확인·예약등록은 "잠깐 들렀다 가는" 화면입니다.
+//   같은 창에서 열면 보고 있던 회차 카드가 사라져 다시 찾아야 합니다.
+//   메인 카드의 [내 번호 당첨확인 →]이 이미 같은 방식으로 열립니다.
+//
+//   ⚠ href는 그대로 둡니다. 가운데 클릭·새 탭으로 열기·주소 복사가 됩니다.
+//   ⚠ 창이 막히면(팝업 차단) 그냥 이 창에서 엽니다.
+//     아무 일도 안 일어나는 것이 제일 나쁩니다.
+//   ⚠ 좁은 화면(휴대전화)에서는 새 창이 새 탭이 되어 오히려 불편합니다.
+//     그때는 그냥 이동합니다.
+function plOpenWin(a, name, w, h) {
+  if (window.innerWidth < 700) return true;   // 휴대전화는 그대로 이동
+  var win = window.open(a.href, name,
+    'width=' + (w || 460) + ',height=' + (h || 800) + ',resizable=yes,scrollbars=yes');
+  if (!win) return true;                      // 차단됐으면 그대로 이동
+  win.focus();
+  return false;
+}
 </script>
 
 <div class="site-sticky-top">
@@ -524,11 +552,11 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
       <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
       <a href="paperlotto_my_page.html" data-i18n="navMyPage">마이페이지</a>
       <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
-      <a href="paperlotto_checker.html" data-i18n="navChecker">당첨확인</a>
+      <a href="paperlotto_checker.html" data-i18n="navChecker" onclick="return plOpenWin(this, 'plChecker');">당첨확인</a>
       <!-- 🔴 2026-09-02 신설: 당첨결과 알림 예약등록
            ⚠ 옆의 [당첨확인]은 지금 결과를 보는 것이고, 이것은 다음 회차를
              맡겨두는 것입니다. 하는 일이 다르므로 색을 갈라 둡니다. -->
-      <a href="paperlotto_watch_register.html" class="nav-watch" data-i18n="navWatch">당첨확인 예약등록</a>
+      <a href="paperlotto_watch_register.html" class="nav-watch" data-i18n="navWatch" onclick="return plOpenWin(this, 'plWatch', 480, 860);">당첨확인 예약등록</a>
       <a href="paperlotto_round_stats.html" data-i18n="navStats">통계</a>
       <a href="paperlotto_racetrack_mockup.html" data-i18n="navRacetrack">경마장</a>
       <a href="paperlotto_battles_mockup.html" data-i18n="navBattles">무제한 대결</a>

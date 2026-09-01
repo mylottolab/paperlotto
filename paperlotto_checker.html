@@ -79,7 +79,7 @@ main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
        ⚠ 결과를 본 직후에만 띄웁니다. 결과를 확인한 그 순간이
          "다음엔 안 잊었으면" 하는 순간이라 권유가 가장 자연스럽게 닿습니다.
          회차만 고르고 있는 사람에게 미리 들이밀지 않습니다. -->
-  <div class="watch-cta" id="watchCta" style="display:none;" onclick="location.href='paperlotto_watch_register.html'">
+  <div class="watch-cta" id="watchCta" style="display:none;" onclick="plGoWatch()">
     <div class="watch-cta-t" id="watchCtaT">🔔 다음 회차는 맡겨두시겠어요?</div>
     <div class="watch-cta-s" id="watchCtaS">번호를 등록해두시면 추첨이 끝나는 대로 대조해서 이메일로 알려드려요. 당첨되지 않았을 때도 보내드립니다.</div>
     <div class="watch-cta-b" id="watchCtaB">당첨확인 예약등록 →</div>
@@ -163,6 +163,17 @@ document.getElementById('themeToggleBtn').addEventListener('click', function(){
   this.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
 });
 (function(){ var btn=document.getElementById('themeToggleBtn'); btn.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙'; })();
+
+// 🔴 2026-09-02: 예약등록은 조금 넓은 창을 따로 띄웁니다.
+//   이 화면 자체가 460px 창으로 열릴 수 있는데, 등록 화면은 공이 70개까지
+//   늘어서고 담은 목록과 결제 요약이 함께 놓여 그 폭으로는 답답합니다.
+//   ⚠ 차단되면 이 창에서 엽니다. 아무 일도 안 일어나는 것이 제일 나쁩니다.
+function plGoWatch(){
+  var win = window.open('paperlotto_watch_register.html', 'plWatch',
+    'width=500,height=860,resizable=yes,scrollbars=yes');
+  if (!win) { location.href = 'paperlotto_watch_register.html'; return; }
+  win.focus();
+}
 
 // 🔴 2026-09-02: 당첨확인 결과가 나온 뒤에만 예약등록 권유를 띄웁니다.
 //
