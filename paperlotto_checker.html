@@ -76,11 +76,10 @@ main{ max-width:720px; margin:0 auto; padding:28px 20px 60px; }
   <div id="checkerMount"></div>
 
   <!-- 🔴 2026-09-02 신설: 당첨결과 알림 예약등록 권유
-       ⚠ 원래는 결과를 본 직후에만 띄우려 했습니다. 결과를 확인한 그 순간이
+       ⚠ 결과를 본 직후에만 띄웁니다. 결과를 확인한 그 순간이
          "다음엔 안 잊었으면" 하는 순간이라 권유가 가장 자연스럽게 닿습니다.
-         그런데 결과는 paperlotto_checker.js가 그리므로 그쪽에 손을 대야 합니다.
-         우선 확인 칸 아래에 두었습니다. -->
-  <div class="watch-cta" id="watchCta" onclick="location.href='paperlotto_watch_register.html'">
+         회차만 고르고 있는 사람에게 미리 들이밀지 않습니다. -->
+  <div class="watch-cta" id="watchCta" style="display:none;" onclick="location.href='paperlotto_watch_register.html'">
     <div class="watch-cta-t" id="watchCtaT">🔔 다음 회차는 맡겨두시겠어요?</div>
     <div class="watch-cta-s" id="watchCtaS">번호를 등록해두시면 추첨이 끝나는 대로 대조해서 이메일로 알려드려요. 당첨되지 않았을 때도 보내드립니다.</div>
     <div class="watch-cta-b" id="watchCtaB">당첨확인 예약등록 →</div>
@@ -164,6 +163,32 @@ document.getElementById('themeToggleBtn').addEventListener('click', function(){
   this.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
 });
 (function(){ var btn=document.getElementById('themeToggleBtn'); btn.textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙'; })();
+
+// 🔴 2026-09-02: 당첨확인 결과가 나온 뒤에만 예약등록 권유를 띄웁니다.
+//
+//   paperlotto_checker.js의 showResult(html, kind)가 결과 상자에
+//   'plck-result-<kind>' 라는 이름을 붙입니다.
+//     win / lose   실제 당첨확인 결과      ← 이때만 권합니다
+//     warn         "회차를 골라주세요" 같은 안내 → 권하지 않습니다
+//
+//   ⚠ .js 파일은 건드리지 않았습니다. 그쪽을 고치면 두 파일이 짝을 이뤄야 하고,
+//     나중에 한쪽만 올리면 조용히 어긋납니다. 화면에서 지켜보는 편이 안전합니다.
+//   ⚠ 종목이나 언어를 바꾸면 checkerMount 안이 통째로 다시 그려집니다.
+//     그래서 결과 상자 하나가 아니라 mount 전체를 지켜봅니다.
+(function () {
+  var cta = document.getElementById('watchCta');
+  var mount = document.getElementById('checkerMount');
+  if (!cta || !mount || typeof MutationObserver === 'undefined') return;
+
+  function sync() {
+    var done = mount.querySelector('.plck-result-win, .plck-result-lose');
+    cta.style.display = done ? 'block' : 'none';
+  }
+  new MutationObserver(sync).observe(mount, {
+    childList: true, subtree: true, attributes: true, attributeFilter: ['class'],
+  });
+  sync();
+})();
 </script>
 </body>
 </html>
