@@ -148,6 +148,82 @@
     });
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // 방문 기록 (2026-09-02 신설)
+  //
+  // 🔴 왜 여기 붙였나:
+  //   이 파일이 모든 화면의 머리말에 이미 실려 있습니다. 화면마다 따로
+  //   붙이면 언젠가 빠뜨린 화면이 생기고, 그 화면만 통계에서 사라집니다.
+  //
+  // 🔴 개인을 식별하지 않습니다.
+  //   브라우저가 스스로 만든 임의의 번호만 씁니다. 로그인 여부와 무관합니다.
+  //   ⚠ 여기에 이메일이나 user_id 를 넣지 마세요. 넣는 순간
+  //     "누가 무엇을 봤는지"가 되어 개인정보가 됩니다.
+  //
+  // 🔴 navigator.sendBeacon 을 쓰지 않습니다.
+  //   sendBeacon 은 언제나 쿠키를 함께 보내는데(credentials=include),
+  //   서버가 CORS 를 '*' 로 열어두면 브라우저가 그 조합을 막습니다.
+  //   My Lotto Lab 이 그 이유로 방문 기록이 통째로 막혀 있었습니다(2026-09-02 발견).
+  //   fetch 는 기본이 'same-origin' 이라 다른 도메인에는 쿠키를 안 보냅니다.
+  //
+  // 🔴 실패해도 화면에 영향을 주지 않습니다. 통계 때문에 화면이 멈추면 안 됩니다.
+  // ═══════════════════════════════════════════════════════════════════
+  const TRACK_FN_URL = `${SUPABASE_URL}/functions/v1/track-visit`;
+
+  function getOrCreateVisitorId() {
+    const key = 'paperlotto_vid';
+    try {
+      let vid = localStorage.getItem(key);
+      if (!vid) {
+        vid = 'v_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(key, vid);
+      }
+      return vid;
+    } catch (e) {
+      // 저장을 막아둔 브라우저 — 그래도 방문 수는 세어집니다(사람 수만 부정확).
+      return 'v_nostorage';
+    }
+  }
+
+  // 포워딩 도메인으로 들어왔을 때(?entry=도메인명) 최초 1회 잡아 세션 내내 유지합니다.
+  // 예: 광고에 allimlotto.com/?entry=ad_google 을 걸어두면 그 방문과
+  //     이어지는 같은 세션의 다른 화면들이 전부 "ad_google 로 들어온 방문"이 됩니다.
+  // ⚠ 이것이 없으면 어느 광고가 손님을 데려왔는지 알 수 없습니다.
+  function getEntryDomain() {
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get('entry');
+      if (fromUrl) {
+        sessionStorage.setItem('paperlotto_entry_domain', fromUrl);
+        return fromUrl;
+      }
+      return sessionStorage.getItem('paperlotto_entry_domain') || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function trackVisit() {
+    try {
+      const payload = JSON.stringify({
+        path: window.location.pathname,
+        referrer: document.referrer || '',
+        visitorId: getOrCreateVisitorId(),
+        entryDomain: getEntryDomain(),
+        // ⚠ 언어를 함께 보냅니다. 영어권 광고의 효과를 이 값으로 잽니다.
+        //   화면이 아직 언어를 정하기 전일 수 있어 저장값도 함께 봅니다.
+        lang: document.documentElement.lang ||
+              (function(){ try { return localStorage.getItem('paperlotto_lang') || ''; } catch(e) { return ''; } })(),
+      });
+
+      fetch(TRACK_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      }).catch(function () { /* 통계 실패는 조용히 무시 */ });
+    } catch (e) { /* 통계 실패는 조용히 무시 */ }
+  }
+
   // 페이지의 언어 전환(각 페이지 applyLang 함수가 document.documentElement.lang을 바꿔줌)에
   // 맞춰 위젯 라벨(로그인/충전/로그아웃)도 같이 갱신되도록 감시
   const langObserver = new MutationObserver(() => render());
@@ -155,7 +231,11 @@
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', render);
+    // ⚠ 방문 기록은 위젯이 그려지는 것과 무관하게 한 번만 보냅니다.
+    //   render() 안에 넣으면 언어를 바꿀 때마다 다시 불려 방문 수가 부풀려집니다.
+    document.addEventListener('DOMContentLoaded', trackVisit);
   } else {
     render();
+    trackVisit();
   }
 })();
