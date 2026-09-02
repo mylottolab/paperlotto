@@ -38,6 +38,20 @@ main{ max-width:640px; margin:0 auto; padding:24px 16px 80px; }
 .card{ background:var(--board-2); border:1px solid var(--board-line); border-radius:16px; padding:18px; margin-bottom:14px; }
 .sec-title{ font-size:13.5px; font-weight:700; margin-bottom:4px; }
 .sec-desc{ font-size:12px; color:var(--text-dim); line-height:1.7; margin-bottom:14px; }
+/* 2026-09-02: 내 알림 등록 목록 */
+.ent-row{ display:flex; align-items:center; gap:10px; padding:11px 0;
+  border-bottom:1px solid var(--board-line); flex-wrap:wrap; }
+.ent-row:last-child{ border-bottom:none; }
+.ent-main{ flex:1; min-width:150px; }
+.ent-name{ font-size:13px; font-weight:700; margin-bottom:3px; }
+.ent-sub{ font-size:11px; color:var(--text-dim); }
+.ent-tag{ font-size:11px; font-weight:800; padding:3px 9px; border-radius:20px; flex-shrink:0; }
+.ent-tag.wait{ background:rgba(167,173,199,.12); color:var(--text-dim); }
+.ent-tag.top{ background:rgba(224,170,78,.16); color:var(--gold-bright); }
+.ent-tag.win{ background:rgba(34,150,90,.14); color:#3fb37f; }
+.ent-tag.lose{ background:rgba(167,173,199,.1); color:var(--text-dim); }
+.ent-tag.refund{ background:rgba(212,83,126,.12); color:#d4537e; }
+.ent-empty{ text-align:center; padding:20px 12px; color:var(--text-dim); font-size:12px; }
 
 .now-box{ background:var(--board); border:1px solid var(--board-line); border-radius:12px; padding:13px 14px; margin-bottom:14px; }
 .now-label{ font-size:11.5px; color:var(--text-dim); margin-bottom:4px; }
@@ -164,12 +178,28 @@ button.ghost:disabled{ opacity:.4; cursor:not-allowed; }
       </div>
     </div>
 
+    <!-- 🔴 2026-09-02 신설: 내 알림 등록 목록
+         지금까지 손님이 "내가 무엇을 등록했는지" 볼 데가 없었습니다.
+         완료 화면은 방금 한 건만 보여주고, 다음 종목으로 넘어가면 그것도 사라집니다.
+         ⚠ 같은 회차를 여러 번 등록하는 것은 막지 않습니다(여러 장 사시는 분이 있습니다).
+           다만 나란히 보여드려서 손님이 알아차리게 합니다. -->
+    <div class="card">
+      <div class="sec-title" id="entTitle"></div>
+      <div class="sec-desc" id="entDesc"></div>
+      <div id="entList"></div>
+    </div>
+
     <button class="primary" id="saveAllBtn"></button>
     <a class="ghost" id="backBtn" href="paperlotto_watch_register.html"></a>
   </div>
 </main>
 
 <script src="paperlotto_lang.js"></script>
+<!-- 🔴 2026-09-02: 종목 이름(PLChecker.GAME_META)만 빌려 씁니다.
+     ⚠ 이름을 이 화면에 또 적어두면 종목이 늘 때 두 곳을 고쳐야 하고,
+       한 곳을 잊으면 화면마다 종목 이름이 달라집니다.
+     ⚠ 이 파일을 못 불러와도 목록은 뜹니다. 이름 자리에 game_id가 그대로 보입니다. -->
+<script src="paperlotto_checker.js"></script>
 <script>
 // =====================================================
 // PaperLotto — 당첨결과 알림 설정 화면
@@ -213,6 +243,12 @@ const T = {
     loseDesc:'꺼두시면 당첨된 회차만 알려드립니다.<br>⚠ 끄시면 연락이 없을 때 낙첨인지 확인이 안 된 것인지 알 수 없습니다.',
     saveAll:'저장',
     back:'등록 화면으로',
+    // 2026-09-02 신설: 내 알림 등록 목록
+    entTitle:'내 알림 등록',
+    entDesc:'지금까지 등록하신 것들입니다. 같은 회차가 두 줄이면 두 번 등록하신 것입니다.',
+    entEmpty:'아직 등록하신 알림이 없습니다.',
+    entWait:'추첨 대기', entLose:'낙첨', entWin:'{n}등 당첨', entRefund:'포인트 반환',
+    entLines:'{n}줄', entRound:'{n}회차', entFail:'등록 목록을 불러오지 못했습니다.',
     savedOk:'저장했습니다.',
     testOk:'{to} 로 시험 알림을 보냈습니다. 메일함을 확인해주세요.',
     verifyOk:'확인됐습니다. 이제 이 주소로 알림이 갑니다.',
@@ -252,6 +288,11 @@ const T = {
     loseDesc:'Turn this off to hear only about wins.<br>⚠ If off, silence could mean either "no win" or "not checked yet".',
     saveAll:'Save',
     back:'Back to registration',
+    entTitle:'My alerts',
+    entDesc:'Everything you have registered so far. Two rows for the same draw means you registered twice.',
+    entEmpty:'No alerts registered yet.',
+    entWait:'Awaiting draw', entLose:'No win', entWin:'Tier {n}', entRefund:'Refunded',
+    entLines:'{n} line(s)', entRound:'Draw #{n}', entFail:'Could not load your alerts.',
     savedOk:'Saved.',
     testOk:'Test sent to {to}. Please check your inbox.',
     verifyOk:'Verified. Notifications will now go to this address.',
@@ -291,6 +332,11 @@ const T = {
     loseDesc:'オフにすると当選した回のみお知らせします。<br>⚠ オフの場合、連絡がないときに落選なのか未確認なのか分かりません。',
     saveAll:'保存',
     back:'登録画面へ',
+    entTitle:'登録した通知',
+    entDesc:'これまでにご登録いただいたものです。同じ回が二行あれば、二度登録されています。',
+    entEmpty:'まだご登録の通知はありません。',
+    entWait:'抽選待ち', entLose:'はずれ', entWin:'{n}等当選', entRefund:'ポイント返還',
+    entLines:'{n}行', entRound:'第{n}回', entFail:'登録一覧を読み込めませんでした。',
     savedOk:'保存しました。',
     testOk:'{to} にテスト通知を送りました。メールをご確認ください。',
     verifyOk:'確認できました。今後はこのアドレスにお送りします。',
@@ -434,6 +480,8 @@ function applyLang(){
   document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   $('pageTitle').textContent = t().title;
   $('pageSub').textContent = t().sub;
+  $('entTitle').textContent = t().entTitle;
+  $('entDesc').textContent = t().entDesc;
   $('emailTitle').textContent = t().emailTitle;
   $('emailDesc').textContent = t().emailDesc;
   $('nowLabel').textContent = t().nowLabel;
@@ -529,6 +577,7 @@ $('langToggle').addEventListener('click', (e) => {
   lang = btn.dataset.lang;
   try { localStorage.setItem('paperlotto_lang', lang); } catch (e) {}
   applyLang();
+  loadEntries();   // 2026-09-02: 목록의 종목 이름·상태도 언어를 따라갑니다
 });
 $('themeToggleBtn').addEventListener('click', function(){
   document.body.classList.toggle('light-mode');
@@ -537,9 +586,73 @@ $('themeToggleBtn').addEventListener('click', function(){
   this.textContent = light ? '☀️' : '🌙';
 });
 
+// ─────────────────────────────────────────────────────
+// 내 알림 등록 목록 (2026-09-02 신설)
+//
+// ⚠ 종목 이름은 paperlotto_checker.js의 PLChecker.GAME_META를 씁니다.
+//   그 파일이 없는 경우를 대비해 game_id를 그대로 보여주는 길을 남겨둡니다.
+//   이름을 여기 또 적어두면 종목이 늘 때 두 곳을 고쳐야 합니다.
+// ⚠ 회차를 쓰지 않는 종목은 추첨일로 부릅니다. 그 나라 손님은 회차를 모릅니다.
+// ─────────────────────────────────────────────────────
+function entGameName(gameId){
+  try {
+    const meta = window.PLChecker && PLChecker.GAME_META && PLChecker.GAME_META[gameId];
+    if (meta) return lang === 'en' ? meta.nameEn : (lang === 'ja' ? meta.nameJa : meta.nameKr);
+  } catch (e) {}
+  return gameId;
+}
+function entDrawLabel(it){
+  const meta = (window.PLChecker && PLChecker.GAME_META) ? PLChecker.GAME_META[it.gameId] : null;
+  const name = entGameName(it.gameId);
+  const useRound = meta ? meta.roundLabel !== false : true;
+  if (!useRound && it.drawDate) {
+    const d = new Date(String(it.drawDate).slice(0, 10) + 'T00:00:00Z');
+    if (!isNaN(d.getTime())) {
+      const loc = lang === 'ko' ? 'ko-KR' : (lang === 'ja' ? 'ja-JP' : 'en-US');
+      return name + ' ' + d.toLocaleDateString(loc, { timeZone:'UTC', year:'numeric', month:'long', day:'numeric' });
+    }
+  }
+  return name + ' ' + fill(t().entRound, { n: it.roundNo });
+}
+
+async function loadEntries(){
+  const box = $('entList');
+  box.innerHTML = '<div class="ent-empty">…</div>';
+  try {
+    const data = await callPrefs({ action:'entries' });
+    if (!data) { box.innerHTML = '<div class="ent-empty">' + t().entFail + '</div>'; return; }
+    const items = data.items || [];
+    if (!items.length) { box.innerHTML = '<div class="ent-empty">' + t().entEmpty + '</div>'; return; }
+
+    box.innerHTML = items.map(function(it){
+      let tag, cls;
+      if (it.status === 'refunded') { tag = t().entRefund; cls = 'refund'; }
+      else if (!it.result) { tag = t().entWait; cls = 'wait'; }
+      else if (it.result.tier_class === 'none') { tag = t().entLose; cls = 'lose'; }
+      else { tag = fill(t().entWin, { n: it.result.best_grade }); cls = (it.result.tier_class === 'jackpot') ? 'top' : 'win'; }
+
+      const when = new Date(it.createdAt).toLocaleDateString(
+        lang === 'ko' ? 'ko-KR' : (lang === 'ja' ? 'ja-JP' : 'en-US'));
+
+      return '<div class="ent-row">' +
+        '<div class="ent-main">' +
+          '<div class="ent-name">' + entDrawLabel(it) + '</div>' +
+          '<div class="ent-sub">' + fill(t().entLines, { n: it.lineCount }) +
+            ' · ' + (it.pointsCharged || 0) + ' P · ' + when + '</div>' +
+        '</div>' +
+        '<span class="ent-tag ' + cls + '">' + tag + '</span>' +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[watch] 등록 목록 오류', e);
+    box.innerHTML = '<div class="ent-empty">' + t().entFail + '</div>';
+  }
+}
+
 $('themeToggleBtn').textContent = document.body.classList.contains('light-mode') ? '☀️' : '🌙';
 applyLang();
 load();
+loadEntries();
 </script>
 </body>
 </html>
