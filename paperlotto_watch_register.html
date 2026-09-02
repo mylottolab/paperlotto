@@ -327,7 +327,11 @@ const GAMES = {
   jp_miniloto:     { main:5, range:31, bonus:0, bonusRange:0,  roundLabel:true,  ko:'일본 미니로또',     en:'Mini Loto',          ja:'ミニロト' },
   jp_loto7:        { main:7, range:37, bonus:0, bonusRange:0,  roundLabel:true,  ko:'일본 로또7',        en:'Loto 7',             ja:'ロト7' },
   jp_loto6:        { main:6, range:43, bonus:0, bonusRange:0,  roundLabel:true,  ko:'일본 로또6',        en:'Loto 6',             ja:'ロト6' },
-  ca_lottomax:     { main:7, range:50, bonus:0, bonusRange:0,  roundLabel:true,  ko:'캐나다 로또맥스',   en:'Lotto Max',          ja:'ロトマックス' },
+  // 🔴 2026-09-02 수정: 50 → 52
+  //   2026년 4월 개편으로 7/50에서 7/52로 바뀌었습니다.
+  //   그동안 손님이 51·52가 든 번호를 등록하려 하면 거부당했습니다.
+  //   실제로 9월 1일 추첨(#1262)에 52가 나왔습니다.
+  ca_lottomax:     { main:7, range:52, bonus:0, bonusRange:0,  roundLabel:true,  ko:'캐나다 로또맥스',   en:'Lotto Max',          ja:'ロトマックス' },
   ca_lotto649:     { main:6, range:49, bonus:0, bonusRange:0,  roundLabel:true,  ko:'캐나다 로또 6/49',  en:'Lotto 6/49',         ja:'カナダ・ロト6/49' },
   au_powerball:    { main:7, range:35, bonus:1, bonusRange:20, roundLabel:false, ko:'호주 파워볼',       en:'Australia Powerball',ja:'豪パワーボール' },
   au_ozlotto:      { main:7, range:47, bonus:0, bonusRange:0,  roundLabel:true,  ko:'오즈로또',          en:'Oz Lotto',           ja:'オズロト' },
