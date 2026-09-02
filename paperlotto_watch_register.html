@@ -323,6 +323,10 @@ const T = {
     count:'{n}줄 입력됨 · 최대 {max}줄',
     dup:'같은 숫자가 두 번 들어갔습니다',
     next:'다음', submit:'등록하기', back:'뒤로', again:'다른 종목 등록하기',
+    // 🔴 2026-09-02: 이 문구가 세 사전에 모두 빠져 있었습니다.
+    //   t().settings 가 undefined 라 단추가 빈 상자로만 보였습니다.
+    //   ⚠ 알림이 실제로 도착하는지 확인하러 가는 유일한 길입니다.
+    settings:'🔔 알림 설정 · 시험 알림 받아보기',
     confirmGame:'종목', confirmRound:'추첨', confirmLines:'줄 수', confirmCost:'차감 포인트', confirmAfter:'등록 후 잔액',
     notice:'• 한 번 등록에 최대 50줄까지 100P입니다.<br>• 남은 줄은 다음 회차로 넘어가지 않습니다.<br>• 종목마다 따로 등록하셔야 합니다.<br>• 나중에 추가로 등록하시면 별건으로 100P가 다시 차감됩니다.',
     confirmNotice:'등록시 100P가 차감됩니다. 지금 등록 후 나중에 추가 등록시 별건으로 인식되어 100P가 다시 차감됨을 알려 드리오니 등록시 가능하면 함께 하시길 권합니다.',
@@ -353,6 +357,7 @@ const T = {
     count:'{n} line(s) · up to {max}',
     dup:'the same number appears twice',
     next:'Next', submit:'Register', back:'Back', again:'Register another game',
+    settings:'🔔 Alert settings · send me a test',
     confirmGame:'Game', confirmRound:'Draw', confirmLines:'Lines', confirmCost:'Points', confirmAfter:'Balance after',
     notice:'• Up to 50 lines per registration for 100P.<br>• Unused lines do not carry over.<br>• Each game is registered separately.<br>• Registering more numbers later costs another 100P.',
     confirmNotice:'100P will be deducted. If you register more numbers later, it counts as a separate registration and another 100P will be deducted — so please enter everything you have now if you can.',
@@ -383,6 +388,7 @@ const T = {
     count:'{n}行 · 最大{max}行',
     dup:'同じ数字が2回入っています',
     next:'次へ', submit:'登録する', back:'戻る', again:'ほかの種目を登録する',
+    settings:'🔔 通知設定 · テスト通知を受け取る',
     confirmGame:'種目', confirmRound:'抽選', confirmLines:'行数', confirmCost:'消費ポイント', confirmAfter:'登録後の残高',
     notice:'• 1回の登録につき最大50行まで100Pです。<br>• 残りの行は次の回に繰り越されません。<br>• 種目ごとに登録が必要です。<br>• 後から追加登録される場合は別件として100Pが引かれます。',
     confirmNotice:'登録時に100Pが引かれます。今回の登録後に追加で登録される場合は別件として扱われ、さらに100Pが引かれますので、できるだけまとめてご登録ください。',
@@ -440,6 +446,22 @@ function newRequestId(){
 
 const $ = (id) => document.getElementById(id);
 const t = () => T[lang];
+
+// 🔴 2026-09-02 신설: 없는 문구를 지정하면 빈 글자가 되던 것을 막습니다.
+//   settings 문구가 세 사전에 모두 빠져 있어서 t().settings 가 undefined 였고,
+//   단추가 글씨 없는 빈 상자로만 보였습니다. 아무도 눈치채지 못했습니다.
+//   ⚠ 앞으로는 콘솔에 경고가 남고, 열쇠 이름이라도 화면에 보입니다.
+//     "빈 상자"보다 "settings"라고 적힌 단추가 훨씬 빨리 발견됩니다.
+function setText(id, value, key){
+  const el = $(id);
+  if (!el) { console.warn('[watch] 화면에 없는 칸:', id); return; }
+  if (value === undefined || value === null) {
+    console.warn('[watch] 문구가 없습니다:', key || id, '(' + lang + ')');
+    el.textContent = key || id;
+    return;
+  }
+  el.textContent = value;
+}
 function fill(tpl, v){ return String(tpl).replace(/\{(\w+)\}/g, (_, k) => (v[k] !== undefined ? v[k] : '')); }
 function gameName(id){ return GAMES[id][lang]; }
 function bonusName(id){ const b = BONUS_NAME[id]; return b ? b[lang] : ''; }
@@ -745,7 +767,7 @@ $('bulkApplyBtn').addEventListener('click', () => {
   use.forEach((v, r) => writeRow(r, v.main, v.bonus));
   validateAll();
   $('bulkBox').classList.add('hidden');
-  $('bulkToggle').textContent = t().bulkOpen;
+  setText('bulkToggle', t().bulkOpen, 'bulkOpen');
   showMsg(fill(t().bulkDone, { n: use.length }), 'ok');
 });
 
@@ -792,7 +814,7 @@ function showConfirm(){
   $('confirmSummary').innerHTML = summaryHtml(rows);
   renderPreview(parsed, 'confirmPreview');
   $('submitBtn').disabled = false;
-  $('submitBtn').textContent = t().submit;
+  setText('submitBtn', t().submit, 'submit');
   goStep('stepConfirm');
 }
 
@@ -874,21 +896,21 @@ async function submit(){
 function applyLang(){
   const spec = GAMES[gameId];
   document.documentElement.lang = lang;
-  $('pageTitle').textContent = t().title;
-  $('pageSub').textContent = t().sub;
+  setText('pageTitle', t().title, 'title');
+  setText('pageSub', t().sub, 'sub');
   $('roundLabelTxt').textContent = spec.roundLabel ? t().roundLabel : t().roundLabelDate;
-  $('roundNote').textContent = t().roundNote;
-  $('inputLabel').textContent = t().inputLabel;
-  $('addRowBtn').textContent = t().addRow;
+  setText('roundNote', t().roundNote, 'roundNote');
+  setText('inputLabel', t().inputLabel, 'inputLabel');
+  setText('addRowBtn', t().addRow, 'addRow');
   $('bulkToggle').textContent = $('bulkBox').classList.contains('hidden') ? t().bulkOpen : t().bulkClose;
-  $('bulkApplyBtn').textContent = t().bulkApply;
-  $('toConfirmBtn').textContent = t().next;
-  $('submitBtn').textContent = t().submit;
-  $('backBtn').textContent = t().back;
-  $('againBtn').textContent = t().again;
-  $('settingsBtn').textContent = t().settings;
+  setText('bulkApplyBtn', t().bulkApply, 'bulkApply');
+  setText('toConfirmBtn', t().next, 'next');
+  setText('submitBtn', t().submit, 'submit');
+  setText('backBtn', t().back, 'back');
+  setText('againBtn', t().again, 'again');
+  setText('settingsBtn', t().settings, 'settings');
   $('inputNotice').innerHTML = t().notice;
-  $('confirmNotice').textContent = t().confirmNotice;
+  setText('confirmNotice', t().confirmNotice, 'confirmNotice');
   $('doneNotice').innerHTML = t().doneNotice;
 
   // 규칙은 한 줄로 짧게. 칸이 이미 규칙을 말해주므로 설명문이 길 필요가 없습니다.
