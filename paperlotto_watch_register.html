@@ -87,6 +87,33 @@ button.bulk-apply{ width:100%; border:none; border-radius:10px; padding:11px; fo
 .ball.bonus{ background:transparent; border:2px dashed var(--gold); color:var(--gold-bright); }
 
 .summary{ font-size:13.5px; line-height:2; }
+/* 2026-09-02: 내가 등록한 알림 목록 */
+.sec-title{ font-size:14px; font-weight:700; margin-bottom:4px; }
+.sec-desc{ font-size:11.5px; color:var(--text-dim); line-height:1.6; margin-bottom:12px; }
+/* ⚠ 등록이 쌓이면 화면이 한없이 길어집니다. 여기서 끊고 스크롤을 둡니다. */
+.ent-scroll{ max-height:300px; overflow-y:auto; padding-right:4px; }
+.ent-scroll::-webkit-scrollbar{ width:6px; }
+.ent-scroll::-webkit-scrollbar-thumb{ background:var(--board-line); border-radius:3px; }
+.ent-item{ padding:11px 0; border-bottom:1px solid var(--board-line); }
+.ent-item:last-child{ border-bottom:none; }
+.ent-head{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.ent-game{ font-size:12.5px; font-weight:700; flex:1; min-width:130px; }
+.ent-when{ font-size:10.5px; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; }
+.ent-tag{ font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; flex-shrink:0; }
+.ent-tag.wait{ background:rgba(167,173,199,.12); color:var(--text-dim); }
+.ent-tag.top{ background:rgba(224,170,78,.18); color:var(--gold-bright); }
+.ent-tag.win{ background:rgba(34,150,90,.16); color:#4cc38a; }
+.ent-tag.lose{ background:rgba(167,173,199,.1); color:var(--text-dim); }
+.ent-tag.refund{ background:rgba(212,83,126,.14); color:#e0789f; }
+.ent-nums{ display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+.ent-line{ display:flex; flex-wrap:wrap; gap:3px; align-items:center; width:100%; margin-bottom:3px; }
+.ent-b{ min-width:22px; height:22px; padding:0 5px; border-radius:11px; background:var(--board);
+  border:1px solid var(--board-line); color:var(--text-hi); font-size:10.5px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; }
+.ent-b.bonus{ background:rgba(184,134,46,.18); border-color:var(--gold); color:var(--gold-bright); }
+.ent-more{ font-size:10.5px; color:var(--text-dim); }
+.ent-empty{ text-align:center; padding:18px 10px; color:var(--text-dim); font-size:12px; line-height:1.7; }
 .summary .row{ display:flex; justify-content:space-between; gap:12px; }
 .summary .k{ color:var(--text-dim); }
 .summary .v{ font-weight:600; font-family:'IBM Plex Mono',monospace; text-align:right; }
@@ -178,6 +205,18 @@ button.ghost, a.ghost{ display:block; text-align:center; text-decoration:none; w
     <a class="ghost" id="settingsBtn" href="paperlotto_watch_settings.html"
        style="margin-top:14px;"></a>
     <button class="ghost" id="againBtn"></button>
+  </div>
+
+  <!-- 🔴 2026-09-02 신설: 내가 등록한 알림 — 항상 화면 아래에 보입니다.
+       ⚠ 단계(stepInput/stepConfirm/stepDone) 바깥에 둡니다.
+         안에 넣으면 단계가 바뀔 때 함께 사라져, 정작 종목을 바꿔가며
+         등록할 때 안 보입니다. 그 순간이 제일 필요한 때입니다.
+       ⚠ 등록한 번호를 함께 보여줍니다. 같은 회차를 여러 번 등록하시면
+         "파워볼 9월 2일"이 여러 줄 똑같이 보여 구분할 수 없었습니다. -->
+  <div class="card" id="myEntriesCard" style="margin-top:18px;">
+    <div class="sec-title" id="myEntTitle"></div>
+    <div class="sec-desc" id="myEntDesc"></div>
+    <div id="myEntList" class="ent-scroll"></div>
   </div>
 </main>
 
@@ -327,6 +366,11 @@ const T = {
     //   t().settings 가 undefined 라 단추가 빈 상자로만 보였습니다.
     //   ⚠ 알림이 실제로 도착하는지 확인하러 가는 유일한 길입니다.
     settings:'🔔 알림 설정 · 시험 알림 받아보기',
+    // 2026-09-02 신설: 내가 등록한 알림 목록
+    entTitle:'내가 등록한 알림 ({n}건)', entDesc:'종목을 바꿔가며 등록하셔도 여기에 그대로 쌓입니다. 같은 회차가 여러 줄이면 여러 번 등록하신 것입니다.',
+    entEmpty:'아직 등록하신 알림이 없습니다.', entLogin:'로그인하시면 등록하신 내역을 보여드립니다.',
+    entFail:'등록 내역을 불러오지 못했습니다.', entMore:'…외 {n}줄',
+    entWait:'추첨 대기', entLose:'낙첨', entWin:'{n}등 당첨', entRefund:'포인트 반환',
     confirmGame:'종목', confirmRound:'추첨', confirmLines:'줄 수', confirmCost:'차감 포인트', confirmAfter:'등록 후 잔액',
     notice:'• 한 번 등록에 최대 50줄까지 100P입니다.<br>• 남은 줄은 다음 회차로 넘어가지 않습니다.<br>• 종목마다 따로 등록하셔야 합니다.<br>• 나중에 추가로 등록하시면 별건으로 100P가 다시 차감됩니다.',
     confirmNotice:'등록시 100P가 차감됩니다. 지금 등록 후 나중에 추가 등록시 별건으로 인식되어 100P가 다시 차감됨을 알려 드리오니 등록시 가능하면 함께 하시길 권합니다.',
@@ -358,6 +402,10 @@ const T = {
     dup:'the same number appears twice',
     next:'Next', submit:'Register', back:'Back', again:'Register another game',
     settings:'🔔 Alert settings · send me a test',
+    entTitle:'My alerts ({n})', entDesc:'Everything you register stays here, even across games. Several rows for one draw means you registered more than once.',
+    entEmpty:'No alerts registered yet.', entLogin:'Sign in to see what you have registered.',
+    entFail:'Could not load your alerts.', entMore:'…and {n} more line(s)',
+    entWait:'Awaiting draw', entLose:'No win', entWin:'Tier {n}', entRefund:'Refunded',
     confirmGame:'Game', confirmRound:'Draw', confirmLines:'Lines', confirmCost:'Points', confirmAfter:'Balance after',
     notice:'• Up to 50 lines per registration for 100P.<br>• Unused lines do not carry over.<br>• Each game is registered separately.<br>• Registering more numbers later costs another 100P.',
     confirmNotice:'100P will be deducted. If you register more numbers later, it counts as a separate registration and another 100P will be deducted — so please enter everything you have now if you can.',
@@ -389,6 +437,10 @@ const T = {
     dup:'同じ数字が2回入っています',
     next:'次へ', submit:'登録する', back:'戻る', again:'ほかの種目を登録する',
     settings:'🔔 通知設定 · テスト通知を受け取る',
+    entTitle:'登録した通知（{n}件）', entDesc:'種目を変えて登録されても、ここにそのまま残ります。同じ回が複数行あれば、複数回登録されています。',
+    entEmpty:'まだご登録の通知はありません。', entLogin:'ログインすると登録内容を表示します。',
+    entFail:'登録内容を読み込めませんでした。', entMore:'…ほか{n}行',
+    entWait:'抽選待ち', entLose:'はずれ', entWin:'{n}等当選', entRefund:'ポイント返還',
     confirmGame:'種目', confirmRound:'抽選', confirmLines:'行数', confirmCost:'消費ポイント', confirmAfter:'登録後の残高',
     notice:'• 1回の登録につき最大50行まで100Pです。<br>• 残りの行は次の回に繰り越されません。<br>• 種目ごとに登録が必要です。<br>• 後から追加登録される場合は別件として100Pが引かれます。',
     confirmNotice:'登録時に100Pが引かれます。今回の登録後に追加で登録される場合は別件として扱われ、さらに100Pが引かれますので、できるだけまとめてご登録ください。',
@@ -878,6 +930,7 @@ async function submit(){
       $('balanceLabel').textContent = balance.toLocaleString() + ' P';
     }
     pendingRequestId = null;   // 다음 등록은 새 표로 — 별건이므로 다시 차감됩니다
+    loadMyEntries();           // 2026-09-02: 방금 등록한 것이 바로 아래 목록에 나타납니다
     showMsg(t().doneTitle, 'ok');
     goStep('stepDone');
   } catch (e) {
@@ -887,6 +940,100 @@ async function submit(){
     // 성공이든 실패든 반드시 원래대로. 다음 등록에서 단추가 잠겨 있으면 안 됩니다.
     btn.disabled = false;
     btn.textContent = t().submit;
+  }
+}
+
+
+// ─────────────────────────────────────────────────────
+// 내가 등록한 알림 (2026-09-02 신설)
+//
+// 🔴 등록하는 화면에서 바로 보여드립니다.
+//   지금까지는 알림 설정까지 찾아가야 볼 수 있었습니다. 그래서 이미 등록한
+//   회차를 모르고 또 등록해 100P를 두 번 내는 일이 생겼습니다.
+//
+// 🔴 이 창에서 방금 한 것만이 아니라 서버에 있는 것 전부를 보여줍니다.
+//   한참 뒤에 새 창으로 다시 오셔도 "아, 이미 넣었구나"를 알 수 있어야 합니다.
+//
+// ⚠ 같은 회차를 여러 번 등록하는 것을 막지 않습니다. 실제로 여러 장 사십니다.
+//   대신 등록한 번호를 함께 보여드려 어느 것이 무엇인지 구분되게 합니다.
+// ─────────────────────────────────────────────────────
+let myEntriesReady = false;   // 화면이 다 뜬 뒤에만 목록을 다시 그립니다
+
+function entBall(n, isBonus){
+  return '<span class="ent-b' + (isBonus ? ' bonus' : '') + '">' + n + '</span>';
+}
+
+// 한 등록의 번호를 그립니다.
+// ⚠ 50줄까지 등록할 수 있습니다. 다 그리면 목록이 화면을 덮습니다.
+//   앞의 세 줄만 보이고 나머지는 개수로 알려드립니다.
+function entLinesHtml(it){
+  const lines = Array.isArray(it.lines) ? it.lines : [];
+  const bonus = Array.isArray(it.bonusLines) ? it.bonusLines : null;
+  if (!lines.length) return '';
+
+  const SHOW = 3;
+  let html = lines.slice(0, SHOW).map(function(line, i){
+    let h = (line || []).map(function(n){ return entBall(n, false); }).join('');
+    const b = bonus && bonus[i];
+    if (b && b.length) {
+      h += '<span style="color:var(--text-dim);margin:0 2px;">+</span>' +
+        b.map(function(n){ return entBall(n, true); }).join('');
+    }
+    return '<span class="ent-line">' + h + '</span>';
+  }).join('');
+
+  if (lines.length > SHOW) {
+    html += '<span class="ent-more">' + fill(t().entMore, { n: lines.length - SHOW }) + '</span>';
+  }
+  return '<div class="ent-nums">' + html + '</div>';
+}
+
+async function loadMyEntries(){
+  const box = $('myEntList');
+  const token = await ensureToken();
+  if (!token) { box.innerHTML = '<div class="ent-empty">' + t().entLogin + '</div>'; return; }
+
+  box.innerHTML = '<div class="ent-empty">…</div>';
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/watch-prefs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'entries' }),
+    });
+    if (!res.ok) throw new Error('watch-prefs ' + res.status);
+    const data = await res.json();
+    const items = data.items || [];
+
+    setText('myEntTitle', fill(t().entTitle, { n: items.length }), 'entTitle');
+
+    if (!items.length) { box.innerHTML = '<div class="ent-empty">' + t().entEmpty + '</div>'; return; }
+
+    const loc = lang === 'ko' ? 'ko-KR' : (lang === 'ja' ? 'ja-JP' : 'en-US');
+    box.innerHTML = items.map(function(it){
+      let tag, cls;
+      if (it.status === 'refunded') { tag = t().entRefund; cls = 'refund'; }
+      else if (!it.result) { tag = t().entWait; cls = 'wait'; }
+      else if (it.result.tier_class === 'none') { tag = t().entLose; cls = 'lose'; }
+      else { tag = fill(t().entWin, { n: it.result.best_grade }); cls = (it.result.tier_class === 'jackpot') ? 'top' : 'win'; }
+
+      // ⚠ 날짜만 보여주면 같은 날 등록한 것들이 다 똑같아 보입니다. 시각까지 붙입니다.
+      const d = new Date(it.createdAt);
+      const when = d.toLocaleDateString(loc, { month:'numeric', day:'numeric' }) + ' ' +
+                   d.toLocaleTimeString(loc, { hour:'2-digit', minute:'2-digit' });
+
+      const gname = (GAMES[it.gameId] ? GAMES[it.gameId][lang] : it.gameId);
+      return '<div class="ent-item">' +
+        '<div class="ent-head">' +
+          '<span class="ent-game">' + gname + ' ' + roundDisplay(it.roundNo, it.drawDate) + '</span>' +
+          '<span class="ent-tag ' + cls + '">' + tag + '</span>' +
+          '<span class="ent-when">' + when + '</span>' +
+        '</div>' +
+        entLinesHtml(it) +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[watch] 내 등록 목록 오류', e);
+    box.innerHTML = '<div class="ent-empty">' + t().entFail + '</div>';
   }
 }
 
@@ -909,6 +1056,8 @@ function applyLang(){
   setText('backBtn', t().back, 'back');
   setText('againBtn', t().again, 'again');
   setText('settingsBtn', t().settings, 'settings');
+  setText('myEntDesc', t().entDesc, 'entDesc');
+  setText('myEntTitle', fill(t().entTitle, { n: 0 }), 'entTitle');
   $('inputNotice').innerHTML = t().notice;
   setText('confirmNotice', t().confirmNotice, 'confirmNotice');
   $('doneNotice').innerHTML = t().doneNotice;
@@ -924,6 +1073,9 @@ function applyLang(){
   document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   renderTabs();
   renderRound();
+  // 2026-09-02: 목록의 종목 이름·상태도 언어를 따라가야 합니다.
+  // ⚠ 화면이 처음 뜰 때는 아직 안 그렸으므로 건너뜁니다(아래 시작부에서 부릅니다).
+  if (myEntriesReady) loadMyEntries();
 }
 
 function renderTabs(){
@@ -987,6 +1139,8 @@ applyLang();
 buildRows();
 loadNextRound();
 loadBalance();
+myEntriesReady = true;
+loadMyEntries();
 </script>
 </body>
 </html>
