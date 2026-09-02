@@ -96,6 +96,17 @@ main{ max-width:960px; margin:0 auto; padding:18px 20px 90px; }
 .sub{ color:var(--text-mid); font-size:13.5px; margin-top:8px; line-height:1.6; }
 .refresh-btn{ margin-top:14px; background:var(--gold); color:var(--ink); border:none; padding:9px 18px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit; }
 .refresh-btn:hover{ background:var(--gold-bright); }
+/* 🔴 2026-09-02 신설: 마지막으로 불러온 시각
+   ⚠ 이 화면은 저절로 갱신되지 않습니다. 열어두고 몇 시간 뒤에 보면
+     그때 그린 표가 그대로 남아 있어 "결과가 안 들어왔다"고 오해하게 됩니다.
+     실제로 그런 일이 있었습니다(2026-09-02). 언제 그린 표인지 반드시 보여줍니다. */
+.refresh-line{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:14px; }
+.refresh-line .refresh-btn{ margin-top:0; }
+.stamp{ font-size:12px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; }
+.stamp b{ color:var(--gold-bright); }
+/* 오래되면 눈에 띄게 — 5분 넘으면 노랑, 30분 넘으면 빨강 */
+.stamp.old{ color:var(--gold-bright); }
+.stamp.stale{ color:#e0788f; font-weight:700; }
 .refresh-btn:disabled{ opacity:0.5; cursor:not-allowed; }
 
 .section{ margin-top:30px; }
@@ -244,7 +255,7 @@ tr:last-child td{ border-bottom:none; }
       <div class="eyebrow">ADMIN · DATA STATUS</div>
       <h1 class="title">데이터 현황판</h1>
       <p class="sub">12개 게임의 현재 보유 데이터 최신회차와, 한국시간(KST) 기준 요일별 추첨 스케줄을 한눈에 봅니다.<br>이 화면은 내부 관리용입니다.</p>
-      <button class="refresh-btn" id="refreshBtnData" onclick="loadDataStatus()">🔄 새로고침</button>
+      <div class="refresh-line"><button class="refresh-btn" id="refreshBtnData" onclick="loadDataStatus()">🔄 새로고침</button><span class="stamp" id="stampData"></span></div>
 
       <div class="section">
         <div class="section-title">📋 게임별 최신 데이터 현황</div>
@@ -280,7 +291,7 @@ tr:last-child td{ border-bottom:none; }
       <div class="eyebrow">ADMIN · RACETRACK STATUS</div>
       <h1 class="title">🏇 경마 진행현황</h1>
       <p class="sub">게임별로 <b>어느 회차까지 경마 정산이 끝났는지</b>(추첨일 포함)와, <b>다음 경주가 몇 회차·언제(한국시간) 마감되는지</b>를 한눈에 봅니다.</p>
-      <button class="refresh-btn" id="refreshBtnRace" onclick="loadRaceStatus()">🔄 새로고침</button>
+      <div class="refresh-line"><button class="refresh-btn" id="refreshBtnRace" onclick="loadRaceStatus()">🔄 새로고침</button><span class="stamp" id="stampRace"></span></div>
 
       <div class="status-table-wrap">
         <table>
@@ -695,6 +706,48 @@ function fmtKstFromDate(date){
   return `${dateStr}(${wd}) ${timeStr}`;
 }
 
+// ══════════════════════════════════════════════════════════════
+// 🔴 2026-09-02 신설: "언제 그린 표인가"
+//
+//   이 화면은 저절로 갱신되지 않습니다. 열어두고 몇 시간 뒤에 보면
+//   그때 그린 표가 그대로 남아 있습니다.
+//   실제로 그것 때문에 "경마 결과가 이틀째 안 들어온다"고 오해한 일이
+//   있었습니다(2026-09-02). 데이터는 멀쩡했고 화면만 옛것이었습니다.
+//
+//   ⚠ 오래될수록 색이 바뀝니다. 5분 넘으면 노랑, 30분 넘으면 빨강.
+//     숫자만 적어두면 눈이 지나칩니다.
+// ══════════════════════════════════════════════════════════════
+const stampAt = { race: 0, data: 0 };
+
+function markStamp(which){
+  stampAt[which] = Date.now();
+  paintStamps();
+}
+
+function paintStamps(){
+  ['race', 'data'].forEach(function(which){
+    const el = document.getElementById('stamp' + which.charAt(0).toUpperCase() + which.slice(1));
+    if (!el) return;
+    const at = stampAt[which];
+    if (!at) { el.textContent = ''; el.className = 'stamp'; return; }
+
+    const d = new Date(at);
+    const hhmm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const mins = Math.floor((Date.now() - at) / 60000);
+
+    let ago;
+    if (mins < 1) ago = '방금';
+    else if (mins < 60) ago = mins + '분 전';
+    else ago = Math.floor(mins / 60) + '시간 ' + (mins % 60) + '분 전';
+
+    el.innerHTML = '마지막 확인 <b>' + hhmm + '</b> · ' + ago;
+    el.className = 'stamp' + (mins >= 30 ? ' stale' : (mins >= 5 ? ' old' : ''));
+  });
+}
+
+// ⚠ 30초마다 다시 칠합니다. 화면을 열어둔 채로도 시간이 흐르는 것이 보여야 합니다.
+setInterval(paintStamps, 30000);
+
 async function loadDataStatus(){
   const btn = document.getElementById('refreshBtnData');
   const body = document.getElementById('statusBodyData');
@@ -737,6 +790,7 @@ async function loadDataStatus(){
   }).join('');
 
   btn.disabled = false;
+  markStamp('data');   // 2026-09-02: 언제 그린 표인지 남깁니다
 }
 
 function renderWeekGrid(){
@@ -869,6 +923,7 @@ async function loadRaceStatus(){
 
   body.innerHTML = rowsHtml.join('');
   btn.disabled = false;
+  markStamp('race');   // 2026-09-02: 언제 그린 표인지 남깁니다
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1142,6 +1197,7 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
     btn2.disabled = false; btn2.textContent = '엑셀 다운로드';
   }
 });
+
 
 // ══════════════════════════════════════════════════════════════
 // 초기 로드 — 4개 화면 데이터를 페이지 열자마자 한꺼번에 미리 불러둡니다.
