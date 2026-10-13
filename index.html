@@ -259,6 +259,27 @@ main{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:10p
   .wf-hub-btn{ width:100%; text-align:center; }
 }
 
+/* ── 2026-10-13 신설: 다음 회차 추천번호 배너 (금색, 게임 보드 맨 위) ── */
+.pk-hub-banner{
+  display:flex; align-items:center; gap:22px; color:var(--text-hi); text-decoration:none;
+  background:radial-gradient(circle at 90% 10%, rgba(224,170,78,.28), transparent 55%), linear-gradient(135deg,#1b160b,#211a0d);
+  border:1.5px solid var(--gold); border-radius:18px; padding:26px 32px; margin:8px 0 34px; flex-wrap:wrap;
+  box-shadow:0 8px 30px rgba(224,170,78,.12); transition:transform .2s, border-color .2s;
+}
+.pk-hub-banner:hover{ transform:translateY(-3px); border-color:#e0aa4e; }
+.pk-hub-icon{ font-size:36px; flex-shrink:0; filter:drop-shadow(0 0 14px rgba(224,170,78,.5)); }
+.pk-hub-text{ flex:1; min-width:220px; }
+.pk-hub-tag{ font-size:10.5px; font-weight:700; letter-spacing:.1em; color:#e0aa4e; margin-bottom:6px; }
+.pk-hub-text h3{ font-family:'Fraunces',serif; font-size:21px; margin:0 0 6px; color:#f6efdc; }
+.pk-hub-text p{ font-size:12.5px; color:#cdbf98; line-height:1.6; margin:0; }
+.pk-hub-btn{ flex-shrink:0; background:linear-gradient(135deg,#e0aa4e,#b8862e); color:#1c2130; font-weight:800;
+  font-size:13.5px; padding:13px 24px; border-radius:9px; white-space:nowrap; }
+nav a.nav-picks{ color:#e0aa4e; font-weight:700; }
+@media (max-width:640px){
+  .pk-hub-banner{ padding:22px; text-align:center; justify-content:center; }
+  .pk-hub-btn{ width:100%; text-align:center; }
+}
+
 .fr-hub-banner{
   display:flex; align-items:center; gap:22px; background:var(--board-2); color:var(--text-hi);
   border:1.5px solid #3a5fa3; border-radius:18px; padding:28px 34px; margin-top:44px; flex-wrap:wrap;
@@ -549,6 +570,7 @@ function plOpenWin(a, name, w, h) {
     <span class="row-break-2"></span>
     <nav>
       <a href="#board" data-i18n="navGames">전체 게임</a>
+      <a href="paperlotto_picks.html" class="nav-picks" data-i18n="navPicks">🎯 다음 회차 추천번호</a>
       <a href="paperlotto_my_entries_updated.html" data-i18n="navMyEntries">내 등록번호</a>
       <a href="paperlotto_my_page.html" data-i18n="navMyPage">마이페이지</a>
       <a href="paperlotto_guide_mockup.html" data-i18n="navGuide">전략 가이드</a>
@@ -588,6 +610,16 @@ function plOpenWin(a, name, w, h) {
 </section>
 
 <main id="board">
+
+  <a class="pk-hub-banner" href="paperlotto_picks.html">
+    <div class="pk-hub-icon">🎯</div>
+    <div class="pk-hub-text">
+      <div class="pk-hub-tag" data-i18n="pkBannerTag">NEW · 추첨이 끝날 때마다 자동 갱신</div>
+      <h3 data-i18n="pkBannerTitle">다음 회차 추천번호 — 12개 복권 모두</h3>
+      <p data-i18n="pkBannerDesc">가장 최근 추첨까지 반영해 10가지 기준마다 10조합, 게임마다 100조합. 기준 1개는 무료, 기준별 성적표도 공개합니다. 재미·참고용이며 당첨을 보장하지 않습니다.</p>
+    </div>
+    <span class="pk-hub-btn" data-i18n="pkBannerBtn">추천번호 보기 →</span>
+  </a>
 
   <div class="region" data-region="us">
     <div class="region-head"><h2>🇺🇸 <span data-i18n="regionUS">미국</span></h2><span class="region-en mono">UNITED STATES</span><span class="region-count mono">2 GAMES</span></div>
@@ -864,6 +896,7 @@ const i18n = {
     prBannerTitle:"이미 추첨 끝난 회차, 내 번호였다면?",
     prBannerDesc:"과거 회차를 골라 번호를 등록하면, 등록 즉시 채점 결과를 바로 확인할 수 있습니다.",
     prBannerBtn:"과거 회차 도전하기 →",
+    navPicks:"🎯 다음 회차 추천번호", pkBannerTag:"NEW · 추첨이 끝날 때마다 자동 갱신", pkBannerTitle:"다음 회차 추천번호 — 12개 복권 모두", pkBannerDesc:"가장 최근 추첨까지 반영해 10가지 기준마다 10조합, 게임마다 100조합. 기준 1개는 무료, 기준별 성적표도 공개합니다. 재미·참고용이며 당첨을 보장하지 않습니다.", pkBannerBtn:"추천번호 보기 →",
     frBannerTitle:"현재 판매중이며 추첨대기중인 복권에 도전합니다",
     frBannerDesc:"아직 추첨 전인 회차에 내 전략 번호를 등록하세요. 게임마다 등록마감까지 남은 시간을 바로 확인할 수 있습니다.",
     frBannerBtn:"추첨대기중 목록 보기 →",
@@ -897,6 +930,7 @@ const i18n = {
     prBannerTitle:"Wonder if your numbers would've won a past draw?",
     prBannerDesc:"Pick a past round and register your numbers — get graded instantly.",
     prBannerBtn:"Try a past round →",
+    navPicks:"🎯 Next-Draw Picks", pkBannerTag:"NEW · REFRESHED AFTER EVERY DRAW", pkBannerTitle:"Next-Draw Picks — all 12 lotteries", pkBannerDesc:"Using every result up to the latest draw: 10 sets for each of 10 angles, 100 sets per game. One angle is free and the per-angle scoreboard is public. For fun and reference only — no win is guaranteed.", pkBannerBtn:"See the picks →",
     frBannerTitle:"Challenge a round that's on sale right now",
     frBannerDesc:"Register your strategy numbers for a round that hasn't been drawn yet. See the time left to register for each game.",
     frBannerBtn:"View on-sale rounds →",
@@ -930,6 +964,7 @@ const i18n = {
     prBannerTitle:"すでに抽選が終わった回、自分の番号だったら？",
     prBannerDesc:"過去の回を選んで番号を登録すると、登録後すぐに結果を確認できます。",
     prBannerBtn:"過去回にチャレンジ →",
+    navPicks:"🎯 次回おすすめ番号", pkBannerTag:"NEW · 抽せんのたびに自動更新", pkBannerTitle:"次回おすすめ番号 — 12種類すべて", pkBannerDesc:"最新の抽せんまで反映し、10の基準ごとに10組、ゲームごとに100組。1つの基準は無料、基準別の成績表も公開します。娯楽・参考用で、当選を保証するものではありません。", pkBannerBtn:"おすすめ番号を見る →",
     frBannerTitle:"現在販売中で抽選待ちの宝くじに挑戦する",
     frBannerDesc:"まだ抽選されていない回に戦略番号を登録しましょう。ゲームごとの登録締切までの残り時間をすぐ確認できます。",
     frBannerBtn:"抽選待ち一覧を見る →",

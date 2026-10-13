@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaperLotto — 다음 회차 추천번호</title>
+<!-- 2026-10-13 신설: 12개 게임 "다음 회차 추천번호" (서버 함수 next-picks) -->
+<script src="paperlotto_lang.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#0c1020; --board-2:#111731; --board-line:#242c4d;
+  --paper:#f6f1e4; --paper-2:#efe8d6; --ink:#1c2130; --ink-dim:#5b5646;
+  --gold:#b8862e; --gold-bright:#e0aa4e;
+  --text-hi:#f2efe4; --text-mid:#a7adc7; --text-dim:#6b7195;
+  --ok:#1f7a4f; --err:#c65a2e;
+}
+*{box-sizing:border-box;}
+body{ margin:0; background:var(--board); color:var(--text-hi); min-height:100vh; font-family:'Inter',sans-serif; word-break:keep-all; }
+h1,h2,h3{ font-family:'Fraunces',serif; margin:0; }
+a{ color:inherit; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+
+header{ position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between;
+  padding:14px 24px; border-bottom:1px solid var(--board-line); flex-wrap:wrap; gap:10px;
+  background:rgba(12,16,32,0.92); backdrop-filter:blur(6px); }
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; }
+.brand-mark{ width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); display:flex; align-items:center; justify-content:center; color:var(--ink); font-weight:700; font-family:'Fraunces',serif; transform:rotate(-4deg); }
+.brand-name{ font-size:16px; font-weight:600; }
+.brand-name em{ font-style:normal; color:var(--gold-bright); }
+.hdr-right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.back-link{ font-size:12.5px; color:var(--text-mid); text-decoration:none; }
+.back-link:hover{ color:var(--gold-bright); }
+.lang-toggle{ display:flex; border:1px solid var(--board-line); border-radius:20px; overflow:hidden; }
+.lang-toggle button{ border:none; background:transparent; color:var(--text-dim); font-size:11.5px; font-weight:600; padding:6px 11px; cursor:pointer; font-family:'Inter',sans-serif; }
+.lang-toggle button.active{ background:var(--gold); color:var(--ink); }
+
+main{ max-width:980px; margin:0 auto; padding:26px 20px 100px; }
+
+.hero{ position:relative; overflow:hidden; border:1px solid #4a3c1c; border-radius:18px; padding:24px 26px; margin-bottom:18px;
+  background:radial-gradient(circle at 88% 15%, rgba(224,170,78,.25), transparent 55%), linear-gradient(135deg,#17130a,#1d1810); }
+.hero-tag{ font-size:10.5px; font-weight:700; letter-spacing:.1em; color:var(--gold-bright); margin-bottom:8px; }
+.hero h1{ font-size:24px; line-height:1.3; }
+.hero-sub{ font-size:13px; color:#cdbf98; margin-top:8px; line-height:1.6; }
+.honest{ margin-top:14px; font-size:11.5px; color:#b9b39b; line-height:1.7; background:rgba(0,0,0,.25); border:1px solid rgba(224,170,78,.2); border-radius:10px; padding:10px 13px; }
+
+.games{ display:flex; gap:8px; overflow-x:auto; padding:4px 2px 12px; margin-bottom:6px; scrollbar-width:thin; }
+.gchip{ flex-shrink:0; border:1px solid var(--board-line); background:var(--board-2); color:var(--text-mid); border-radius:12px; padding:9px 12px; cursor:pointer; text-align:left; font-family:inherit; min-width:128px; }
+.gchip .gc-name{ font-size:12.5px; font-weight:700; color:var(--text-hi); white-space:nowrap; }
+.gchip .gc-when{ font-size:10.5px; margin-top:3px; white-space:nowrap; }
+.gchip.active{ border-color:var(--gold-bright); background:#231c0e; }
+.gchip.active .gc-name{ color:var(--gold-bright); }
+.gc-when.wait{ color:#d58a5e; }
+
+.roundbar{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:6px 2px 14px; }
+.roundbar h2{ font-size:20px; }
+.roundbar .rb-sub{ font-size:12px; color:var(--text-mid); }
+.countdown{ font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--gold-bright); }
+.waitbox{ background:#2a1a12; border:1px solid #6b3b22; color:#f0c3a5; border-radius:12px; padding:12px 14px; font-size:12.5px; line-height:1.6; margin-bottom:14px; }
+
+.tabs{ display:flex; gap:8px; margin-bottom:14px; }
+.tab{ flex:1; padding:11px; border-radius:10px; border:1px solid var(--board-line); background:transparent; color:var(--text-mid); font-weight:700; font-size:13px; cursor:pointer; font-family:inherit; }
+.tab.active{ background:var(--paper); color:var(--ink); border-color:var(--paper); }
+
+.unlock{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; background:var(--paper); color:var(--ink); border-radius:14px; padding:16px 18px; margin-bottom:14px; border:2px solid var(--gold-bright); }
+.ul-text{ font-size:14px; line-height:1.5; }
+.ul-text b{ color:var(--gold); }
+.ul-sub{ font-size:11.5px; color:var(--ink-dim); margin-top:3px; }
+.btn-gold{ border:none; border-radius:10px; padding:11px 20px; background:linear-gradient(135deg,var(--gold-bright),var(--gold)); color:var(--ink); font-weight:800; font-size:14px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+.btn-gold:disabled{ opacity:.55; cursor:not-allowed; }
+.ul-msg{ flex-basis:100%; font-size:12px; }
+.ul-msg.err{ color:var(--err); } .ul-msg a{ color:var(--gold); font-weight:700; }
+.unlocked-badge{ background:#14301f; border:1px solid #2c6b45; color:#a8e3bf; border-radius:12px; padding:11px 14px; font-size:12.5px; margin-bottom:14px; }
+
+.card{ background:var(--paper); color:var(--ink); border-radius:14px; padding:18px 20px; margin-bottom:12px; }
+.card-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.card-name{ font-family:'Fraunces',serif; font-size:16px; font-weight:700; }
+.card-desc{ font-size:12px; color:var(--ink-dim); margin:5px 0 10px; line-height:1.55; }
+.chip{ font-size:10.5px; font-weight:700; border-radius:20px; padding:3px 10px; border:1px solid #c9bfa5; color:var(--ink-dim); white-space:nowrap; }
+.chip.free{ border-color:var(--ok); color:var(--ok); }
+.chip.lock{ border-color:var(--gold); color:var(--gold); }
+.set{ display:flex; align-items:center; gap:5px; padding:6px 0; border-top:1px dashed #ddd3b8; flex-wrap:nowrap; }
+.set-no{ width:20px; font-size:11px; color:var(--ink-dim); font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
+.ball{ width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12.5px; background:#fff; border:1.5px solid var(--ink); color:var(--ink); flex-shrink:0; }
+.ball.b{ background:var(--gold-bright); border-color:var(--gold); }
+.plus{ color:var(--ink-dim); font-size:12px; margin:0 1px; }
+.ball.ghost{ filter:blur(3px); color:transparent; background:#e6dcc3; border-color:#cfc4a6; }
+.copy{ margin-left:auto; border:1px solid #cfc4a6; background:transparent; border-radius:7px; padding:4px 9px; font-size:11px; cursor:pointer; color:var(--ink-dim); font-family:inherit; flex-shrink:0; }
+.copy:hover{ border-color:var(--gold); color:var(--gold); }
+.locked-box{ position:relative; }
+.veil{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; color:var(--gold); background:rgba(246,241,228,.55); }
+.info{ margin-top:10px; font-size:11.5px; color:var(--ink-dim); line-height:1.9; }
+.mini{ display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11px; background:var(--paper-2); border-radius:6px; padding:1px 7px; margin:0 4px 3px 0; }
+.empty{ text-align:center; color:var(--text-mid); padding:50px 10px; font-size:13px; line-height:1.7; }
+.copy-all{ display:block; margin:4px 0 14px auto; border:1px solid var(--board-line); background:transparent; color:var(--text-mid); border-radius:8px; padding:7px 12px; font-size:12px; cursor:pointer; font-family:inherit; }
+
+table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+th{ text-align:left; padding:8px 6px; color:var(--ink-dim); font-size:11px; border-bottom:1.5px solid #d9d1ba; white-space:nowrap; }
+td{ padding:8px 6px; border-bottom:1px solid #ece4cf; }
+td.num, th.num{ text-align:right; font-family:'IBM Plex Mono',monospace; }
+tr.base td{ color:var(--ink-dim); font-style:italic; }
+.bar{ display:inline-block; height:6px; background:var(--gold); border-radius:3px; margin-left:6px; vertical-align:middle; }
+.theory{ font-size:11.5px; color:var(--ink-dim); margin-top:12px; line-height:1.65; }
+.round-block{ border-top:1px solid #ddd3b8; padding:10px 0; }
+.round-title{ font-weight:700; font-size:13px; margin-bottom:6px; display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+.rb-row{ display:flex; align-items:center; gap:4px; font-size:11.5px; padding:2px 0; }
+.rb-name{ width:150px; flex-shrink:0; color:var(--ink-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sb{ width:22px; height:22px; font-size:10px; border-width:1px; }
+.sb.hit{ background:var(--ink); color:var(--paper); }
+.toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--paper); color:var(--ink); padding:10px 16px; border-radius:10px; font-size:13px; box-shadow:0 6px 24px rgba(0,0,0,.4); display:none; z-index:20; max-width:90vw; }
+
+@media (max-width:640px){
+  header{ padding:12px 14px; }
+  main{ padding:18px 12px 80px; }
+  .hero{ padding:20px 18px; } .hero h1{ font-size:20px; }
+  .card{ padding:14px 12px; }
+  .ball{ width:26px; height:26px; font-size:11px; }
+  .set{ gap:3px; }
+  .rb-name{ width:96px; }
+  #cards.dense .ball{ width:22px; height:22px; font-size:9.5px; border-width:1px; }
+  #cards.dense .set{ gap:2px; }
+  #cards.dense .plus{ margin:0; }
+  #cards.dense .copy{ padding:3px 5px; font-size:0; }
+  #cards.dense .copy::before{ content:'📋'; font-size:12px; }
+  #cards.dense .set-no{ width:16px; }
+  .sb{ width:19px; height:19px; font-size:9px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="index.html">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">Paper<em>Lotto</em></div>
+  </a>
+  <div class="hdr-right">
+    <a class="back-link" href="index.html" data-i18n="navBack">← 전체 게임</a>
+    <div id="authWidget"></div>
+    <div class="lang-toggle">
+      <button data-lang="ko" type="button">KR</button>
+      <button data-lang="en" type="button">EN</button>
+      <button data-lang="ja" type="button">JA</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-tag" data-i18n="heroTag">NEW · 추첨이 끝날 때마다 자동 갱신</div>
+    <h1 data-i18n="heroTitle">다음 회차 추천번호</h1>
+    <div class="hero-sub" data-i18n="heroSub">12개 복권 모두, 가장 최근 추첨까지 반영해 10가지 기준마다 10조합 — 게임마다 100조합을 새로 뽑아 둡니다. 일주일에 세 번 추첨하는 게임도 결과가 들어올 때마다 바뀝니다.</div>
+    <div class="honest" data-i18n="honest">추첨은 매번 완전히 무작위라서 어떤 방법으로도 당첨 확률을 높일 수 없습니다. 이 번호들은 여러 관점으로 골라 본 재미·참고용 조합이며 당첨을 보장하지 않습니다. '기준별 성적표'에서 각 기준이 지난 회차에 실제로 몇 개를 맞혔는지 그대로 확인하실 수 있습니다.</div>
+  </section>
+
+  <div class="games" id="games"></div>
+
+  <div class="roundbar">
+    <div>
+      <h2 id="roundTitle">…</h2>
+      <div class="rb-sub" id="roundSub"></div>
+    </div>
+    <div class="countdown" id="countdown"></div>
+  </div>
+  <div id="waitBox"></div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabPicks" type="button" data-i18n="tabPicks">추천번호</button>
+    <button class="tab" id="tabScore" type="button" data-i18n="tabScore">기준별 성적표</button>
+  </div>
+
+  <div id="paneP">
+    <div id="unlockArea"></div>
+    <div id="cards"><div class="empty" data-i18n="loading">불러오는 중…</div></div>
+  </div>
+  <div id="paneS" style="display:none;"><div class="empty" data-i18n="loading">불러오는 중…</div></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="auth-widget.js"></script>
+<script>
+const SUPABASE_URL = "https://wzrqaozlbfyejsbvnrxk.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3KrYMzwrVlbYr-e9d8UiLA_KgvSs8tC";
+const FN = SUPABASE_URL + "/functions/v1/next-picks";
+const RECHARGE_PAGE = "paperlotto_recharge_mockup.html";
+const LOGIN_PAGE = "paperlotto_login_connected.html";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const GAMES = [
+  { id:'us_powerball',    flag:'🇺🇸', ko:'미국 파워볼',      en:'US Powerball',        ja:'米パワーボール' },
+  { id:'us_megamillions', flag:'🇺🇸', ko:'메가밀리언스',      en:'Mega Millions',       ja:'メガミリオンズ' },
+  { id:'eu_euromillions', flag:'🇪🇺', ko:'유로밀리언스',      en:'EuroMillions',        ja:'ユーロミリオンズ' },
+  { id:'jp_miniloto',     flag:'🇯🇵', ko:'일본 미니로또',     en:'Japan Mini Loto',     ja:'ミニロト' },
+  { id:'jp_loto6',        flag:'🇯🇵', ko:'일본 로또6',       en:'Japan Loto 6',        ja:'ロト6' },
+  { id:'jp_loto7',        flag:'🇯🇵', ko:'일본 로또7',       en:'Japan Loto 7',        ja:'ロト7' },
+  { id:'ca_lotto649',     flag:'🇨🇦', ko:'캐나다 로또 6/49', en:'Canada Lotto 6/49',   ja:'カナダ ロト6/49' },
+  { id:'ca_lottomax',     flag:'🇨🇦', ko:'캐나다 로또맥스',   en:'Canada Lotto Max',    ja:'ロトマックス' },
+  { id:'au_powerball',    flag:'🇦🇺', ko:'호주 파워볼',      en:'Australia Powerball', ja:'豪パワーボール' },
+  { id:'au_ozlotto',      flag:'🇦🇺', ko:'호주 오즈로또',     en:'Oz Lotto',            ja:'オズロト' },
+  { id:'au_tattslotto',   flag:'🇦🇺', ko:'호주 새터데이로또', en:'Saturday Lotto',      ja:'サタデーロト' },
+  { id:'kr_lotto645',     flag:'🇰🇷', ko:'한국 로또 6/45',   en:'Korea Lotto 6/45',    ja:'韓国ロト6/45' },
+];
+
+const I18N = {
+  ko: {
+    navBack:'← 전체 게임', heroTag:'NEW · 추첨이 끝날 때마다 자동 갱신', heroTitle:'다음 회차 추천번호',
+    heroSub:'12개 복권 모두, 가장 최근 추첨까지 반영해 10가지 기준마다 10조합 — 게임마다 100조합을 새로 뽑아 둡니다. 일주일에 세 번 추첨하는 게임도 결과가 들어올 때마다 바뀝니다.',
+    honest:"추첨은 매번 완전히 무작위라서 어떤 방법으로도 당첨 확률을 높일 수 없습니다. 이 번호들은 여러 관점으로 골라 본 재미·참고용 조합이며 당첨을 보장하지 않습니다. '기준별 성적표'에서 각 기준이 지난 회차에 실제로 몇 개를 맞혔는지 그대로 확인하실 수 있습니다.",
+    tabPicks:'추천번호', tabScore:'기준별 성적표', loading:'불러오는 중…',
+    roundTitle:(n)=>'제 '+n+'회 추천번호', drawAt:'추첨 ', computed:' · 계산 ', left:'추첨까지 ',
+    d:'일 ', wait:'결과 반영 대기', soon:'추첨까지 ',
+    waitMsg:'이 회차 추첨 시각이 지났습니다. 결과가 반영되면(해외 복권은 관리자 확인 후) 다음 회차 추천번호가 자동으로 새로 나옵니다. 그동안 입장권 판매는 멈춥니다.',
+    notReady:'이 게임은 아직 추천번호를 만들 만큼 지난 결과가 쌓이지 않았습니다.', loadErr:'추천번호를 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.',
+    unlockText:(p,c,s)=>'<b>'+p+'P</b> 입장권으로 이 회차 <b>'+c+'개 기준 · '+s+'조합</b>을 모두 보기',
+    unlockSub:'게임·회차별 입장권입니다. 한 번 사면 이 회차 추첨 전까지 다시 들어와도 무료입니다.',
+    unlockBtn:'입장하기', unlocked:'✓ 이 회차 입장권이 있습니다. 모든 기준을 보실 수 있습니다.', allFree:'✓ 지금은 모든 기준이 무료로 열려 있습니다.',
+    confirm:(p)=>p+'P가 차감됩니다. 이 게임의 이 회차 추천번호를 모두 볼까요?',
+    needLogin:'로그인이 필요합니다.', loginLink:'로그인하기 →', short:(n)=>'포인트가 부족합니다 ('+n.toLocaleString()+'P 부족).', recharge:'충전하기 →',
+    closed:'이 회차는 추첨이 끝나 입장권을 팔지 않습니다.', changed:'회차가 바뀌었습니다. 새로고침합니다.', genericErr:'처리 중 오류가 발생했습니다.',
+    charged:(p)=>'✅ '+p+'P 차감 — 모든 기준이 열렸습니다.',
+    free:'무료', pass:'입장권', open:'열림', lockedSets:(n)=>n+'개 조합 — 입장권으로 보기', copy:'복사', copied:'복사했습니다: ', copyAll:'열린 조합 모두 복사',
+    bonus:'보너스',
+    infoBalanced:(o,s)=>'홀수 개수 '+o.join(' 또는 ')+'개 · 합계 '+s[0]+'~'+s[1],
+    infoHot:(w)=>'최근 '+w+'회 자주 나온 번호(나온 횟수): ', infoCold:'오래 안 나온 번호(안 나온 회차 수): ',
+    infoDue:'주기 도래 번호(쉬는 중/평소 간격): ', infoCarry:'지난 회차 당첨번호: ', infoNeighbor:'이웃수 후보: ',
+    infoPairs:(w)=>'최근 '+w+'회 짝꿍수(함께 나온 횟수): ', infoZones:(c,z)=>'구간마다 '+c+'개 이하, '+z+'개 구간 이상', infoFresh:(n,l)=>'역대 '+n+'회 당첨번호 모두와 '+l+'개 이상 겹치지 않습니다.',
+    sbTitle:(n)=>'최근 '+n+'회 기준별 성적 (본번호 기준)', colCrit:'기준', colRounds:'회차', colAvg:'평균 맞힘', colBest:'최고',
+    colHit:(k)=>k+'개', colHitUp:(k)=>k+'개↑',
+    theory:(c,e)=>'참고: 아무 번호나 골라도 평균으로 맞히는 본번호 개수는 '+c+'×'+c+'÷범위 = '+e.toFixed(2)+'개입니다. 기준마다 조합 10개로 계산했고, 지난 회차 성적은 그 회차보다 앞선 결과만 써서 거꾸로 계산한 값입니다. \'완전 무작위\'는 추천이 아니라 비교용 기준선입니다. 회차가 적으면 운에 따라 크게 흔들립니다.',
+    recentTitle:'최근 회차별 결과 (기준마다 가장 많이 맞힌 조합)', roundN:(n)=>'제 '+n+'회', bestN:(n)=>'최고 '+n+'개', noScore:'아직 채점된 회차가 없습니다.',
+  },
+  en: {
+    navBack:'← All Games', heroTag:'NEW · REFRESHED AFTER EVERY DRAW', heroTitle:'Next-Draw Picks',
+    heroSub:'For all 12 lotteries we pick 10 sets for each of 10 angles — 100 sets per game — using every result up to the latest draw. Games drawn three times a week refresh each time a result comes in.',
+    honest:'Every draw is completely random, so no method can raise your odds. These are combinations picked from different angles for fun and reference only — no win is guaranteed. The Scoreboard shows exactly how many numbers each angle actually hit in past draws.',
+    tabPicks:'Picks', tabScore:'Scoreboard', loading:'Loading…',
+    roundTitle:(n)=>'Draw #'+n+' picks', drawAt:'Draw ', computed:' · computed ', left:'Draw in ',
+    d:'d ', wait:'Waiting for result', soon:'Draw in ',
+    waitMsg:'This draw has taken place. As soon as the result is in (overseas results after admin review), picks for the next draw appear automatically. Passes are paused meanwhile.',
+    notReady:'Not enough past results for this game yet.', loadErr:'Could not load picks. Please try again shortly.',
+    unlockText:(p,c,s)=>'See all <b>'+c+' angles · '+s+' sets</b> for this draw with a <b>'+p+'P</b> pass',
+    unlockSub:'One pass per game and draw. Buy once, revisit free until this draw.',
+    unlockBtn:'Unlock', unlocked:'✓ You have a pass for this draw — every angle is open.', allFree:'✓ All angles are free right now.',
+    confirm:(p)=>p+'P will be deducted. Unlock all picks for this game and draw?',
+    needLogin:'Please log in.', loginLink:'Log in →', short:(n)=>'Not enough points ('+n.toLocaleString()+'P short).', recharge:'Charge →',
+    closed:'This draw has closed — passes are not sold.', changed:'The draw changed. Reloading.', genericErr:'Something went wrong.',
+    charged:(p)=>'✅ '+p+'P deducted — all angles unlocked.',
+    free:'FREE', pass:'Pass', open:'Open', lockedSets:(n)=>n+' sets — unlock with a pass', copy:'Copy', copied:'Copied: ', copyAll:'Copy all open sets',
+    bonus:'Bonus',
+    infoBalanced:(o,s)=>'Odd count '+o.join(' or ')+' · sum '+s[0]+'–'+s[1],
+    infoHot:(w)=>'Most frequent in last '+w+' (times): ', infoCold:'Longest absent (draws missed): ',
+    infoDue:'Due numbers (resting / usual gap): ', infoCarry:'Previous draw: ', infoNeighbor:'Neighbour candidates: ',
+    infoPairs:(w)=>'Top pairs in last '+w+' (times): ', infoZones:(c,z)=>'At most '+c+' per zone, at least '+z+' zones', infoFresh:(n,l)=>'Shares fewer than '+l+' numbers with every one of '+n+' past draws.',
+    sbTitle:(n)=>'Last '+n+' draws by angle (main numbers)', colCrit:'Angle', colRounds:'Draws', colAvg:'Avg hits', colBest:'Best',
+    colHit:(k)=>k+' hit', colHitUp:(k)=>k+'+ hit',
+    theory:(c,e)=>'Note: any random pick hits '+c+'×'+c+'÷range = '+e.toFixed(2)+' main numbers on average. Each angle uses 10 sets; past draws were recomputed using only results before that draw. "Pure random" is a comparison baseline, not a pick. With few draws, luck dominates.',
+    recentTitle:'Recent draws (best set of each angle)', roundN:(n)=>'Draw #'+n, bestN:(n)=>'best '+n, noScore:'No graded draws yet.',
+  },
+  ja: {
+    navBack:'← すべてのゲーム', heroTag:'NEW · 抽せんのたびに自動更新', heroTitle:'次回おすすめ番号',
+    heroSub:'12種類すべての宝くじで、最新の抽せんまで反映し、10の基準ごとに10組 — ゲームごとに100組を新しく選んでおきます。週3回抽せんするゲームも結果が入るたびに変わります。',
+    honest:'抽せんは毎回完全にランダムなので、どんな方法でも当選確率は上がりません。これらはいろいろな観点で選んだ娯楽・参考用の組み合わせで、当選を保証するものではありません。「基準別成績表」で各基準が過去の回に実際いくつ当てたかをそのまま確認できます。',
+    tabPicks:'おすすめ番号', tabScore:'基準別成績表', loading:'読み込み中…',
+    roundTitle:(n)=>'第'+n+'回 おすすめ番号', drawAt:'抽せん ', computed:' · 計算 ', left:'抽せんまで ',
+    d:'日 ', wait:'結果反映待ち', soon:'抽せんまで ',
+    waitMsg:'この回の抽せん時刻を過ぎました。結果が反映されると(海外の宝くじは管理者確認後)次回のおすすめ番号が自動で出ます。その間は入場券の販売を止めます。',
+    notReady:'このゲームはまだおすすめ番号を作るだけの過去結果がありません。', loadErr:'おすすめ番号を読み込めませんでした。しばらくしてからお試しください。',
+    unlockText:(p,c,s)=>'<b>'+p+'P</b>の入場券でこの回の<b>'+c+'基準・'+s+'組</b>をすべて見る',
+    unlockSub:'ゲーム・回ごとの入場券です。一度買えば、この回の抽せんまで何度入っても無料です。',
+    unlockBtn:'入場する', unlocked:'✓ この回の入場券をお持ちです。すべての基準を見られます。', allFree:'✓ 現在すべての基準が無料で公開されています。',
+    confirm:(p)=>p+'Pが差し引かれます。このゲームのこの回のおすすめ番号をすべて見ますか?',
+    needLogin:'ログインが必要です。', loginLink:'ログイン →', short:(n)=>'ポイントが足りません('+n.toLocaleString()+'P不足)。', recharge:'チャージ →',
+    closed:'この回は抽せんが終わったため入場券を販売していません。', changed:'回が変わりました。再読み込みします。', genericErr:'処理中にエラーが発生しました。',
+    charged:(p)=>'✅ '+p+'P差し引き — すべての基準が開きました。',
+    free:'無料', pass:'入場券', open:'公開', lockedSets:(n)=>n+'組 — 入場券で見る', copy:'コピー', copied:'コピーしました: ', copyAll:'公開中の組をすべてコピー',
+    bonus:'ボーナス',
+    infoBalanced:(o,s)=>'奇数の数 '+o.join('または')+'個 · 合計 '+s[0]+'〜'+s[1],
+    infoHot:(w)=>'直近'+w+'回でよく出た番号(回数): ', infoCold:'長く出ていない番号(出ていない回数): ',
+    infoDue:'周期が来た番号(休み中/普段の間隔): ', infoCarry:'前回の当選番号: ', infoNeighbor:'隣の数字の候補: ',
+    infoPairs:(w)=>'直近'+w+'回のペア(一緒に出た回数): ', infoZones:(c,z)=>'区間ごとに'+c+'個以下、'+z+'区間以上', infoFresh:(n,l)=>'過去'+n+'回の当選番号すべてと'+l+'個以上重なりません。',
+    sbTitle:(n)=>'直近'+n+'回 基準別成績(本数字)', colCrit:'基準', colRounds:'回数', colAvg:'平均的中', colBest:'最高',
+    colHit:(k)=>k+'個', colHitUp:(k)=>k+'個以上',
+    theory:(c,e)=>'参考: どんな番号を選んでも平均で当たる本数字は '+c+'×'+c+'÷範囲 = '+e.toFixed(2)+'個です。基準ごとに10組で計算し、過去の成績はその回より前の結果だけで逆算した値です。「完全ランダム」はおすすめではなく比較用の基準線です。回数が少ないと運で大きくぶれます。',
+    recentTitle:'直近の回ごとの結果(基準ごとに最も当たった組)', roundN:(n)=>'第'+n+'回', bestN:(n)=>'最高'+n+'個', noScore:'まだ採点された回がありません。',
+  },
+};
+
+let LANG = (typeof window.getPaperLottoLang === 'function') ? window.getPaperLottoLang() : (localStorage.getItem('paperlotto_lang') || 'ko');
+if (!I18N[LANG]) LANG = 'ko';
+const T = () => I18N[LANG];
+const N3 = (o) => (o && (o[LANG] || o.ko)) || '';
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gameName = (g) => g[LANG] || g.ko;
+
+let GAME = new URLSearchParams(location.search).get('game') || '';
+let OVERVIEW = {}; let DATA = null; let SCORE = null; let TAB = location.hash === '#score' ? 'score' : 'picks'; let cdTimer = null;
+
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => { t.style.display = 'none'; }, 2600); }
+function fmtDate(iso){
+  if (!iso) return '';
+  const loc = LANG === 'ko' ? 'ko-KR' : LANG === 'ja' ? 'ja-JP' : 'en-US';
+  return new Date(iso).toLocaleString(loc, { month:'short', day:'numeric', weekday:'short', hour:'2-digit', minute:'2-digit' });
+}
+function leftText(iso){
+  const ms = Date.parse(iso) - Date.now();
+  if (ms <= 0) return null;
+  const d = Math.floor(ms / 86400000), h = Math.floor(ms / 3600000) % 24, m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
+  return (d ? d + T().d : '') + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+async function token(){ try { const { data } = await sb.auth.getSession(); return data.session ? data.session.access_token : null; } catch(e){ return null; } }
+async function headers(){ const t = await token(); return t ? { Authorization:'Bearer ' + t, apikey:SUPABASE_KEY } : { apikey:SUPABASE_KEY }; }
+
+// ── 게임 고르기 ─────────────────────────────────────────────────────────
+function renderGames(){
+  const order = GAMES.slice().sort((a, b) => {
+    const A = OVERVIEW[a.id], B = OVERVIEW[b.id];
+    const ta = A && A.status === 'open' && A.drawAt ? Date.parse(A.drawAt) : Infinity;
+    const tb = B && B.status === 'open' && B.drawAt ? Date.parse(B.drawAt) : Infinity;
+    return ta - tb;
+  });
+  document.getElementById('games').innerHTML = order.map((g) => {
+    const o = OVERVIEW[g.id];
+    let when = '';
+    if (o && o.status === 'waiting_result') when = '<div class="gc-when wait">' + esc(T().wait) + '</div>';
+    else if (o && o.drawAt) when = '<div class="gc-when mono" data-left="' + o.drawAt + '">' + esc(leftText(o.drawAt) || '') + '</div>';
+    else when = '<div class="gc-when">&nbsp;</div>';
+    return '<button type="button" class="gchip' + (g.id === GAME ? ' active' : '') + '" onclick="selectGame(\'' + g.id + '\')">' +
+      '<div class="gc-name">' + g.flag + ' ' + esc(gameName(g)) + '</div>' + when + '</button>';
+  }).join('');
+}
+function selectGame(id){
+  if (id === GAME && DATA) return;
+  GAME = id; DATA = null; SCORE = null;
+  const u = new URL(location.href); u.searchParams.set('game', id); history.replaceState(null, '', u.pathname + u.search + location.hash);
+  renderGames(); loadGame();
+}
+
+async function loadOverview(){
+  try {
+    const r = await fetch(FN + '?view=overview', { headers:{ apikey:SUPABASE_KEY } });
+    const d = await r.json();
+    (d.games || []).forEach((g) => { OVERVIEW[g.game] = g; });
+  } catch(e){}
+  if (!GAME) {
+    const open = GAMES.map((g) => OVERVIEW[g.id]).filter((o) => o && o.status === 'open' && o.drawAt).sort((a, b) => Date.parse(a.drawAt) - Date.parse(b.drawAt));
+    GAME = open.length ? open[0].game : GAMES[0].id;
+  }
+  renderGames();
+  const act = document.querySelector('.gchip.active'); if (act) act.scrollIntoView({ inline:'center', block:'nearest' });
+}
+
+async function loadGame(){
+  document.getElementById('cards').innerHTML = '<div class="empty">' + esc(T().loading) + '</div>';
+  document.getElementById('unlockArea').innerHTML = '';
+  try {
+    const r = await fetch(FN + '?game=' + encodeURIComponent(GAME), { headers: await headers() });
+    DATA = await r.json();
+    if (!r.ok) DATA = { error:true };
+  } catch(e){ DATA = { error:true }; }
+  renderHead(); renderPicks();
+  if (TAB === 'score') loadScore();
+}
+
+// ── 머리: 회차·추첨 시각·남은 시간 ─────────────────────────────────────────
+function renderHead(){
+  const g = GAMES.find((x) => x.id === GAME) || GAMES[0];
+  const tt = document.getElementById('roundTitle'), sub = document.getElementById('roundSub'), wb = document.getElementById('waitBox');
+  if (!DATA || DATA.error || !DATA.round) { tt.textContent = g.flag + ' ' + gameName(g); sub.textContent = ''; wb.innerHTML = ''; document.getElementById('countdown').textContent = ''; return; }
+  tt.textContent = g.flag + ' ' + gameName(g) + ' · ' + T().roundTitle(DATA.round);
+  sub.textContent = (DATA.drawAt ? T().drawAt + fmtDate(DATA.drawAt) : '') + (DATA.generatedAt ? T().computed + fmtDate(DATA.generatedAt) : '');
+  wb.innerHTML = DATA.status === 'waiting_result' ? '<div class="waitbox">⏳ ' + esc(T().waitMsg) + '</div>' : '';
+  tick();
+}
+function tick(){
+  const cd = document.getElementById('countdown');
+  if (DATA && DATA.drawAt && DATA.status === 'open') {
+    const l = leftText(DATA.drawAt);
+    cd.textContent = l ? T().left + l : T().wait;
+    if (!l && DATA.status === 'open') { DATA.status = 'waiting_result'; renderHead(); renderPicks(); }
+  } else cd.textContent = DATA && DATA.status === 'waiting_result' ? T().wait : '';
+  document.querySelectorAll('[data-left]').forEach((el) => { el.textContent = leftText(el.getAttribute('data-left')) || T().wait; });
+}
+
+// ── 추천번호 카드 ────────────────────────────────────────────────────────
+function balls(c, cls){
+  cls = cls || '';
+  let h = c.main.map((n) => '<span class="ball ' + cls + '">' + n + '</span>').join('');
+  if (c.bonus && c.bonus.length) h += '<span class="plus">+</span>' + c.bonus.map((n) => '<span class="ball b ' + cls + '">' + n + '</span>').join('');
+  return h;
+}
+const setText = (c) => c.main.join(', ') + (c.bonus && c.bonus.length ? ' + ' + c.bonus.join(', ') : '');
+
+function renderPicks(){
+  const cards = document.getElementById('cards'), ua = document.getElementById('unlockArea');
+  if (!DATA) return;
+  if (DATA.error || !DATA.round) {
+    ua.innerHTML = '';
+    cards.innerHTML = '<div class="empty">' + esc(DATA.error ? T().loadErr : T().notReady) + '</div>';
+    return;
+  }
+  const locked = DATA.criteria.filter((c) => c.locked).length;
+  if (DATA.price === 0) ua.innerHTML = '<div class="unlocked-badge">' + esc(T().allFree) + '</div>';
+  else if (DATA.unlocked) ua.innerHTML = '<div class="unlocked-badge">' + esc(T().unlocked) + '</div>';
+  else if (locked && DATA.status === 'open') {
+    ua.innerHTML = '<div class="unlock"><div><div class="ul-text">' + T().unlockText(DATA.price, DATA.criteria.length, DATA.totalSets) + '</div>' +
+      '<div class="ul-sub">' + esc(T().unlockSub) + '</div></div>' +
+      '<button class="btn-gold" id="unlockBtn" type="button" onclick="unlock()">' + esc(T().unlockBtn) + '</button><div class="ul-msg" id="ulMsg"></div></div>';
+  } else ua.innerHTML = '';
+
+  const anyOpen = DATA.criteria.some((c) => c.combos);
+  cards.classList.toggle('dense', DATA.spec && DATA.spec.count + DATA.spec.bonusCount >= 9);   // 오즈로또 7+3 등
+  cards.innerHTML = (anyOpen ? '<button class="copy-all" type="button" onclick="copyAll()">📋 ' + esc(T().copyAll) + '</button>' : '') +
+    DATA.criteria.map((c) => {
+      const chip = c.free ? '<span class="chip free">' + esc(T().free) + '</span>' : c.locked ? '<span class="chip lock">🔒 ' + esc(T().pass) + '</span>' : '<span class="chip">' + esc(T().open) + '</span>';
+      let body;
+      if (c.locked) {
+        const ghost = { main: new Array(DATA.spec.count).fill(0), bonus: new Array(DATA.spec.bonusCount).fill(0) };
+        let g = ''; for (let i = 0; i < 2; i++) g += '<div class="set"><span class="set-no">' + (i + 1) + '</span>' + balls(ghost, 'ghost') + '</div>';
+        body = '<div class="locked-box">' + g + '<div class="veil">🔒 ' + esc(T().lockedSets(c.count)) + '</div></div>';
+      } else {
+        body = c.combos.map((s, i) => '<div class="set"><span class="set-no">' + (i + 1) + '</span>' + balls(s) +
+          '<button class="copy" type="button" onclick="copyText(\'' + setText(s) + '\')">' + esc(T().copy) + '</button></div>').join('') + infoHtml(c);
+      }
+      return '<div class="card"><div class="card-head"><div class="card-name">' + esc(N3(c.name)) + '</div>' + chip + '</div>' +
+        '<div class="card-desc">' + esc(N3(c.desc)) + '</div>' + body + '</div>';
+    }).join('');
+}
+
+function infoHtml(c){
+  const i = c.info; if (!i) return '';
+  const mini = (t) => '<span class="mini">' + esc(t) + '</span>';
+  const t = T();
+  switch (c.key) {
+    case 'balanced': return i.oddCounts ? '<div class="info">' + esc(t.infoBalanced(i.oddCounts, i.sumRange)) + '</div>' : '';
+    case 'hot': return '<div class="info">' + esc(t.infoHot(i.window)) + i.hot.map((h) => mini(h.n + '·' + h.count)).join('') + '</div>';
+    case 'cold': return '<div class="info">' + esc(t.infoCold) + i.cold.map((h) => mini(h.n + '·' + h.absent)).join('') + '</div>';
+    case 'due': return '<div class="info">' + esc(t.infoDue) + i.due.map((h) => mini(h.n + '·' + h.absent + '/' + (h.usual == null ? '–' : h.usual))).join('') + '</div>';
+    case 'carry': return '<div class="info">' + esc(t.infoCarry) + i.last.map(mini).join('') + '</div>';
+    case 'neighbor': return '<div class="info">' + esc(t.infoNeighbor) + i.neighbors.map(mini).join('') + '</div>';
+    case 'pairs': return '<div class="info">' + esc(t.infoPairs(i.window)) + i.pairs.slice(0, 6).map((p) => mini(p.pair.join('+') + '·' + p.count)).join('') + '</div>';
+    case 'zones': return '<div class="info">' + esc(t.infoZones(i.cap, i.minZones)) + '</div>';
+    case 'fresh': return '<div class="info">' + esc(t.infoFresh(i.checkedDraws, i.limit)) + '</div>';
+    default: return '';
+  }
+}
+
+function copyText(text){
+  try { navigator.clipboard.writeText(text); toast(T().copied + text); } catch(e){ toast(text); }
+}
+function copyAll(){
+  const lines = [];
+  DATA.criteria.forEach((c) => { if (c.combos) { lines.push('[' + N3(c.name) + ']'); c.combos.forEach((s) => lines.push(setText(s))); } });
+  const g = GAMES.find((x) => x.id === GAME);
+  const text = gameName(g) + ' ' + T().roundTitle(DATA.round) + '\n' + lines.join('\n');
+  try { navigator.clipboard.writeText(text); toast('📋 ' + DATA.criteria.filter((c) => c.combos).reduce((a, c) => a + c.combos.length, 0) + ' ✓'); } catch(e){ toast(T().genericErr); }
+}
+
+async function unlock(){
+  const msg = document.getElementById('ulMsg'), btn = document.getElementById('unlockBtn');
+  const tk = await token();
+  if (!tk) { msg.className = 'ul-msg err'; msg.innerHTML = esc(T().needLogin) + ' <a href="' + LOGIN_PAGE + '">' + esc(T().loginLink) + '</a>'; return; }
+  if (!confirm(T().confirm(DATA.price))) return;
+  btn.disabled = true; msg.className = 'ul-msg'; msg.textContent = '…';
+  try {
+    const r = await fetch(FN, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tk, apikey:SUPABASE_KEY },
+      body: JSON.stringify({ action:'unlock', game:GAME, round:DATA.round }) });
+    const d = await r.json();
+    if (r.ok) {
+      toast(d.already ? T().unlocked : T().charged(d.charged));
+      if (window.refreshAuthBalance) window.refreshAuthBalance();
+      await loadGame(); return;
+    }
+    msg.className = 'ul-msg err';
+    if (r.status === 401) msg.innerHTML = esc(T().needLogin) + ' <a href="' + LOGIN_PAGE + '">' + esc(T().loginLink) + '</a>';
+    else if (r.status === 402) msg.innerHTML = esc(T().short(d.shortfall || 0)) + ' <a href="' + RECHARGE_PAGE + '">' + esc(T().recharge) + '</a>';
+    else if (d.error === 'draw_closed') msg.textContent = T().closed;
+    else if (d.error === 'round_changed') { msg.textContent = T().changed; setTimeout(loadGame, 900); }
+    else msg.textContent = T().genericErr;
+  } catch(e){ msg.className = 'ul-msg err'; msg.textContent = T().genericErr; }
+  btn.disabled = false;
+}
+
+// ── 성적표 ───────────────────────────────────────────────────────────────
+async function loadScore(){
+  const box = document.getElementById('paneS');
+  if (SCORE && SCORE.game === GAME) return renderScore();
+  box.innerHTML = '<div class="empty">' + esc(T().loading) + '</div>';
+  try { const r = await fetch(FN + '?view=scoreboard&last=52&game=' + encodeURIComponent(GAME), { headers:{ apikey:SUPABASE_KEY } }); SCORE = await r.json(); }
+  catch(e){ SCORE = { error:true }; }
+  renderScore();
+}
+function renderScore(){
+  const box = document.getElementById('paneS'), t = T();
+  if (!SCORE || SCORE.error || !SCORE.summary || !SCORE.summary.length) { box.innerHTML = '<div class="empty">' + esc(SCORE && SCORE.error ? t.loadErr : t.noScore) + '</div>'; return; }
+  const K = SCORE.count, lv = [K - 3, K - 2, K - 1].filter((x) => x >= 1);
+  const maxAvg = Math.max.apply(null, SCORE.summary.map((s) => s.avg).concat([SCORE.expectedAvg])) || 1;
+  const rows = SCORE.summary.map((s) => {
+    const cnt = (k, up) => { let n = 0; Object.keys(s.dist || {}).forEach((m) => { m = +m; if (up ? m >= k : m === k) n += s.dist[m]; }); return n; };
+    return '<tr class="' + (s.baseline ? 'base' : '') + '"><td>' + esc(N3(s.name)) + '</td><td class="num">' + s.rounds + '</td>' +
+      '<td class="num">' + s.avg.toFixed(2) + '<span class="bar" style="width:' + Math.round(44 * s.avg / maxAvg) + 'px"></span></td>' +
+      lv.map((k, i) => '<td class="num">' + cnt(k, i === lv.length - 1) + '</td>').join('') + '<td class="num">' + s.best + '</td></tr>';
+  }).join('');
+  let html = '<div class="card"><div class="card-name" style="margin-bottom:10px;">' + esc(t.sbTitle(SCORE.rounds)) + '</div><div style="overflow-x:auto;"><table><thead><tr>' +
+    '<th>' + esc(t.colCrit) + '</th><th class="num">' + esc(t.colRounds) + '</th><th class="num">' + esc(t.colAvg) + '</th>' +
+    lv.map((k, i) => '<th class="num">' + esc(i === lv.length - 1 ? t.colHitUp(k) : t.colHit(k)) + '</th>').join('') +
+    '<th class="num">' + esc(t.colBest) + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<div class="theory">' + esc(t.theory(K, SCORE.expectedAvg)) + '</div></div>';
+  html += '<div class="card"><div class="card-name">' + esc(t.recentTitle) + '</div>' + SCORE.recent.map((rd) => {
+    const hit = (n) => rd.drawn.indexOf(n) >= 0, bhit = (n) => (rd.drawnBonus || []).indexOf(n) >= 0;
+    return '<div class="round-block"><div class="round-title">' + esc(t.roundN(rd.round)) + ' ' +
+      rd.drawn.map((n) => '<span class="ball sb hit">' + n + '</span>').join('') +
+      ((rd.drawnBonus || []).length ? '<span class="plus">+</span>' + rd.drawnBonus.map((n) => '<span class="ball sb b">' + n + '</span>').join('') : '') + '</div>' +
+      rd.picks.map((p) => '<div class="rb-row"><span class="rb-name">' + esc(N3(SCORE.names[p.key])) + '</span>' +
+        p.combo.main.map((n) => '<span class="ball sb' + (hit(n) ? ' hit' : '') + '">' + n + '</span>').join('') +
+        (p.combo.bonus && p.combo.bonus.length ? '<span class="plus">+</span>' + p.combo.bonus.map((n) => '<span class="ball sb b' + (bhit(n) ? ' hit' : '') + '">' + n + '</span>').join('') : '') +
+        '<span class="mono" style="margin-left:6px;">' + esc(t.bestN(p.best)) + '</span></div>').join('') + '</div>';
+  }).join('') + '</div>';
+  box.innerHTML = html;
+}
+
+function showTab(t){
+  TAB = t;
+  document.getElementById('tabPicks').classList.toggle('active', t === 'picks');
+  document.getElementById('tabScore').classList.toggle('active', t === 'score');
+  document.getElementById('paneP').style.display = t === 'picks' ? '' : 'none';
+  document.getElementById('paneS').style.display = t === 'score' ? '' : 'none';
+  history.replaceState(null, '', location.pathname + location.search + (t === 'score' ? '#score' : ''));
+  if (t === 'score') loadScore();
+}
+document.getElementById('tabPicks').onclick = () => showTab('picks');
+document.getElementById('tabScore').onclick = () => showTab('score');
+
+// ── 언어 ─────────────────────────────────────────────────────────────────
+function applyLang(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i18n]').forEach((el) => { const v = T()[el.getAttribute('data-i18n')]; if (typeof v === 'string') el.textContent = v; });
+  document.querySelectorAll('.lang-toggle button').forEach((b) => b.classList.toggle('active', b.getAttribute('data-lang') === LANG));
+  document.title = 'PaperLotto — ' + T().heroTitle;
+  renderGames(); renderHead(); renderPicks(); if (TAB === 'score' && SCORE) renderScore();
+}
+document.querySelectorAll('.lang-toggle button').forEach((b) => b.onclick = () => {
+  LANG = b.getAttribute('data-lang');
+  if (typeof window.setPaperLottoLang === 'function') window.setPaperLottoLang(LANG); else try { localStorage.setItem('paperlotto_lang', LANG); } catch(e){}
+  applyLang();
+});
+
+(async function init(){
+  applyLang();
+  if (TAB === 'score') showTab('score');
+  await loadOverview();
+  await loadGame();
+  cdTimer = setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
