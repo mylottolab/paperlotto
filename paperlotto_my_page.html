@@ -187,6 +187,15 @@ main{ max-width:920px; margin:0 auto; padding:28px 24px 90px; }
     </div>
     <div id="pointList" class="loading-note" data-i18n="loading">불러오는 중…</div>
   </div>
+
+  <!-- 🔴 2026-10-16 회원 탈퇴 (애플 5.1.1 · 구글 플레이 정책 — 앱 안에서 계정을 지울 수 있어야 합니다) -->
+  <div class="section-card" id="accountCard" style="display:none">
+    <div class="section-head">
+      <div class="section-title">⚙️ <span id="accTitle">계정</span></div>
+    </div>
+    <p id="accDesc" style="font-size:12.5px;line-height:1.7;opacity:.75;margin:4px 0 12px"></p>
+    <button type="button" id="accDelBtn" style="background:none;border:1px solid #c65a2e;color:#c65a2e;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit"></button>
+  </div>
 </main>
 
 <script>
@@ -497,6 +506,51 @@ async function loadBattles(){
 
 applyLang(currentLang);
 loadAll();
+// ── 🔴 2026-10-16 회원 탈퇴 ──
+const ACC_T = {
+  ko: { title:'계정', desc:'탈퇴하면 로그인 정보가 지워지고 다시 로그인할 수 없습니다. 남은 포인트는 사라지며 되돌릴 수 없습니다.', btn:'회원 탈퇴',
+        ask:'정말 탈퇴하시겠습니까?\n확인을 위해 가입한 이메일을 그대로 입력해 주세요:\n', mismatch:'이메일이 맞지 않습니다.', done:'탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.', fail:'탈퇴하지 못했습니다: ' },
+  en: { title:'Account', desc:'Deleting your account removes your login and cannot be undone. Any remaining points will be lost.', btn:'Delete account',
+        ask:'Delete your account?\nTo confirm, type the email you signed up with:\n', mismatch:'The email does not match.', done:'Your account has been deleted. Thank you for using PaperLotto.', fail:'Could not delete the account: ' },
+  ja: { title:'アカウント', desc:'退会するとログイン情報が削除され、再度ログインできなくなります。残りのポイントは失われ、元に戻せません。', btn:'退会する',
+        ask:'本当に退会しますか？\n確認のため、登録したメールアドレスを入力してください：\n', mismatch:'メールアドレスが一致しません。', done:'退会が完了しました。ご利用ありがとうございました。', fail:'退会できませんでした: ' }
+};
+(async function setupAccount(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return;
+  const card = document.getElementById('accountCard');
+  function paint(){
+    const a = ACC_T[currentLang] || ACC_T.en;
+    document.getElementById('accTitle').textContent = a.title;
+    document.getElementById('accDesc').textContent = a.desc;
+    document.getElementById('accDelBtn').textContent = a.btn;
+  }
+  paint();
+  card.style.display = '';
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.addEventListener('click', function(){ setTimeout(paint, 0); }); });
+  document.getElementById('accDelBtn').addEventListener('click', async function(){
+    const a = ACC_T[currentLang] || ACC_T.en;
+    const { data: { session: s } } = await sb.auth.getSession();
+    if (!s) return;
+    const typed = prompt(a.ask + (s.user.email || ''), '');
+    if (typed === null) return;
+    if (typed.trim().toLowerCase() !== String(s.user.email || '').toLowerCase()) { alert(a.mismatch); return; }
+    this.disabled = true;
+    try {
+      const r = await fetch(SUPABASE_URL + '/functions/v1/account-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.access_token, 'apikey': SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({ confirm: typed.trim() })
+      });
+      const d = await r.json().catch(function(){ return {}; });
+      if (!r.ok || !d.ok) { alert(a.fail + (d.error || r.status)); this.disabled = false; return; }
+      try { await sb.auth.signOut(); } catch (e) {}
+      try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && /^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); } } catch (e) {}
+      alert(a.done);
+      location.href = 'index.html';
+    } catch (e) { alert(a.fail + e.message); this.disabled = false; }
+  });
+})();
 </script>
 
 <script src="auth-widget.js"></script>
