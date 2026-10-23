@@ -121,6 +121,12 @@ async function render(){
   }
   var items = [];
   try { items = (await call('products')).d.items || []; } catch (e) {}
+  /* 🔴 2026-10-24 — 상품 목록을 서버에서 못 받아도(공개 키가 함수 문지기에 막히는 경우 등) 앱 결제는 되게:
+     상품 번호 · 값은 App Store Connect 와 같은 고정 목록을 씁니다. 실제 값은 애플 결제창이 정합니다. */
+  if (!items.length) items = [
+    { id:'pl_points_1100',  krw:1100,  points:1100 },  { id:'pl_points_3300',  krw:3300,  points:3300 },
+    { id:'pl_points_5500',  krw:5500,  points:5500 },  { id:'pl_points_11000', krw:11000, points:11000 },
+    { id:'pl_points_33000', krw:33000, points:33000 }, { id:'pl_points_55000', krw:55000, points:55000 } ];
   if (!items.length) { area.innerHTML = '<div class="box">' + t.noItems + '</div>'; return; }
   area.innerHTML = '<div class="bal"><div class="l">' + t.my + '</div><div class="n" id="balN">–</div></div>' +
     '<div class="grid">' + items.map(function(p){
