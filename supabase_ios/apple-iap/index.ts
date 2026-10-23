@@ -96,6 +96,11 @@ Deno.serve(async (req) => {
     const action = String(body.action || '');
 
     if (action === 'products') return reply({ items: PRODUCTS });
+    // 🔴 2026-10-24 — 아이폰 결제창에서 난 오류를 기록에 남깁니다(심사관 화면에서 무슨 일이 났는지 보려고). 개인정보 없음.
+    if (action === 'log') {
+      console.log('[apple-iap] 앱 결제 오류', JSON.stringify({ sku: String(body.sku || '').slice(0, 40), msg: String(body.msg || '').slice(0, 300), ua: (req.headers.get('user-agent') || '').slice(0, 120) }));
+      return reply({ ok: true });
+    }
 
     const uid = await userId(req);
     if (!uid) return reply({ error: 'login_required' }, 401);

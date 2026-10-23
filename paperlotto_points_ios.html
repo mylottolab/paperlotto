@@ -155,7 +155,7 @@ window.mllStoreEvent = async function(ev){
   if (!ev) return;
   if (ev.kind === 'storeCanceled') { unlock(); say(t.cancel); return; }
   if (ev.kind === 'storePending') { unlock(); say(t.pending); return; }
-  if (ev.kind === 'storeError') { unlock(); say(ev.a || t.payErr, 'err'); return; }
+  if (ev.kind === 'storeError') { unlock(); say(ev.a || t.payErr, 'err'); try { call('log', { sku: ev.sku || '', msg: ev.a || '' }); } catch (e) {} return; }   // 🔴 2026-10-24 오류를 서버 기록에
   if (ev.kind !== 'storePurchase') return;
   var tx = ev.a;
   if (busy[tx]) return; busy[tx] = true;
