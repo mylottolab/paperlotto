@@ -522,6 +522,15 @@ footer .foot-brand{ font-family:'Fraunces',serif; font-size:15px; color:var(--te
   nav{ display:flex; flex-wrap:nowrap; gap:6px 14px; font-size:11.5px; width:100%; overflow-x:auto; scrollbar-width:none;
        -webkit-mask-image:linear-gradient(90deg,#000 88%,transparent); mask-image:linear-gradient(90deg,#000 88%,transparent); padding:2px 18px 2px 0; }
   nav::-webkit-scrollbar{ display:none; }
+  /* 2026-10-27 폰 메뉴 순서: 예약등록 · 통계 · 경마장 · 대결 · 공지 · 사용법을 앞으로, 나머지는 뒤로 (컴퓨터 화면 순서는 그대로) */
+  nav > *{ order:20; }
+  nav a.nav-watch{ order:1; }
+  nav a[href="paperlotto_round_stats.html"]{ order:2; }
+  nav a[href="paperlotto_racetrack_mockup.html"]{ order:3; }
+  nav a[href="paperlotto_battles_mockup.html"]{ order:4; }
+  nav a[href="paperlotto_board_notice.html"]{ order:5; }
+  nav a[href="paperlotto_board_guide.html"]{ order:6; }
+  nav #authWidget{ order:99; }
   nav a{ white-space:nowrap; }
   #authSlot1, #authSlot2{ display:flex; }
   #authWidget:empty{ display:none; }
